@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -99,7 +98,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       zoom: defaultZoom,
       // Optimize rendering performance
       antialias: true,
-      optimizeForTerrain: true,
       preserveDrawingBuffer: false,
       // Reduce rendering lag
       renderWorldCopies: false,
@@ -147,24 +145,21 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         return price.toLocaleString();
       };
 
-      // Create optimized marker element with better positioning
+      // Create optimized marker element
       const markerEl = document.createElement('div');
       markerEl.className = 'property-marker';
       markerEl.style.cssText = `
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.15s ease-out;
         transform-origin: center bottom;
-        will-change: transform;
+        position: relative;
+        z-index: 1;
       `;
       
-      // Add hover effects and selection state
+      // Add selection state
       if (selectedPropertyId === property.id) {
         markerEl.style.transform = 'scale(1.1)';
         markerEl.style.zIndex = '1000';
-      }
-      
-      if (enableNavigation) {
-        markerEl.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
       }
       
       markerEl.innerHTML = `
@@ -174,55 +169,55 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           flex-direction: column;
           align-items: center;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          pointer-events: none;
         ">
           <div style="
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 600;
             white-space: nowrap;
-            border: 2px solid white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1.5px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             position: relative;
             z-index: 1;
-            ${enableNavigation ? 'transition: all 0.2s ease;' : ''}
+            transition: all 0.15s ease;
+            pointer-events: auto;
           ">
             AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}
           </div>
           <div style="
             width: 0;
             height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 10px solid #1e40af;
-            margin-top: -2px;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #1e40af;
+            margin-top: -1px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
           "></div>
         </div>
       `;
 
-      // Create marker with optimized anchor point
+      // Create marker with better anchor
       const marker = new mapboxgl.Marker({
         element: markerEl,
-        anchor: 'bottom',
-        offset: [0, -10]
+        anchor: 'bottom'
       })
         .setLngLat([property.longitude, property.latitude])
         .addTo(map.current!);
 
-      // Add optimized hover effects
+      // Add hover effects
+      const priceDiv = markerEl.querySelector('div > div') as HTMLElement;
+      
       markerEl.addEventListener('mouseenter', () => {
         if (!markerEl.style.transform.includes('scale')) {
           markerEl.style.transform = 'scale(1.05)';
         }
-        if (enableNavigation) {
-          const priceDiv = markerEl.querySelector('div > div') as HTMLElement;
-          if (priceDiv) {
-            priceDiv.style.background = 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)';
-            priceDiv.style.transform = 'translateY(-2px)';
-          }
+        if (priceDiv) {
+          priceDiv.style.background = 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)';
+          priceDiv.style.transform = 'translateY(-1px)';
         }
       });
 
@@ -230,12 +225,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         if (selectedPropertyId !== property.id) {
           markerEl.style.transform = 'scale(1)';
         }
-        if (enableNavigation) {
-          const priceDiv = markerEl.querySelector('div > div') as HTMLElement;
-          if (priceDiv) {
-            priceDiv.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)';
-            priceDiv.style.transform = 'translateY(0)';
-          }
+        if (priceDiv) {
+          priceDiv.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)';
+          priceDiv.style.transform = 'translateY(0)';
         }
       });
 
@@ -251,26 +243,26 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
       // Create popup with enhanced content
       const popupContent = enableNavigation ? `
-        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
-          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 8px 0;">
+        <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h3 style="font-weight: 600; font-size: 13px; margin: 0 0 4px 0; color: #1f2937;">${property.title}</h3>
+          <p style="font-size: 11px; color: #6b7280; margin: 0 0 6px 0;">${property.location}</p>
+          <p style="font-size: 13px; font-weight: 700; color: #1e40af; margin: 0 0 6px 0;">
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
-          <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
+          <p style="font-size: 10px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
         </div>
       ` : `
-        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
-          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0;">
+        <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <h3 style="font-weight: 600; font-size: 13px; margin: 0 0 4px 0; color: #1f2937;">${property.title}</h3>
+          <p style="font-size: 11px; color: #6b7280; margin: 0 0 6px 0;">${property.location}</p>
+          <p style="font-size: 13px; font-weight: 700; color: #1e40af; margin: 0;">
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
         </div>
       `;
 
       const popup = new mapboxgl.Popup({ 
-        offset: 25,
+        offset: 15,
         closeButton: false,
         className: 'custom-popup'
       }).setHTML(popupContent);
