@@ -32,12 +32,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // Load Mapbox token from Supabase settings
+  // Load Mapbox token from Supabase Edge Function
   useEffect(() => {
     const loadMapboxToken = async () => {
       try {
-        const { data, error } = await supabase
-          .rpc('get_setting', { setting_key: 'mapbox_token' });
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
 
         if (error) {
           console.error('Error loading mapbox token:', error);
@@ -45,8 +44,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           return;
         }
 
-        if (data) {
-          setMapboxToken(data);
+        if (data?.token) {
+          setMapboxToken(data.token);
         }
         setIsLoading(false);
       } catch (error) {
