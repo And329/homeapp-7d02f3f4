@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Clock, CheckCircle, XCircle, Send, Plus, Eye } from 'lucide-react';
@@ -278,15 +279,35 @@ const UserProfile = () => {
                     {userRequests.map((request) => {
                       const replies = adminReplies.filter(reply => reply.request_id === request.id);
                       
+                      // Transform PropertyRequest to match what ExpandablePropertyCard expects
+                      const transformedProperty = {
+                        id: request.id,
+                        title: request.title,
+                        description: request.description,
+                        price: request.price,
+                        location: request.location,
+                        bedrooms: request.bedrooms,
+                        bathrooms: request.bathrooms,
+                        type: request.type,
+                        amenities: request.amenities,
+                        images: request.images,
+                        latitude: request.latitude,
+                        longitude: request.longitude,
+                        status: request.status,
+                        created_at: request.created_at
+                      };
+                      
                       return (
                         <div key={request.id}>
-                          <ExpandablePropertyCard 
-                            property={{
-                              ...request,
-                              id: request.id
-                            }}
-                            showActions={false}
-                          />
+                          <div className="relative">
+                            <ExpandablePropertyCard 
+                              property={transformedProperty}
+                              showActions={false}
+                            />
+                            <div className="absolute top-4 right-4">
+                              {getStatusBadge(request.status)}
+                            </div>
+                          </div>
                           
                           {request.status === 'rejected' && replies.length > 0 && (
                             <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
