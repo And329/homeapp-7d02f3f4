@@ -125,21 +125,33 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     validProperties.forEach((property) => {
       if (!property.latitude || !property.longitude) return;
 
+      // Format price for display
+      const formatPrice = (price: number) => {
+        if (price >= 1000000) {
+          return `${(price / 1000000).toFixed(1)}M`;
+        } else if (price >= 1000) {
+          return `${(price / 1000).toFixed(0)}K`;
+        }
+        return price.toLocaleString();
+      };
+
       // Create custom marker element
       const markerEl = document.createElement('div');
-      markerEl.className = `relative cursor-pointer transform transition-transform hover:scale-110 ${
-        selectedPropertyId === property.id ? 'scale-125' : ''
+      markerEl.className = `cursor-pointer transition-all duration-200 hover:scale-105 ${
+        selectedPropertyId === property.id ? 'scale-110 z-10' : ''
       }`;
       
       markerEl.innerHTML = `
-        <div class="bg-primary text-white px-2 py-1 rounded-md shadow-lg text-xs font-semibold whitespace-nowrap max-w-[120px] text-center">
-          AED ${property.price >= 1000000 ? (property.price / 1000000).toFixed(1) + 'M' : property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}
+        <div class="relative">
+          <div class="bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap border border-blue-700">
+            AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}
+          </div>
+          <div class="absolute left-1/2 top-full transform -translate-x-1/2 -mt-[1px] w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-blue-600"></div>
         </div>
-        <div class="absolute left-1/2 top-full transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-primary"></div>
       `;
 
-      // Create marker with proper anchor
-      const marker = new mapboxgl.Marker(markerEl, { anchor: 'bottom' })
+      // Create marker
+      const marker = new mapboxgl.Marker(markerEl)
         .setLngLat([property.longitude, property.latitude])
         .addTo(map.current!);
 
@@ -152,10 +164,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
       // Create popup
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="p-2">
+        <div class="p-3">
           <h3 class="font-semibold text-sm mb-1">${property.title}</h3>
-          <p class="text-xs text-gray-600 mb-1">${property.location}</p>
-          <p class="text-sm font-bold text-primary">
+          <p class="text-xs text-gray-600 mb-2">${property.location}</p>
+          <p class="text-sm font-bold text-blue-600">
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
         </div>
