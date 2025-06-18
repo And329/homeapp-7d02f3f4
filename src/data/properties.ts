@@ -25,6 +25,8 @@ export interface Property {
 }
 
 export const getProperties = async (): Promise<Property[]> => {
+  console.log('Fetching properties from Supabase...');
+  
   const { data, error } = await supabase
     .from('properties')
     .select('*');
@@ -34,8 +36,15 @@ export const getProperties = async (): Promise<Property[]> => {
     return [];
   }
 
+  console.log('Raw properties data:', data);
+
+  if (!data || data.length === 0) {
+    console.log('No properties found in database');
+    return [];
+  }
+
   // Transform database data to match our Property interface
-  return data.map((property: any) => ({
+  const transformedProperties = data.map((property: any) => ({
     id: property.id.toString(),
     title: property.name || 'Untitled Property',
     price: property.price || 0,
@@ -43,34 +52,46 @@ export const getProperties = async (): Promise<Property[]> => {
     bedrooms: property.bedrooms || 0,
     bathrooms: property.bathrooms || 0,
     area: property.area || 0,
-    image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop', // Default image
+    image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
     images: [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ],
     type: property.is_rental ? 'rent' : 'sale',
-    isHotDeal: false, // You can add this field to your database later
+    isHotDeal: false,
     description: property.description || 'No description available',
-    amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'], // Default amenities, you can add this to database
-    coordinates: { lat: 25.0772, lng: 55.1395 }, // Default coordinates for Dubai
-    propertyType: 'Apartment', // Default type, you can add this to database
+    amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
+    coordinates: { lat: 25.0772, lng: 55.1395 },
+    propertyType: 'Apartment',
     yearBuilt: 2020,
     parking: 1
   }));
+
+  console.log('Transformed properties:', transformedProperties);
+  return transformedProperties;
 };
 
 export const getPropertyById = async (id: string): Promise<Property | undefined> => {
+  console.log('Fetching property by ID:', id);
+  
   const { data, error } = await supabase
     .from('properties')
     .select('*')
     .eq('id', parseInt(id))
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
     console.error('Error fetching property:', error);
     return undefined;
   }
+
+  if (!data) {
+    console.log('No property found with ID:', id);
+    return undefined;
+  }
+
+  console.log('Found property:', data);
 
   return {
     id: data.id.toString(),
@@ -98,6 +119,8 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
 };
 
 export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Property[]> => {
+  console.log('Fetching properties by type:', type);
+  
   const { data, error } = await supabase
     .from('properties')
     .select('*')
@@ -105,6 +128,10 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
 
   if (error) {
     console.error('Error fetching properties by type:', error);
+    return [];
+  }
+
+  if (!data) {
     return [];
   }
 
@@ -134,8 +161,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
 };
 
 export const getHotDeals = async (): Promise<Property[]> => {
-  // For now, get all properties and filter later
-  // You can add a hot_deal column to your database later
+  // Get all properties and return first 3 as hot deals
   const properties = await getProperties();
-  return properties.slice(0, 3); // Return first 3 as hot deals
+  return properties.slice(0, 3);
 };
