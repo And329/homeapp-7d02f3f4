@@ -1,8 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapPin, Navigation, Map } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyLocationPickerProps {
   location: string;
@@ -11,24 +13,69 @@ interface PropertyLocationPickerProps {
   onLocationChange: (location: string, lat?: number, lng?: number) => void;
 }
 
-// Mock geocoding function - in production, you'd use Mapbox Geocoding API
+// Enhanced mock geocoding with more UAE locations
 const mockGeocode = async (address: string): Promise<{ lat: number; lng: number } | null> => {
-  // Simplified mock coordinates for UAE locations
   const mockLocations: Record<string, { lat: number; lng: number }> = {
+    // Dubai areas
     'dubai': { lat: 25.2048, lng: 55.2708 },
-    'abu dhabi': { lat: 24.4539, lng: 54.3773 },
-    'sharjah': { lat: 25.3463, lng: 55.4209 },
-    'ajman': { lat: 25.4052, lng: 55.5136 },
     'downtown dubai': { lat: 25.1972, lng: 55.2744 },
     'marina': { lat: 25.0757, lng: 55.1395 },
+    'dubai marina': { lat: 25.0757, lng: 55.1395 },
     'jbr': { lat: 25.0746, lng: 55.1376 },
+    'jumeirah beach residence': { lat: 25.0746, lng: 55.1376 },
     'business bay': { lat: 25.1875, lng: 55.2639 },
     'jumeirah': { lat: 25.2321, lng: 55.2687 },
+    'palm jumeirah': { lat: 25.1124, lng: 55.1390 },
+    'jlt': { lat: 25.0657, lng: 55.1441 },
+    'jumeirah lake towers': { lat: 25.0657, lng: 55.1441 },
+    'difc': { lat: 25.2138, lng: 55.2794 },
+    'dubai international financial centre': { lat: 25.2138, lng: 55.2794 },
+    'sheikh zayed road': { lat: 25.2285, lng: 55.2845 },
+    'bur dubai': { lat: 25.2631, lng: 55.2972 },
+    'deira': { lat: 25.2697, lng: 55.3094 },
+    'dubai hills': { lat: 25.1030, lng: 55.2440 },
+    'motor city': { lat: 25.0550, lng: 55.2260 },
+    'sports city': { lat: 25.0400, lng: 55.2100 },
+    'arabian ranches': { lat: 25.0520, lng: 55.2650 },
+    'the springs': { lat: 25.0580, lng: 55.2580 },
+    'the meadows': { lat: 25.0620, lng: 55.2520 },
+    
+    // Abu Dhabi areas
+    'abu dhabi': { lat: 24.4539, lng: 54.3773 },
+    'corniche': { lat: 24.4795, lng: 54.3703 },
+    'khalifa city': { lat: 24.4169, lng: 54.5975 },
+    'al reem island': { lat: 24.4972, lng: 54.4003 },
+    'yas island': { lat: 24.4881, lng: 54.6036 },
+    'saadiyat island': { lat: 24.5394, lng: 54.4370 },
+    
+    // Other Emirates
+    'sharjah': { lat: 25.3463, lng: 55.4209 },
+    'ajman': { lat: 25.4052, lng: 55.5136 },
+    'ras al khaimah': { lat: 25.7889, lng: 55.9758 },
+    'fujairah': { lat: 25.1164, lng: 56.3450 },
+    'umm al quwain': { lat: 25.5641, lng: 55.5553 },
+    'al ain': { lat: 24.2075, lng: 55.7454 },
   };
 
-  const searchKey = address.toLowerCase();
+  const searchKey = address.toLowerCase().trim();
+  
+  // Direct match
+  if (mockLocations[searchKey]) {
+    return mockLocations[searchKey];
+  }
+  
+  // Fuzzy match - check if any key contains the search term or vice versa
   for (const [key, coords] of Object.entries(mockLocations)) {
-    if (searchKey.includes(key)) {
+    if (searchKey.includes(key) || key.includes(searchKey)) {
+      return coords;
+    }
+  }
+  
+  // Multi-word match
+  const searchWords = searchKey.split(' ');
+  for (const [key, coords] of Object.entries(mockLocations)) {
+    const keyWords = key.split(' ');
+    if (searchWords.some(word => keyWords.some(keyWord => keyWord.includes(word) || word.includes(keyWord)))) {
       return coords;
     }
   }
@@ -43,6 +90,75 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   onLocationChange,
 }) => {
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [tempLat, setTempLat] = useState(latitude?.toString() || '');
+  const [tempLng, setTempLng] = useState(longitude?.toString() || '');
+  const [mapToken, setMapToken] = useState<string | null>(null);
+  
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+
+  // Load Mapbox token
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const { data } = await supabase.rpc('get_setting', { setting_key: 'mapbox_token' });
+        if (data) setMapToken(data);
+      } catch (error) {
+        console.error('Error loading Mapbox token:', error);
+      }
+    };
+    loadToken();
+  }, []);
+
+  // Initialize map when shown
+  useEffect(() => {
+    if (!showMap || !mapContainer.current || !mapToken) return;
+
+    mapboxgl.accessToken = mapToken;
+    
+    const centerLat = latitude || 25.2048; // Default to Dubai
+    const centerLng = longitude || 55.2708;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [centerLng, centerLat],
+      zoom: 12,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add click handler
+    map.current.on('click', (e) => {
+      const { lat, lng } = e.lngLat;
+      setTempLat(lat.toFixed(6));
+      setTempLng(lng.toFixed(6));
+      onLocationChange(location, lat, lng);
+      
+      // Update marker
+      if (marker.current) {
+        marker.current.remove();
+      }
+      marker.current = new mapboxgl.Marker()
+        .setLngLat([lng, lat])
+        .addTo(map.current!);
+    });
+
+    // Add existing marker if coordinates exist
+    if (latitude && longitude) {
+      marker.current = new mapboxgl.Marker()
+        .setLngLat([longitude, latitude])
+        .addTo(map.current);
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [showMap, mapToken]);
 
   const handleLocationChange = (newLocation: string) => {
     onLocationChange(newLocation, latitude, longitude);
@@ -55,7 +171,11 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     try {
       const coords = await mockGeocode(location);
       if (coords) {
+        setTempLat(coords.lat.toString());
+        setTempLng(coords.lng.toString());
         onLocationChange(location, coords.lat, coords.lng);
+      } else {
+        alert('Location not found. Try entering coordinates manually or use the map picker.');
       }
     } catch (error) {
       console.error('Geocoding error:', error);
@@ -64,43 +184,160 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     }
   };
 
+  const handleCoordinateChange = () => {
+    const lat = parseFloat(tempLat);
+    const lng = parseFloat(tempLng);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      alert('Please enter valid coordinates');
+      return;
+    }
+    
+    // Basic UAE coordinate validation
+    if (lat < 22 || lat > 27 || lng < 51 || lng > 57) {
+      alert('Coordinates should be within UAE bounds (Lat: 22-27, Lng: 51-57)');
+      return;
+    }
+    
+    onLocationChange(location, lat, lng);
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setTempLat(lat.toString());
+        setTempLng(lng.toString());
+        onLocationChange(location, lat, lng);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        alert('Unable to get your location');
+      }
+    );
+  };
+
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        Location *
-      </label>
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Location *
+        </label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={location}
+            onChange={(e) => handleLocationChange(e.target.value)}
+            placeholder="Enter property location..."
+            className="flex-1"
+            required
+          />
+          <Button
+            type="button"
+            onClick={handleGeocode}
+            disabled={!location.trim() || isGeocoding}
+            variant="outline"
+            size="sm"
+          >
+            {isGeocoding ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            ) : (
+              <MapPin className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Coordinate Input Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Latitude
+          </label>
+          <Input
+            type="number"
+            step="any"
+            value={tempLat}
+            onChange={(e) => setTempLat(e.target.value)}
+            placeholder="25.2048"
+            className="text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Longitude
+          </label>
+          <Input
+            type="number"
+            step="any"
+            value={tempLng}
+            onChange={(e) => setTempLng(e.target.value)}
+            placeholder="55.2708"
+            className="text-sm"
+          />
+        </div>
+        <div className="flex items-end">
+          <Button
+            type="button"
+            onClick={handleCoordinateChange}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            Set Coordinates
+          </Button>
+        </div>
+      </div>
+
+      {/* Map Toggle and Current Location */}
       <div className="flex gap-2">
-        <Input
-          type="text"
-          value={location}
-          onChange={(e) => handleLocationChange(e.target.value)}
-          placeholder="Enter property location..."
-          className="flex-1"
-          required
-        />
+        {mapToken && (
+          <Button
+            type="button"
+            onClick={() => setShowMap(!showMap)}
+            variant="outline"
+            size="sm"
+          >
+            <Map className="h-4 w-4 mr-2" />
+            {showMap ? 'Hide Map' : 'Show Map Picker'}
+          </Button>
+        )}
         <Button
           type="button"
-          onClick={handleGeocode}
-          disabled={!location.trim() || isGeocoding}
+          onClick={getCurrentLocation}
           variant="outline"
           size="sm"
         >
-          {isGeocoding ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          ) : (
-            <MapPin className="h-4 w-4" />
-          )}
+          <Navigation className="h-4 w-4 mr-2" />
+          Use Current Location
         </Button>
       </div>
+
+      {/* Interactive Map */}
+      {showMap && mapToken && (
+        <div className="border rounded-lg overflow-hidden">
+          <div ref={mapContainer} className="h-64 w-full" />
+          <div className="p-2 bg-gray-50 text-xs text-gray-600">
+            Click on the map to set the property location
+          </div>
+        </div>
+      )}
       
+      {/* Status Display */}
       {latitude && longitude && (
         <p className="text-xs text-green-600">
-          ✓ Coordinates: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+          ✓ Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
         </p>
       )}
       
       <p className="text-xs text-gray-500">
-        Click the map pin to get coordinates for this location
+        Enter an address and click the map pin, use the map picker, enter coordinates manually, or use your current location
       </p>
     </div>
   );
