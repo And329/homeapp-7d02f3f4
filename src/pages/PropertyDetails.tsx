@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
@@ -47,19 +48,11 @@ const PropertyDetails = () => {
 
   // Parse coordinates from property data
   const getCoordinates = () => {
-    // Check if coordinates exist as separate fields
+    // Check if coordinates exist as an object with lat/lng
     if (property.coordinates?.lat && property.coordinates?.lng) {
       return {
         lat: property.coordinates.lat,
         lng: property.coordinates.lng
-      };
-    }
-    
-    // Check if latitude and longitude exist as separate fields
-    if (property.latitude && property.longitude) {
-      return {
-        lat: property.latitude,
-        lng: property.longitude
       };
     }
     
@@ -304,3 +297,4 @@ const PropertyDetails = () => {
 };
 
 export default PropertyDetails;
+
