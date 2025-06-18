@@ -1,4 +1,5 @@
 
+
 export interface BlogPost {
   id: string;
   title: string;
@@ -7,7 +8,7 @@ export interface BlogPost {
   excerpt: string | null;
   featured_image: string | null;
   author_id: string;
-  status: 'draft' | 'published';
+  status: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string | null;
@@ -15,3 +16,4 @@ export interface BlogPost {
   meta_description: string | null;
   pdf_attachment: string | null;
 }
+
