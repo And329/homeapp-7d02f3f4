@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
@@ -265,6 +264,8 @@ const AdminDashboard = () => {
 
   const sendReplyMutation = useMutation({
     mutationFn: async ({ requestId, message, userId }: { requestId: string; message: string; userId: string }) => {
+      console.log('sendReplyMutation called with:', { requestId, message, userId });
+      
       const propertyRequest = propertyRequests.find(req => req.id === requestId);
       const chatSubject = `Property Request: ${propertyRequest?.title || 'Property'}`;
       
@@ -290,7 +291,10 @@ const AdminDashboard = () => {
           .select()
           .single();
 
-        if (chatError) throw chatError;
+        if (chatError) {
+          console.error('Chat creation error:', chatError);
+          throw chatError;
+        }
         chatId = newChat.id;
       }
 
@@ -302,7 +306,10 @@ const AdminDashboard = () => {
           message
         }]);
 
-      if (messageError) throw messageError;
+      if (messageError) {
+        console.error('Message creation error:', messageError);
+        throw messageError;
+      }
 
       await supabase
         .from('admin_chats')
@@ -320,7 +327,10 @@ const AdminDashboard = () => {
           message
         }]);
 
-      if (replyError) throw replyError;
+      if (replyError) {
+        console.error('Reply creation error:', replyError);
+        throw replyError;
+      }
 
       return chatId;
     },
@@ -334,10 +344,11 @@ const AdminDashboard = () => {
         description: "Your reply has been sent to the user and a chat has been created.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Send reply error:', error);
       toast({
         title: "Error",
-        description: "Failed to send reply. Please try again.",
+        description: `Failed to send reply: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -404,7 +415,18 @@ const AdminDashboard = () => {
   };
 
   const handleSendReply = (requestId: string) => {
-    if (!replyMessage.trim()) return;
+    console.log('handleSendReply called with:', requestId);
+    console.log('Reply message:', replyMessage);
+    
+    if (!replyMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a reply message.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const request = propertyRequests.find(req => req.id === requestId);
     if (!request?.user_id) {
       toast({
@@ -414,6 +436,13 @@ const AdminDashboard = () => {
       });
       return;
     }
+    
+    console.log('Calling sendReplyMutation with:', {
+      requestId,
+      message: replyMessage.trim(),
+      userId: request.user_id
+    });
+    
     sendReplyMutation.mutate({ 
       requestId, 
       message: replyMessage.trim(),

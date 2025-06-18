@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { MessageCircle, Send, User } from 'lucide-react';
+import { MessageCircle, Send, User, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyRequest } from '@/types/propertyRequest';
+import { Link } from 'react-router-dom';
 
 interface Chat {
   id: string;
@@ -214,6 +215,18 @@ const AdminChatsTab: React.FC<AdminChatsTabProps> = ({
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date(request.created_at).toLocaleDateString()}
                         </p>
+                        <div className="mt-2">
+                          <Link
+                            to={`/properties/${request.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button size="sm" variant="outline" className="w-full">
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View Listing
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     ))}
                   </div>

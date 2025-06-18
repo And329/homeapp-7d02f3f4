@@ -50,6 +50,16 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     }
   };
 
+  const handleSendReply = (requestId: string) => {
+    console.log('Sending reply for request:', requestId);
+    console.log('Reply message:', replyMessage);
+    if (!replyMessage.trim()) {
+      console.log('Reply message is empty');
+      return;
+    }
+    onSendReply(requestId);
+  };
+
   return (
     <>
       {requestsLoading ? (
@@ -139,11 +149,11 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                   />
                   <div className="flex gap-2 mt-2">
                     <Button
-                      onClick={() => onSendReply(request.id)}
+                      onClick={() => handleSendReply(request.id)}
                       disabled={!replyMessage.trim() || sendReplyMutation.isPending}
                       size="sm"
                     >
-                      Send Reply
+                      {sendReplyMutation.isPending ? 'Sending...' : 'Send Reply'}
                     </Button>
                     <Button
                       onClick={() => {
