@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Property {
@@ -139,18 +138,29 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
 
   console.log('Found property:', data);
 
-  // Parse location coordinates
-  let coordinates = { lat: 25.0772, lng: 55.1395 };
-  if (data.location) {
+  // Parse location coordinates - check all possible sources
+  let coordinates = { lat: 25.0772, lng: 55.1395 }; // Default Dubai coordinates
+  
+  // First, check if we have separate latitude/longitude fields in the database
+  if (data.latitude && data.longitude) {
+    coordinates = { lat: data.latitude, lng: data.longitude };
+    console.log('Using database lat/lng fields:', coordinates);
+  }
+  // Then check if location is a JSON object with coordinates
+  else if (data.location && typeof data.location === 'object' && data.location.lat && data.location.lng) {
+    coordinates = { lat: data.location.lat, lng: data.location.lng };
+    console.log('Using location object coordinates:', coordinates);
+  }
+  // Finally, try to parse location as JSON string
+  else if (data.location && typeof data.location === 'string') {
     try {
-      const locationData = typeof data.location === 'string' 
-        ? JSON.parse(data.location) 
-        : data.location;
+      const locationData = JSON.parse(data.location);
       if (locationData.lat && locationData.lng) {
         coordinates = { lat: locationData.lat, lng: locationData.lng };
+        console.log('Parsed coordinates from location JSON:', coordinates);
       }
     } catch (e) {
-      console.log('Could not parse location for property', data.id);
+      console.log('Could not parse location as JSON for property', data.id);
     }
   }
 
@@ -186,9 +196,9 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     id: data.id.toString(),
     title: data.title || 'Untitled Property',
     price: data.price || 0,
-    location: typeof data.location === 'string' && data.location.startsWith('{') 
-      ? `${coordinates.lat}, ${coordinates.lng}` 
-      : data.location || 'Location not specified',
+    location: typeof data.location === 'string' && !data.location.startsWith('{') 
+      ? data.location 
+      : `${coordinates.lat}, ${coordinates.lng}`,
     bedrooms: data.bedrooms || 0,
     bathrooms: data.bathrooms || 0,
     area: 1000, // Default area

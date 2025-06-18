@@ -48,25 +48,34 @@ const PropertyDetails = () => {
 
   // Parse coordinates from property data
   const getCoordinates = () => {
+    console.log('PropertyDetails: Parsing coordinates for property:', property);
+    console.log('PropertyDetails: Property coordinates:', property.coordinates);
+    console.log('PropertyDetails: Property location:', property.location);
+    
     // Check if coordinates exist as an object with lat/lng
     if (property.coordinates?.lat && property.coordinates?.lng) {
+      console.log('PropertyDetails: Using coordinates object:', property.coordinates);
       return {
         lat: property.coordinates.lat,
         lng: property.coordinates.lng
       };
     }
     
-    // Try to parse from location string (format: "lat, lng")
-    if (property.location && property.location.includes(',')) {
-      const coords = property.location.split(',').map(coord => parseFloat(coord.trim()));
-      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-        return {
-          lat: coords[0],
-          lng: coords[1]
-        };
+    // Try to parse from location string if it contains coordinates
+    if (property.location && typeof property.location === 'string') {
+      // Check if location is a coordinate string like "25.2048, 55.2708"
+      const coordMatch = property.location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+      if (coordMatch) {
+        const lat = parseFloat(coordMatch[1]);
+        const lng = parseFloat(coordMatch[2]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          console.log('PropertyDetails: Parsed coordinates from location string:', { lat, lng });
+          return { lat, lng };
+        }
       }
     }
     
+    console.log('PropertyDetails: No valid coordinates found');
     return null;
   };
 
