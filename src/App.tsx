@@ -12,6 +12,7 @@ import PropertyDetails from "./pages/PropertyDetails";
 import Blog from "./pages/Blog";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
+import ListProperty from "./pages/ListProperty";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/news" element={<News />} />
             <Route path="/news/:id" element={<News />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/list-property" element={<ListProperty />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/admin" 

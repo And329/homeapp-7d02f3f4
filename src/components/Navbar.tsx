@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, MapPin, FileText, Newspaper, Mail, Settings, LogOut, User } from 'lucide-react';
+import { Menu, X, Home, Building, FileText, Newspaper, Plus, Settings, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -12,10 +12,11 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
-    { name: 'Properties', path: '/properties', icon: MapPin },
+    { name: 'For Rent', path: '/properties/rent', icon: Building },
+    { name: 'For Sale', path: '/properties/sale', icon: Building },
     { name: 'Blog', path: '/blog', icon: FileText },
     { name: 'News', path: '/news', icon: Newspaper },
-    { name: 'Contact', path: '/contact', icon: Mail },
+    { name: 'List Your Property', path: '/list-property', icon: Plus },
   ];
 
   const isActive = (path: string) => location.pathname === path;
