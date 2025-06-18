@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Map } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -112,6 +113,12 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     loadToken();
   }, []);
 
+  // Update temp coordinates when props change
+  useEffect(() => {
+    setTempLat(latitude?.toString() || '');
+    setTempLng(longitude?.toString() || '');
+  }, [latitude, longitude]);
+
   // Initialize map when shown
   useEffect(() => {
     if (!showMap || !mapContainer.current || !mapToken) return;
@@ -159,6 +166,22 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       }
     };
   }, [showMap, mapToken]);
+
+  // Update map center and marker when coordinates change
+  useEffect(() => {
+    if (!map.current || !latitude || !longitude) return;
+
+    // Update map center
+    map.current.setCenter([longitude, latitude]);
+    
+    // Update marker
+    if (marker.current) {
+      marker.current.remove();
+    }
+    marker.current = new mapboxgl.Marker()
+      .setLngLat([longitude, latitude])
+      .addTo(map.current);
+  }, [latitude, longitude]);
 
   const handleLocationChange = (newLocation: string) => {
     onLocationChange(newLocation, latitude, longitude);
