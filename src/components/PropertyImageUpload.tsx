@@ -21,15 +21,18 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    console.log('Starting file upload, files count:', files.length);
 
     try {
       const newImages: string[] = [];
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        console.log('Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
         
         // Validate file type
         if (!file.type.startsWith('image/')) {
+          console.log('Skipping non-image file:', file.name);
           toast({
             title: "Invalid file type",
             description: `${file.name} is not an image file.`,
@@ -40,6 +43,7 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
+          console.log('Skipping large file:', file.name);
           toast({
             title: "File too large",
             description: `${file.name} is larger than 5MB.`,
@@ -48,17 +52,31 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
           continue;
         }
 
-        // Convert to base64 for now (in production, you'd upload to Supabase Storage)
-        const base64 = await new Promise<string>((resolve) => {
+        // Convert to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            console.log('File converted to base64:', file.name);
+            resolve(result);
+          };
+          reader.onerror = () => {
+            console.error('Error reading file:', file.name);
+            reject(new Error(`Failed to read ${file.name}`));
+          };
           reader.readAsDataURL(file);
         });
 
         newImages.push(base64);
       }
 
-      onImagesChange([...images, ...newImages]);
+      console.log('Successfully processed images:', newImages.length);
+      console.log('Current images count:', images.length);
+      console.log('Total images after addition:', images.length + newImages.length);
+
+      // Only add the new images to existing ones
+      const updatedImages = [...images, ...newImages];
+      onImagesChange(updatedImages);
       
       if (newImages.length > 0) {
         toast({
@@ -66,7 +84,11 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
           description: `${newImages.length} image(s) uploaded successfully.`,
         });
       }
+
+      // Clear the input
+      event.target.value = '';
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: "Failed to upload images. Please try again.",
@@ -78,9 +100,13 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
   };
 
   const removeImage = (index: number) => {
+    console.log('Removing image at index:', index);
     const newImages = images.filter((_, i) => i !== index);
+    console.log('Images after removal:', newImages.length);
     onImagesChange(newImages);
   };
+
+  console.log('PropertyImageUpload render - Current images:', images.length);
 
   return (
     <div>
@@ -95,6 +121,11 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
               src={image}
               alt={`Property ${index + 1}`}
               className="w-full h-32 object-cover rounded-lg border border-gray-200"
+              onError={(e) => {
+                console.error('Image failed to load at index:', index);
+                // Remove the broken image
+                removeImage(index);
+              }}
             />
             <button
               type="button"

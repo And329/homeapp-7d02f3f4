@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,8 +32,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('PropertyForm: useEffect triggered with property:', property);
     if (property) {
-      setFormData({
+      const newFormData = {
         title: property.title || '',
         price: property.price?.toString() || '',
         location: property.location || '',
@@ -47,13 +47,36 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || false,
         amenities: property.amenities || [],
         images: property.images || [],
-      });
+      };
+      console.log('PropertyForm: Setting form data from property, images:', newFormData.images);
+      setFormData(newFormData);
+    } else {
+      // Reset form for new property
+      const resetFormData = {
+        title: '',
+        price: '',
+        location: '',
+        latitude: null as number | null,
+        longitude: null as number | null,
+        bedrooms: '',
+        bathrooms: '',
+        type: 'rent' as 'rent' | 'sale',
+        description: '',
+        is_hot_deal: false,
+        amenities: [] as string[],
+        images: [] as string[], // Make sure this is always empty for new properties
+      };
+      console.log('PropertyForm: Resetting form data for new property');
+      setFormData(resetFormData);
     }
   }, [property]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    console.log('PropertyForm: Submitting with images:', formData.images.length);
+    console.log('PropertyForm: Images array:', formData.images);
 
     try {
       const dataToSubmit = {
@@ -71,19 +94,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         images: formData.images,
       };
 
+      console.log('PropertyForm: Data to submit:', dataToSubmit);
+
       let result;
       if (property) {
+        console.log('PropertyForm: Updating existing property');
         result = await supabase
           .from('properties')
           .update(dataToSubmit)
           .eq('id', property.id);
       } else {
+        console.log('PropertyForm: Creating new property');
         result = await supabase
           .from('properties')
           .insert([dataToSubmit]);
       }
 
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error('PropertyForm: Database error:', result.error);
+        throw result.error;
+      }
+
+      console.log('PropertyForm: Success!', result);
 
       toast({
         title: property ? "Property updated" : "Property created",
@@ -92,6 +124,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
       onSuccess();
     } catch (error) {
+      console.error('PropertyForm: Submit error:', error);
       toast({
         title: "Error",
         description: `Failed to ${property ? 'update' : 'create'} property. Please try again.`,
@@ -117,6 +150,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       latitude: lat || null,
       longitude: lng || null,
     }));
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    console.log('PropertyForm: Images changed to:', images.length, 'images');
+    setFormData(prev => ({ ...prev, images }));
   };
 
   return (
@@ -237,7 +275,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
           <PropertyImageUpload
             images={formData.images}
-            onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+            onImagesChange={handleImagesChange}
           />
 
           <PropertyAmenities

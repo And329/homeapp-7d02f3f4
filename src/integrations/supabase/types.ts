@@ -116,9 +116,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_setting: {
+        Args: { setting_key: string }
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_setting: {
+        Args: { setting_key: string }
+        Returns: string
+      }
+      upsert_setting: {
+        Args: { setting_key: string; setting_value: string }
+        Returns: undefined
       }
     }
     Enums: {
