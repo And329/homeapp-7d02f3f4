@@ -44,7 +44,7 @@ export const getProperties = async (): Promise<Property[]> => {
   }
 
   // Transform database data to match our Property interface
-  const transformedProperties = data.map((property: any) => ({
+  const transformedProperties: Property[] = data.map((property: any) => ({
     id: property.id.toString(),
     title: property.name || 'Untitled Property',
     price: property.price || 0,
@@ -58,7 +58,7 @@ export const getProperties = async (): Promise<Property[]> => {
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ],
-    type: property.is_rental ? 'rent' : 'sale',
+    type: property.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
     isHotDeal: false,
     description: property.description || 'No description available',
     amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
@@ -107,7 +107,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ],
-    type: data.is_rental ? 'rent' : 'sale',
+    type: data.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
     isHotDeal: false,
     description: data.description || 'No description available',
     amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
@@ -149,7 +149,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ],
-    type: property.is_rental ? 'rent' : 'sale',
+    type: property.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
     isHotDeal: false,
     description: property.description || 'No description available',
     amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
