@@ -46,7 +46,9 @@ export type Database = {
           id: number
           images: Json | null
           is_hot_deal: boolean | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           price: number | null
           title: string | null
           type: string | null
@@ -60,7 +62,9 @@ export type Database = {
           id?: number
           images?: Json | null
           is_hot_deal?: boolean | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           price?: number | null
           title?: string | null
           type?: string | null
@@ -74,7 +78,9 @@ export type Database = {
           id?: number
           images?: Json | null
           is_hot_deal?: boolean | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           price?: number | null
           title?: string | null
           type?: string | null

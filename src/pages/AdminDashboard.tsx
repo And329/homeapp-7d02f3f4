@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Eye, Map } from 'lucide-react';
@@ -22,8 +23,8 @@ interface Property {
   is_hot_deal: boolean;
   description: string;
   created_at: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const AdminDashboard = () => {
