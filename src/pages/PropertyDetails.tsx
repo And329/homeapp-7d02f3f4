@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
@@ -44,16 +45,50 @@ const PropertyDetails = () => {
     return `AED ${price.toLocaleString()}`;
   };
 
+  // Parse coordinates from property data
+  const getCoordinates = () => {
+    // Check if coordinates exist as separate fields
+    if (property.coordinates?.lat && property.coordinates?.lng) {
+      return {
+        lat: property.coordinates.lat,
+        lng: property.coordinates.lng
+      };
+    }
+    
+    // Check if latitude and longitude exist as separate fields
+    if (property.latitude && property.longitude) {
+      return {
+        lat: property.latitude,
+        lng: property.longitude
+      };
+    }
+    
+    // Try to parse from location string (format: "lat, lng")
+    if (property.location && property.location.includes(',')) {
+      const coords = property.location.split(',').map(coord => parseFloat(coord.trim()));
+      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+        return {
+          lat: coords[0],
+          lng: coords[1]
+        };
+      }
+    }
+    
+    return null;
+  };
+
+  const coords = getCoordinates();
+
   // Prepare property data for the map
-  const mapProperties = [{
+  const mapProperties = coords ? [{
     id: parseInt(property.id),
     title: property.title,
     location: property.location,
     price: property.price,
     type: property.type,
-    latitude: property.coordinates.lat,
-    longitude: property.coordinates.lng,
-  }];
+    latitude: coords.lat,
+    longitude: coords.lng,
+  }] : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,11 +218,21 @@ const PropertyDetails = () => {
             {/* Interactive Map */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Location</h2>
-              <PropertyMap
-                properties={mapProperties}
-                selectedPropertyId={parseInt(property.id)}
-                height="400px"
-              />
+              {coords ? (
+                <PropertyMap
+                  properties={mapProperties}
+                  selectedPropertyId={parseInt(property.id)}
+                  height="400px"
+                />
+              ) : (
+                <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 font-medium">Location coordinates not available</p>
+                    <p className="text-sm text-gray-500">{property.location}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
