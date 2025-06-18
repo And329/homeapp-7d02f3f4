@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -193,7 +192,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         }
       });
 
-      // Add property labels
+      // Add property labels with background
       map.current.addLayer({
         id: 'property-labels',
         type: 'symbol',
@@ -227,7 +226,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             '#dc2626',
             '#1e40af'
           ],
-          'text-halo-width': 1
+          'text-halo-width': 2,
+          'text-halo-blur': 1
         }
       });
 
