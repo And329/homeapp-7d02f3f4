@@ -11,40 +11,46 @@ export type Database = {
     Tables: {
       properties: {
         Row: {
-          area: number | null
+          amenities: Json | null
           bathrooms: number | null
           bedrooms: number | null
           created_at: string
           description: string | null
           id: number
-          is_rental: boolean | null
+          images: Json | null
+          is_hot_deal: boolean | null
           location: string | null
-          name: string | null
           price: number | null
+          title: string | null
+          type: string | null
         }
         Insert: {
-          area?: number | null
+          amenities?: Json | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
           description?: string | null
           id?: number
-          is_rental?: boolean | null
+          images?: Json | null
+          is_hot_deal?: boolean | null
           location?: string | null
-          name?: string | null
           price?: number | null
+          title?: string | null
+          type?: string | null
         }
         Update: {
-          area?: number | null
+          amenities?: Json | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
           description?: string | null
           id?: number
-          is_rental?: boolean | null
+          images?: Json | null
+          is_hot_deal?: boolean | null
           location?: string | null
-          name?: string | null
           price?: number | null
+          title?: string | null
+          type?: string | null
         }
         Relationships: []
       }

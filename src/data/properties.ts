@@ -44,29 +44,61 @@ export const getProperties = async (): Promise<Property[]> => {
   }
 
   // Transform database data to match our Property interface
-  const transformedProperties: Property[] = data.map((property: any) => ({
-    id: property.id.toString(),
-    title: property.name || 'Untitled Property',
-    price: property.price || 0,
-    location: property.location || 'Location not specified',
-    bedrooms: property.bedrooms || 0,
-    bathrooms: property.bathrooms || 0,
-    area: property.area || 0,
-    image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-    images: [
+  const transformedProperties: Property[] = data.map((property: any) => {
+    // Parse location coordinates if it's a JSON string
+    let coordinates = { lat: 25.0772, lng: 55.1395 }; // Default Dubai coordinates
+    if (property.location) {
+      try {
+        const locationData = typeof property.location === 'string' 
+          ? JSON.parse(property.location) 
+          : property.location;
+        if (locationData.lat && locationData.lng) {
+          coordinates = { lat: locationData.lat, lng: locationData.lng };
+        }
+      } catch (e) {
+        console.log('Could not parse location for property', property.id);
+      }
+    }
+
+    // Use actual images from database or fallback to placeholder
+    let images = [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
-    ],
-    type: property.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
-    isHotDeal: false,
-    description: property.description || 'No description available',
-    amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
-    coordinates: { lat: 25.0772, lng: 55.1395 },
-    propertyType: 'Apartment',
-    yearBuilt: 2020,
-    parking: 1
-  }));
+    ];
+    
+    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+      images = property.images;
+    }
+
+    // Parse amenities if it's an object
+    let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
+    if (property.amenities && typeof property.amenities === 'object') {
+      amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+    }
+
+    return {
+      id: property.id.toString(),
+      title: property.title || 'Untitled Property',
+      price: property.price || 0,
+      location: typeof property.location === 'string' && property.location.startsWith('{') 
+        ? `${coordinates.lat}, ${coordinates.lng}` 
+        : property.location || 'Location not specified',
+      bedrooms: property.bedrooms || 0,
+      bathrooms: property.bathrooms || 0,
+      area: property.area || 0,
+      image: images[0],
+      images: images,
+      type: property.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
+      isHotDeal: property.is_hot_deal || false,
+      description: property.description || 'No description available',
+      amenities: amenities,
+      coordinates: coordinates,
+      propertyType: 'Apartment',
+      yearBuilt: 2020,
+      parking: 1
+    };
+  });
 
   console.log('Transformed properties:', transformedProperties);
   return transformedProperties;
@@ -93,25 +125,55 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
 
   console.log('Found property:', data);
 
+  // Parse location coordinates
+  let coordinates = { lat: 25.0772, lng: 55.1395 };
+  if (data.location) {
+    try {
+      const locationData = typeof data.location === 'string' 
+        ? JSON.parse(data.location) 
+        : data.location;
+      if (locationData.lat && locationData.lng) {
+        coordinates = { lat: locationData.lat, lng: locationData.lng };
+      }
+    } catch (e) {
+      console.log('Could not parse location for property', data.id);
+    }
+  }
+
+  // Use actual images from database or fallback
+  let images = [
+    'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
+  ];
+  
+  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+    images = data.images;
+  }
+
+  // Parse amenities
+  let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
+  if (data.amenities && typeof data.amenities === 'object') {
+    amenities = Object.keys(data.amenities).filter(key => data.amenities[key]);
+  }
+
   return {
     id: data.id.toString(),
-    title: data.name || 'Untitled Property',
+    title: data.title || 'Untitled Property',
     price: data.price || 0,
-    location: data.location || 'Location not specified',
+    location: typeof data.location === 'string' && data.location.startsWith('{') 
+      ? `${coordinates.lat}, ${coordinates.lng}` 
+      : data.location || 'Location not specified',
     bedrooms: data.bedrooms || 0,
     bathrooms: data.bathrooms || 0,
     area: data.area || 0,
-    image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-    images: [
-      'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
-    ],
-    type: data.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
-    isHotDeal: false,
+    image: images[0],
+    images: images,
+    type: data.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
+    isHotDeal: data.is_hot_deal || false,
     description: data.description || 'No description available',
-    amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
-    coordinates: { lat: 25.0772, lng: 55.1395 },
+    amenities: amenities,
+    coordinates: coordinates,
     propertyType: 'Apartment',
     yearBuilt: 2020,
     parking: 1
@@ -124,7 +186,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
   const { data, error } = await supabase
     .from('properties')
     .select('*')
-    .eq('is_rental', type === 'rent');
+    .eq('type', type);
 
   if (error) {
     console.error('Error fetching properties by type:', error);
@@ -135,29 +197,61 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
     return [];
   }
 
-  return data.map((property: any) => ({
-    id: property.id.toString(),
-    title: property.name || 'Untitled Property',
-    price: property.price || 0,
-    location: property.location || 'Location not specified',
-    bedrooms: property.bedrooms || 0,
-    bathrooms: property.bathrooms || 0,
-    area: property.area || 0,
-    image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-    images: [
+  return data.map((property: any) => {
+    // Parse location coordinates
+    let coordinates = { lat: 25.0772, lng: 55.1395 };
+    if (property.location) {
+      try {
+        const locationData = typeof property.location === 'string' 
+          ? JSON.parse(property.location) 
+          : property.location;
+        if (locationData.lat && locationData.lng) {
+          coordinates = { lat: locationData.lat, lng: locationData.lng };
+        }
+      } catch (e) {
+        console.log('Could not parse location for property', property.id);
+      }
+    }
+
+    // Use actual images from database or fallback
+    let images = [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
-    ],
-    type: property.is_rental ? 'rent' : 'sale' as 'rent' | 'sale',
-    isHotDeal: false,
-    description: property.description || 'No description available',
-    amenities: ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'],
-    coordinates: { lat: 25.0772, lng: 55.1395 },
-    propertyType: 'Apartment',
-    yearBuilt: 2020,
-    parking: 1
-  }));
+    ];
+    
+    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+      images = property.images;
+    }
+
+    // Parse amenities
+    let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
+    if (property.amenities && typeof property.amenities === 'object') {
+      amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+    }
+
+    return {
+      id: property.id.toString(),
+      title: property.title || 'Untitled Property',
+      price: property.price || 0,
+      location: typeof property.location === 'string' && property.location.startsWith('{') 
+        ? `${coordinates.lat}, ${coordinates.lng}` 
+        : property.location || 'Location not specified',
+      bedrooms: property.bedrooms || 0,
+      bathrooms: property.bathrooms || 0,
+      area: property.area || 0,
+      image: images[0],
+      images: images,
+      type: property.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
+      isHotDeal: property.is_hot_deal || false,
+      description: property.description || 'No description available',
+      amenities: amenities,
+      coordinates: coordinates,
+      propertyType: 'Apartment',
+      yearBuilt: 2020,
+      parking: 1
+    };
+  });
 };
 
 export const getHotDeals = async (): Promise<Property[]> => {
