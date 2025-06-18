@@ -50,7 +50,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      setProfile(data);
+      if (data) {
+        setProfile({
+          id: data.id,
+          email: data.email,
+          full_name: data.full_name,
+          role: data.role as 'admin' | 'user'
+        });
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
