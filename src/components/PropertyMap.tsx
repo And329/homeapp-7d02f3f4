@@ -132,10 +132,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       }`;
       
       markerEl.innerHTML = `
-        <div class="bg-primary text-white px-3 py-2 rounded-lg shadow-lg text-sm font-semibold whitespace-nowrap">
-          AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}
+        <div class="bg-primary text-white px-2 py-1 rounded-md shadow-lg text-xs font-semibold whitespace-nowrap max-w-[120px] text-center">
+          AED ${property.price >= 1000000 ? (property.price / 1000000).toFixed(1) + 'M' : property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}
         </div>
-        <div class="absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary"></div>
+        <div class="absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-primary"></div>
       `;
 
       // Create marker
