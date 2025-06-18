@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import PropertyMap from '../components/PropertyMap';
 import { getPropertyById } from '../data/properties';
 
 const PropertyDetails = () => {
@@ -43,6 +43,17 @@ const PropertyDetails = () => {
     }
     return `AED ${price.toLocaleString()}`;
   };
+
+  // Prepare property data for the map
+  const mapProperties = [{
+    id: parseInt(property.id),
+    title: property.title,
+    location: property.location,
+    price: property.price,
+    type: property.type,
+    latitude: property.coordinates.lat,
+    longitude: property.coordinates.lng,
+  }];
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +158,7 @@ const PropertyDetails = () => {
             </div>
 
             {/* Property Info */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Property Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between py-2 border-b">
@@ -167,6 +178,16 @@ const PropertyDetails = () => {
                   <span className="font-semibold">{property.parking || 'N/A'}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Interactive Map */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Location</h2>
+              <PropertyMap
+                properties={mapProperties}
+                selectedPropertyId={parseInt(property.id)}
+                height="400px"
+              />
             </div>
           </div>
 
@@ -227,18 +248,6 @@ const PropertyDetails = () => {
                   </button>
                 </form>
               )}
-
-              {/* Map Placeholder */}
-              <div className="mt-6 pt-6 border-t">
-                <h4 className="font-semibold mb-3">Location</h4>
-                <div className="bg-gray-100 h-48 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
-                    <p className="text-gray-600">Interactive Map</p>
-                    <p className="text-sm text-gray-500">Coming Soon</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
