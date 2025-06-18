@@ -31,13 +31,34 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get token from localStorage
-    const savedToken = localStorage.getItem('mapbox_token');
-    setToken(savedToken);
+    // Get token from localStorage and listen for storage changes
+    const getToken = () => {
+      const savedToken = localStorage.getItem('mapbox_token');
+      console.log('PropertyMap: Retrieved token from localStorage:', savedToken ? 'Token exists' : 'No token');
+      setToken(savedToken);
+    };
+
+    getToken();
+
+    // Listen for storage changes in case token is updated
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'mapbox_token') {
+        console.log('PropertyMap: Token updated in localStorage');
+        getToken();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || !token) return;
+    if (!mapContainer.current || !token) {
+      console.log('PropertyMap: Missing requirements - container:', !!mapContainer.current, 'token:', !!token);
+      return;
+    }
+
+    console.log('PropertyMap: Initializing map with token');
 
     // Initialize map
     mapboxgl.accessToken = token;
@@ -64,7 +85,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   }, [token]);
 
   useEffect(() => {
-    if (!map.current || !properties) return;
+    if (!map.current || !properties) {
+      console.log('PropertyMap: Cannot add markers - map:', !!map.current, 'properties:', !!properties);
+      return;
+    }
+
+    console.log('PropertyMap: Adding markers for', properties.length, 'properties');
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -134,6 +160,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         map.current.fitBounds(bounds, { padding: 50 });
       }
     }
+
+    console.log('PropertyMap: Added', markers.current.length, 'markers');
   }, [properties, selectedPropertyId, onPropertySelect]);
 
   if (!token) {

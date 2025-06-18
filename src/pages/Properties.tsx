@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyCard from '../components/PropertyCard';
+import PropertyMap from '../components/PropertyMap';
 import { getProperties } from '../data/properties';
 
 const Properties = () => {
@@ -228,7 +229,7 @@ const Properties = () => {
         </div>
       </section>
 
-      {/* Properties Grid */}
+      {/* Properties Grid/Map */}
       <section className="py-8">
         <div className="container mx-auto px-4">
           {viewMode === 'grid' ? (
@@ -238,19 +239,18 @@ const Properties = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              <Map className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Interactive Map View</h3>
-              <p className="text-gray-600 mb-4">
-                Map integration coming soon! View all properties with interactive pins and detailed popups.
-              </p>
-              <button
-                onClick={() => setViewMode('grid')}
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Switch to Grid View
-              </button>
-            </div>
+            <PropertyMap
+              properties={filteredProperties.map(property => ({
+                id: parseInt(property.id),
+                title: property.title,
+                location: property.location,
+                price: property.price,
+                type: property.type,
+                latitude: property.coordinates.lat,
+                longitude: property.coordinates.lng,
+              }))}
+              height="600px"
+            />
           )}
 
           {filteredProperties.length === 0 && !isLoading && (
