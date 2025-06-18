@@ -18,6 +18,7 @@ export type Database = {
           featured_image: string | null
           id: string
           meta_description: string | null
+          pdf_attachment: string | null
           published_at: string | null
           slug: string
           status: string | null
@@ -33,6 +34,7 @@ export type Database = {
           featured_image?: string | null
           id?: string
           meta_description?: string | null
+          pdf_attachment?: string | null
           published_at?: string | null
           slug: string
           status?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           featured_image?: string | null
           id?: string
           meta_description?: string | null
+          pdf_attachment?: string | null
           published_at?: string | null
           slug?: string
           status?: string | null
@@ -147,6 +150,7 @@ export type Database = {
           featured_image: string | null
           id: string
           meta_description: string | null
+          pdf_attachment: string | null
           published_at: string | null
           slug: string
           status: string | null
@@ -162,6 +166,7 @@ export type Database = {
           featured_image?: string | null
           id?: string
           meta_description?: string | null
+          pdf_attachment?: string | null
           published_at?: string | null
           slug: string
           status?: string | null
@@ -177,6 +182,7 @@ export type Database = {
           featured_image?: string | null
           id?: string
           meta_description?: string | null
+          pdf_attachment?: string | null
           published_at?: string | null
           slug?: string
           status?: string | null

@@ -13,4 +13,5 @@ export interface BlogPost {
   updated_at: string | null;
   tags: string[] | null;
   meta_description: string | null;
+  pdf_attachment: string | null;
 }

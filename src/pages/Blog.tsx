@@ -5,19 +5,7 @@ import Footer from '../components/Footer';
 import ExpandableBlogCard from '../components/ExpandableBlogCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  content: string;
-  featured_image: string | null;
-  published_at: string | null;
-  tags: string[] | null;
-  author_id: string;
-  pdf_attachment: string | null;
-}
+import { BlogPost } from '@/types/blog';
 
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);

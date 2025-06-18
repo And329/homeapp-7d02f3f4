@@ -3,17 +3,7 @@ import React, { useState } from 'react';
 import { Calendar, User, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-interface BlogPost {
-  id: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  featured_image: string | null;
-  published_at: string | null;
-  tags: string[] | null;
-  pdf_attachment: string | null;
-}
+import { BlogPost } from '@/types/blog';
 
 interface ExpandableBlogCardProps {
   post: BlogPost;
