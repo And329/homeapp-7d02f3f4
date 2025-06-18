@@ -13,6 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import PropertyAmenities from '@/components/PropertyAmenities';
+import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 
 const propertyRequestSchema = z.object({
   title: z.string().min(1, 'Property title is required'),
@@ -26,13 +29,15 @@ const propertyRequestSchema = z.object({
   contactName: z.string().min(1, 'Contact name is required'),
   contactEmail: z.string().email('Valid email is required'),
   contactPhone: z.string().optional(),
-  amenities: z.string().optional(),
 });
 
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
 
 const ListProperty = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [propertyImages, setPropertyImages] = useState<string[]>([]);
+  const [propertyVideos, setPropertyVideos] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -50,7 +55,6 @@ const ListProperty = () => {
       contactName: '',
       contactEmail: user?.email || '',
       contactPhone: '',
-      amenities: '',
     },
   });
 
@@ -67,11 +71,6 @@ const ListProperty = () => {
     setIsSubmitting(true);
 
     try {
-      // Parse amenities string into array
-      const amenitiesArray = data.amenities 
-        ? data.amenities.split(',').map(a => a.trim()).filter(a => a.length > 0)
-        : [];
-
       const { error } = await supabase
         .from('property_requests')
         .insert({
@@ -84,7 +83,9 @@ const ListProperty = () => {
           bathrooms: parseInt(data.bathrooms),
           type: data.type,
           property_type: data.propertyType,
-          amenities: amenitiesArray,
+          amenities: selectedAmenities,
+          images: propertyImages,
+          videos: propertyVideos,
           contact_name: data.contactName,
           contact_email: data.contactEmail,
           contact_phone: data.contactPhone || null,
@@ -98,6 +99,9 @@ const ListProperty = () => {
       });
 
       form.reset();
+      setSelectedAmenities([]);
+      setPropertyImages([]);
+      setPropertyVideos([]);
     } catch (error) {
       console.error('Error submitting property request:', error);
       toast({
@@ -282,21 +286,22 @@ const ListProperty = () => {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="amenities"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amenities</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., Swimming Pool, Gym, Parking, Security (separate with commas)" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                {/* Amenities */}
+                <PropertyAmenities
+                  selectedAmenities={selectedAmenities}
+                  onAmenitiesChange={setSelectedAmenities}
+                />
+
+                {/* Images */}
+                <PropertyImageUpload
+                  images={propertyImages}
+                  onImagesChange={setPropertyImages}
+                />
+
+                {/* Videos */}
+                <PropertyVideoUpload
+                  videos={propertyVideos}
+                  onVideosChange={setPropertyVideos}
                 />
 
                 {/* Contact Information */}

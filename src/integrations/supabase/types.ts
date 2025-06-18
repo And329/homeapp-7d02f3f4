@@ -309,6 +309,7 @@ export type Database = {
           type: string
           updated_at: string | null
           user_id: string | null
+          videos: string[] | null
         }
         Insert: {
           amenities?: Json | null
@@ -333,6 +334,7 @@ export type Database = {
           type: string
           updated_at?: string | null
           user_id?: string | null
+          videos?: string[] | null
         }
         Update: {
           amenities?: Json | null
@@ -357,6 +359,7 @@ export type Database = {
           type?: string
           updated_at?: string | null
           user_id?: string | null
+          videos?: string[] | null
         }
         Relationships: []
       }

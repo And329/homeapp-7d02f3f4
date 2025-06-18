@@ -1,77 +1,177 @@
-
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Filter, Map, List, Search } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, MapPin, Bed, Bath, DollarSign, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyCard from '../components/PropertyCard';
 import PropertyMap from '../components/PropertyMap';
-import { getProperties } from '../data/properties';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { transformProperty } from '@/utils/propertyTransform';
+
+interface Property {
+  id: number;
+  title: string;
+  price: number;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  type: string;
+  images: string[];
+  amenities: string[];
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  is_hot_deal?: boolean;
+}
+
+interface PropertyRequest {
+  id: string;
+  title: string;
+  price: number;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  type: string;
+  description: string;
+  status: string;
+  images: string[];
+  videos: string[];
+  amenities: string[];
+  user_id: string;
+  created_at: string;
+}
 
 const Properties = () => {
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [userRequests, setUserRequests] = useState<PropertyRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    type: 'all' as 'all' | 'rent' | 'sale',
-    priceMin: '',
-    priceMax: '',
-    bedrooms: 'all' as 'all' | '0' | '1' | '2' | '3' | '4' | '5+',
+    type: '',
+    minPrice: '',
+    maxPrice: '',
+    bedrooms: '',
     location: '',
-    propertyType: 'all' as 'all' | 'Apartment' | 'Villa' | 'Townhouse' | 'Penthouse' | 'Studio'
   });
+  const [showFilters, setShowFilters] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [showUserListings, setShowUserListings] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const { data: properties = [], isLoading, error } = useQuery({
-    queryKey: ['properties'],
-    queryFn: getProperties,
-  });
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*');
 
-  const filteredProperties = useMemo(() => {
-    return properties.filter(property => {
-      if (filters.type !== 'all' && property.type !== filters.type) return false;
-      if (filters.priceMin && property.price < parseInt(filters.priceMin)) return false;
-      if (filters.priceMax && property.price > parseInt(filters.priceMax)) return false;
-      if (filters.bedrooms !== 'all') {
-        if (filters.bedrooms === '5+' && property.bedrooms < 5) return false;
-        if (filters.bedrooms !== '5+' && property.bedrooms !== parseInt(filters.bedrooms)) return false;
+        if (error) throw error;
+
+        const transformedProperties = data?.map(transformProperty) || [];
+        setProperties(transformedProperties);
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load properties.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-      if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
-      if (filters.propertyType !== 'all' && property.propertyType !== filters.propertyType) return false;
-      return true;
-    });
-  }, [properties, filters]);
+    };
+
+    fetchProperties();
+  }, [toast]);
+
+  useEffect(() => {
+    if (user && showUserListings) {
+      fetchUserRequests();
+    }
+  }, [user, showUserListings]);
+
+  const fetchUserRequests = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('property_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching user requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your listings.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deletePropertyRequest = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('property_requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('user_id', user?.id); // Ensure user can only delete their own requests
+
+      if (error) throw error;
+
+      setUserRequests(prev => prev.filter(req => req.id !== requestId));
+      toast({
+        title: "Listing deleted",
+        description: "Your property listing has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting property request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete listing. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredProperties = properties.filter((property) => {
+    const matchesType = !filters.type || property.type === filters.type;
+    const matchesMinPrice = !filters.minPrice || property.price >= parseInt(filters.minPrice);
+    const matchesMaxPrice = !filters.maxPrice || property.price <= parseInt(filters.maxPrice);
+    const matchesBedrooms = !filters.bedrooms || property.bedrooms === parseInt(filters.bedrooms);
+    const matchesLocation = !filters.location || 
+      property.location.toLowerCase().includes(filters.location.toLowerCase());
+
+    return matchesType && matchesMinPrice && matchesMaxPrice && matchesBedrooms && matchesLocation;
+  });
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading properties...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const clearFilters = () => {
+    setFilters({
+      type: '',
+      minPrice: '',
+      maxPrice: '',
+      bedrooms: '',
+      location: '',
+    });
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <p className="text-red-600">Error loading properties. Please try again later.</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const getStatusBadge = (status: string) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,186 +180,202 @@ const Properties = () => {
       {/* Header */}
       <section className="uae-gradient text-white py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">UAE Properties</h1>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Properties</h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Discover your perfect property from our extensive collection across the UAE
+              Discover the perfect property in Dubai's most sought-after locations.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* Quick Filter Tabs */}
-      <section className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+          
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link 
-              to="/properties" 
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filters.type === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => handleFilterChange('type', 'all')}
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              variant="outline"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
-              All Properties
-            </Link>
-            <Link 
-              to="/properties/rent" 
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filters.type === 'rent' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => handleFilterChange('type', 'rent')}
+              <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              Filters
+            </Button>
+            <Button
+              onClick={() => setShowMap(!showMap)}
+              variant="outline"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
-              For Rent
-            </Link>
-            <Link 
-              to="/properties/sale" 
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filters.type === 'sale' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => handleFilterChange('type', 'sale')}
-            >
-              For Sale
-            </Link>
+              <MapPin className="h-4 w-4 mr-2" />
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </Button>
+            {user && (
+              <Button
+                onClick={() => setShowUserListings(!showUserListings)}
+                variant="outline"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                {showUserListings ? 'Hide My Listings' : 'My Listings'}
+              </Button>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Filters and Search */}
-      <section className="bg-gray-50 py-6">
-        <div className="container mx-auto px-4">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input
-                  type="text"
-                  placeholder="Search location..."
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                <select
-                  value={filters.propertyType}
-                  onChange={(e) => handleFilterChange('propertyType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="all">All Types</option>
-                  <option value="Apartment">Apartment</option>
-                  <option value="Villa">Villa</option>
-                  <option value="Townhouse">Townhouse</option>
-                  <option value="Penthouse">Penthouse</option>
-                  <option value="Studio">Studio</option>
-                </select>
-              </div>
+      {/* Filters */}
+      {showFilters && (
+        <section className="bg-white border-b py-6">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <select
+                value={filters.type}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              >
+                <option value="">All Types</option>
+                <option value="rent">For Rent</option>
+                <option value="sale">For Sale</option>
+              </select>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
-                <select
-                  value={filters.bedrooms}
-                  onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="all">Any</option>
-                  <option value="0">Studio</option>
-                  <option value="1">1 Bedroom</option>
-                  <option value="2">2 Bedrooms</option>
-                  <option value="3">3 Bedrooms</option>
-                  <option value="4">4 Bedrooms</option>
-                  <option value="5+">5+ Bedrooms</option>
-                </select>
-              </div>
+              <input
+                type="number"
+                placeholder="Min Price"
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min Price (AED)</label>
-                <input
-                  type="number"
-                  placeholder="Min price"
-                  value={filters.priceMin}
-                  onChange={(e) => handleFilterChange('priceMin', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+              <input
+                type="number"
+                placeholder="Max Price"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (AED)</label>
-                <input
-                  type="number"
-                  placeholder="Max price"
-                  value={filters.priceMax}
-                  onChange={(e) => handleFilterChange('priceMax', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+              <select
+                value={filters.bedrooms}
+                onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Any Bedrooms</option>
+                <option value="1">1 Bedroom</option>
+                <option value="2">2 Bedrooms</option>
+                <option value="3">3 Bedrooms</option>
+                <option value="4">4+ Bedrooms</option>
+              </select>
 
-              <div className="flex items-end">
-                <button className="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  <Search className="h-4 w-4 mx-auto" />
-                </button>
-              </div>
-            </div>
+              <input
+                type="text"
+                placeholder="Location"
+                value={filters.location}
+                onChange={(e) => handleFilterChange('location', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              />
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                {filteredProperties.length} properties found
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === 'grid' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === 'map' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Map className="h-4 w-4" />
-                </button>
-              </div>
+              <Button onClick={clearFilters} variant="outline">
+                Clear All
+              </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Properties Grid/Map */}
-      <section className="py-8">
+      {/* Map */}
+      {showMap && (
+        <section className="h-96">
+          <PropertyMap properties={filteredProperties} />
+        </section>
+      )}
+
+      {/* User Listings */}
+      {showUserListings && user && (
+        <section className="py-8 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold mb-6">My Property Listings</h2>
+            {userRequests.length === 0 ? (
+              <p className="text-gray-600">You haven't submitted any property listings yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userRequests.map((request) => (
+                  <div key={request.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    {request.images.length > 0 && (
+                      <img
+                        src={request.images[0]}
+                        alt={request.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-lg">{request.title}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-600 mb-2">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{request.location}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center text-primary font-bold">
+                          <DollarSign className="h-4 w-4" />
+                          <span>{request.price.toLocaleString()} AED</span>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <Bed className="h-4 w-4 mr-1" />
+                            <span>{request.bedrooms}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Bath className="h-4 w-4 mr-1" />
+                            <span>{request.bathrooms}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </span>
+                        <Button
+                          onClick={() => deletePropertyRequest(request.id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Properties Grid */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          {viewMode === 'grid' ? (
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {filteredProperties.length} Properties Found
+            </h2>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredProperties.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No properties found</h3>
+              <p className="text-gray-500">Try adjusting your filters to see more results.</p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProperties.map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
-            </div>
-          ) : (
-            <PropertyMap
-              properties={filteredProperties.map(property => ({
-                id: parseInt(property.id),
-                title: property.title,
-                location: property.location,
-                price: property.price,
-                type: property.type,
-                latitude: property.coordinates.lat,
-                longitude: property.coordinates.lng,
-              }))}
-              height="600px"
-            />
-          )}
-
-          {filteredProperties.length === 0 && !isLoading && (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <Search className="h-16 w-16 mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No properties found</h3>
-              <p className="text-gray-500">Try adjusting your search filters</p>
             </div>
           )}
         </div>

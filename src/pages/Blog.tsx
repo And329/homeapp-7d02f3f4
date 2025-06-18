@@ -1,85 +1,68 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface BlogPost {
   id: string;
   title: string;
-  excerpt: string;
-  image: string;
-  author: string;
-  date: string;
-  category: string;
-  readTime: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  featured_image: string | null;
+  published_at: string | null;
+  tags: string[] | null;
+  author_id: string;
 }
 
-const blogPosts: BlogPost[] = [
-  {
-    id: '1',
-    title: 'UAE Real Estate Market Trends 2024: What Investors Need to Know',
-    excerpt: 'Discover the latest trends shaping the UAE real estate market and how they impact investment opportunities across Dubai, Abu Dhabi, and other emirates.',
-    image: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=800&h=400&fit=crop',
-    author: 'Sarah Al-Mahmoud',
-    date: '2024-01-15',
-    category: 'Market Analysis',
-    readTime: '5 min read'
-  },
-  {
-    id: '2',
-    title: 'First-Time Home Buyer\'s Guide to Dubai Real Estate',
-    excerpt: 'Everything you need to know before purchasing your first property in Dubai, from financing options to legal requirements and best neighborhoods.',
-    image: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=400&fit=crop',
-    author: 'Ahmed Hassan',
-    date: '2024-01-10',
-    category: 'Buying Guide',
-    readTime: '8 min read'
-  },
-  {
-    id: '3',
-    title: 'Top 10 Luxury Communities in Dubai for 2024',
-    excerpt: 'Explore the most exclusive residential communities in Dubai, featuring world-class amenities, stunning architecture, and prime locations.',
-    image: 'https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=800&h=400&fit=crop',
-    author: 'Maria Rodriguez',
-    date: '2024-01-08',
-    category: 'Luxury Living',
-    readTime: '6 min read'
-  },
-  {
-    id: '4',
-    title: 'Rental Market Insights: Finding the Perfect Property in Abu Dhabi',
-    excerpt: 'Navigate the Abu Dhabi rental market with confidence. Learn about pricing trends, popular areas, and tips for securing your ideal rental property.',
-    image: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800&h=400&fit=crop',
-    author: 'Omar Al-Rashid',
-    date: '2024-01-05',
-    category: 'Rental Guide',
-    readTime: '7 min read'
-  },
-  {
-    id: '5',
-    title: 'Investment Opportunities in UAE\'s Emerging Real Estate Markets',
-    excerpt: 'Discover promising investment opportunities in up-and-coming areas across the UAE, from emerging neighborhoods to new development projects.',
-    image: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=400&fit=crop',
-    author: 'Lisa Chen',
-    date: '2024-01-03',
-    category: 'Investment',
-    readTime: '9 min read'
-  },
-  {
-    id: '6',
-    title: 'Smart Home Technology in UAE Real Estate: The Future is Now',
-    excerpt: 'How smart home technology is revolutionizing UAE properties and what homebuyers should look for in modern connected homes.',
-    image: 'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=400&fit=crop',
-    author: 'John Smith',
-    date: '2024-01-01',
-    category: 'Technology',
-    readTime: '5 min read'
-  }
-];
-
 const Blog = () => {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('admin_blog_posts')
+          .select('*')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false });
+
+        if (error) throw error;
+        setPosts(data || []);
+      } catch (error) {
+        console.error('Error fetching blog posts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load blog posts.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [toast]);
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Draft';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const truncateContent = (content: string, maxLength: number = 200) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -90,118 +73,74 @@ const Blog = () => {
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Real Estate Blog</h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Expert insights, market analysis, and helpful guides for UAE real estate
+              Stay updated with the latest insights, trends, and news from Dubai's real estate market.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Featured Post */}
-      <section className="py-12">
+      {/* Blog Posts */}
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              <div className="relative">
-                <img 
-                  src={blogPosts[0].image} 
-                  alt={blogPosts[0].title}
-                  className="w-full h-64 lg:h-full object-cover"
-                />
-                <div className="absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  Featured
-                </div>
-              </div>
-              <div className="p-8 flex flex-col justify-center">
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                  <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full">
-                    {blogPosts[0].category}
-                  </span>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>{new Date(blogPosts[0].date).toLocaleDateString()}</span>
-                  </div>
-                  <span>{blogPosts[0].readTime}</span>
-                </div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-                  {blogPosts[0].title}
-                </h2>
-                <p className="text-gray-700 mb-6 leading-relaxed">
-                  {blogPosts[0].excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5" />
-                    </div>
-                    <span className="font-medium">{blogPosts[0].author}</span>
-                  </div>
-                  <Link 
-                    to={`/blog/${blogPosts[0].id}`}
-                    className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                  >
-                    Read More
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </div>
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Blog Posts Grid */}
-      <section className="pb-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.slice(1).map((post) => (
-              <article key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="relative">
-                  <img 
-                    src={post.image} 
-                    alt={post.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-white bg-opacity-90 text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
-                    {post.category}
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                    <div className="flex items-center">
+          ) : posts.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No blog posts yet</h3>
+              <p className="text-gray-500">Check back soon for exciting real estate content!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {posts.map((post) => (
+                <article key={post.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  {post.featured_image && (
+                    <img
+                      src={post.featured_image}
+                      alt={post.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
+                  
+                  <div className="p-6">
+                    <div className="flex items-center text-sm text-gray-500 mb-3">
                       <Calendar className="h-4 w-4 mr-1" />
-                      <span>{new Date(post.date).toLocaleDateString()}</span>
+                      <span>{formatDate(post.published_at)}</span>
+                      <User className="h-4 w-4 ml-4 mr-1" />
+                      <span>Admin</span>
                     </div>
-                    <span>{post.readTime}</span>
-                  </div>
-                  
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-gray-700 mb-4 text-sm leading-relaxed line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">
-                        <User className="h-4 w-4" />
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {post.excerpt || truncateContent(post.content)}
+                    </p>
+                    
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.slice(0, 3).map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
                       </div>
-                      <span className="text-sm font-medium">{post.author}</span>
-                    </div>
-                    <Link 
-                      to={`/blog/${post.id}`}
-                      className="text-primary hover:text-blue-700 transition-colors flex items-center text-sm font-medium"
-                    >
+                    )}
+                    
+                    <button className="text-primary font-semibold flex items-center hover:text-primary/80 transition-colors">
                       Read More
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Link>
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </button>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
