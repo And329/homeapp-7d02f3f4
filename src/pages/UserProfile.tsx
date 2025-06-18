@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Clock, CheckCircle, XCircle, Send, Plus, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
+import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
 
 interface AdminReply {
   id: string;
@@ -49,6 +49,7 @@ const UserProfile = () => {
   const [newMessage, setNewMessage] = useState('');
   const [newChatSubject, setNewChatSubject] = useState('');
   const [showNewChatForm, setShowNewChatForm] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's property requests
   const { data: userRequests = [], isLoading: requestsLoading } = useQuery({
@@ -191,6 +192,13 @@ const UserProfile = () => {
     },
   });
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { icon: Clock, className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
@@ -271,23 +279,17 @@ const UserProfile = () => {
                       const replies = adminReplies.filter(reply => reply.request_id === request.id);
                       
                       return (
-                        <div key={request.id} className="border rounded-lg p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <h3 className="font-semibold text-lg">{request.title}</h3>
-                              <p className="text-gray-600">{request.location}</p>
-                              <p className="text-primary font-bold">AED {request.price.toLocaleString()}</p>
-                            </div>
-                            <div className="text-right">
-                              {getStatusBadge(request.status)}
-                              <p className="text-sm text-gray-500 mt-1">
-                                {new Date(request.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-
+                        <div key={request.id}>
+                          <ExpandablePropertyCard 
+                            property={{
+                              ...request,
+                              id: request.id
+                            }}
+                            showActions={false}
+                          />
+                          
                           {request.status === 'rejected' && replies.length > 0 && (
-                            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                            <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
                               <h4 className="font-medium text-red-800 mb-2">Admin Reply:</h4>
                               {replies.map((reply) => (
                                 <div key={reply.id} className="text-red-700 text-sm">
@@ -297,12 +299,6 @@ const UserProfile = () => {
                                   </p>
                                 </div>
                               ))}
-                            </div>
-                          )}
-
-                          {request.description && (
-                            <div className="mt-3">
-                              <p className="text-gray-700 text-sm">{request.description}</p>
                             </div>
                           )}
                         </div>
@@ -389,7 +385,7 @@ const UserProfile = () => {
 
               {/* Chat Messages */}
               <div className="lg:col-span-2">
-                <Card className="h-96">
+                <Card className="h-96 flex flex-col">
                   <CardHeader>
                     <CardTitle>
                       {selectedChat ? 
@@ -398,7 +394,7 @@ const UserProfile = () => {
                       }
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="flex flex-col h-full">
+                  <CardContent className="flex flex-col flex-1 min-h-0">
                     {selectedChat ? (
                       <>
                         <div className="flex-1 overflow-y-auto space-y-3 mb-4">
@@ -421,6 +417,7 @@ const UserProfile = () => {
                               </div>
                             </div>
                           ))}
+                          <div ref={messagesEndRef} />
                         </div>
                         <div className="flex gap-2">
                           <Textarea
