@@ -1,173 +1,191 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Building, FileText, Newspaper, Plus, Settings, LogOut, User } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
-  const { user, profile, signOut, loading } = useAuth();
-
-  const navItems = [
-    { name: 'Home', path: '/', icon: Home },
-    { name: 'For Rent', path: '/properties/rent', icon: Building },
-    { name: 'For Sale', path: '/properties/sale', icon: Building },
-    { name: 'Blog', path: '/blog', icon: FileText },
-    { name: 'News', path: '/news', icon: Newspaper },
-    { name: 'List Your Property', path: '/list-property', icon: Plus },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
-    setIsMenuOpen(false);
+    navigate('/');
   };
+
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/properties', label: 'Properties' },
+    { href: '/blog', label: 'Blog' },
+    { href: '/news', label: 'News' },
+    { href: '/contact', label: 'Contact' },
+  ];
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-primary text-white p-2 rounded-lg">
-              <Home className="h-6 w-6" />
-            </div>
-            <span className="text-2xl font-bold text-primary">HomeApp</span>
+          <Link to="/" className="text-2xl font-bold text-primary">
+            Dubai Properties
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {navLinks.map((link) => (
               <Link
-                key={item.name}
-                to={item.path}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-md transition-colors ${
-                  isActive(item.path)
-                    ? 'text-primary bg-accent'
-                    : 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                }`}
+                key={link.href}
+                to={link.href}
+                className="text-gray-700 hover:text-primary transition-colors"
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
+                {link.label}
               </Link>
             ))}
-
-            {/* Auth Section */}
-            {loading ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            ) : user ? (
+            
+            {user ? (
               <div className="flex items-center space-x-4">
-                {profile?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-md transition-colors ${
-                      isActive('/admin')
-                        ? 'text-primary bg-accent'
-                        : 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                    }`}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Admin</span>
-                  </Link>
-                )}
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{profile?.full_name || user.email}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-1"
+                <Link
+                  to="/list-property"
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                </Button>
+                  List Property
+                </Link>
+                
+                <div className="relative group">
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>{profile?.full_name || user.email}</span>
+                  </Button>
+                  
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <Link
+                      to="/profile"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      My Profile
+                    </Link>
+                    
+                    {profile?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
-              <Link to="/auth">
-                <Button variant="default" size="sm">
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/auth"
+                  className="text-gray-700 hover:text-primary transition-colors"
+                >
                   Sign In
-                </Button>
-              </Link>
+                </Link>
+                <Link
+                  to="/list-property"
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  List Property
+                </Link>
+              </div>
             )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-primary p-2"
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-700 hover:text-primary"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 animate-fade-in-up">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center space-x-2 px-3 py-3 rounded-md transition-colors ${
-                  isActive(item.path)
-                    ? 'text-primary bg-accent'
-                    : 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
-
-            {/* Mobile Auth Section */}
-            {user ? (
-              <>
-                {profile?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center space-x-2 px-3 py-3 rounded-md transition-colors ${
-                      isActive('/admin')
-                        ? 'text-primary bg-accent'
-                        : 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                    }`}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Admin</span>
-                  </Link>
-                )}
-                <div className="px-3 py-3 border-t border-gray-200 mt-2">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <User className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">{profile?.full_name || user.email}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSignOut}
-                    className="flex items-center space-x-1 w-full justify-start"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign Out</span>
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="px-3 py-3 border-t border-gray-200 mt-2">
-                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="default" size="sm" className="w-full">
-                    Sign In
-                  </Button>
+        {isOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {link.label}
                 </Link>
-              </div>
-            )}
+              ))}
+              
+              {user ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/list-property"
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    List Property
+                  </Link>
+                  {profile?.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/auth"
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/list-property"
+                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    List Property
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

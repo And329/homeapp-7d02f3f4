@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock, FileText, Newspaper } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock, FileText, Newspaper, MessageCircle, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import PropertyForm from '@/components/PropertyForm';
 import PropertyRequestApprovalForm from '@/components/PropertyRequestApprovalForm';
@@ -33,6 +35,24 @@ interface Property {
   images: string[] | null;
 }
 
+interface Chat {
+  id: string;
+  user_id: string;
+  admin_id: string | null;
+  subject: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ChatMessage {
+  id: string;
+  chat_id: string;
+  sender_id: string;
+  message: string;
+  created_at: string;
+}
+
 const AdminDashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
@@ -41,7 +61,11 @@ const AdminDashboard = () => {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [approvingRequest, setApprovingRequest] = useState<PropertyRequest | null>(null);
   const [showMap, setShowMap] = useState(false);
-  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content'>('properties');
+  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats'>('properties');
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [replyingToRequest, setReplyingToRequest] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -96,6 +120,36 @@ const AdminDashboard = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: chats = [] } = useQuery({
+    queryKey: ['admin-chats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_chats')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Chat[];
+    },
+  });
+
+  const { data: chatMessages = [] } = useQuery({
+    queryKey: ['chat-messages', selectedChat],
+    queryFn: async () => {
+      if (!selectedChat) return [];
+      
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('chat_id', selectedChat)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data as ChatMessage[];
+    },
+    enabled: !!selectedChat,
   });
 
   const deleteMutation = useMutation({
@@ -192,6 +246,71 @@ const AdminDashboard = () => {
     },
   });
 
+  const sendReplyMutation = useMutation({
+    mutationFn: async ({ requestId, message }: { requestId: string; message: string }) => {
+      const { error } = await supabase
+        .from('property_request_replies')
+        .insert([{
+          request_id: requestId,
+          admin_id: profile!.id,
+          message
+        }]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      setReplyingToRequest(null);
+      setReplyMessage('');
+      toast({
+        title: "Reply sent",
+        description: "Your reply has been sent to the user.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send reply. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendChatMessageMutation = useMutation({
+    mutationFn: async ({ chatId, message }: { chatId: string; message: string }) => {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([{
+          chat_id: chatId,
+          sender_id: profile!.id,
+          message
+        }]);
+
+      if (error) throw error;
+
+      // Update chat's updated_at timestamp and assign admin
+      await supabase
+        .from('admin_chats')
+        .update({ 
+          updated_at: new Date().toISOString(),
+          admin_id: profile!.id
+        })
+        .eq('id', chatId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', selectedChat] });
+      queryClient.invalidateQueries({ queryKey: ['admin-chats'] });
+      setNewMessage('');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEdit = (property: Property) => {
     setEditingProperty(property);
     setIsFormOpen(true);
@@ -216,6 +335,16 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to reject this property request?')) {
       rejectRequestMutation.mutate(requestId);
     }
+  };
+
+  const handleSendReply = (requestId: string) => {
+    if (!replyMessage.trim()) return;
+    sendReplyMutation.mutate({ requestId, message: replyMessage.trim() });
+  };
+
+  const handleSendChatMessage = () => {
+    if (!selectedChat || !newMessage.trim()) return;
+    sendChatMessageMutation.mutate({ chatId: selectedChat, message: newMessage.trim() });
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -260,7 +389,7 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage properties, requests, and content</p>
+          <p className="text-gray-600">Manage properties, requests, content, and user communications</p>
         </div>
 
         <MapboxTokenSettings />
@@ -298,6 +427,16 @@ const AdminDashboard = () => {
                 }`}
               >
                 Content Management
+              </button>
+              <button
+                onClick={() => setActiveTab('chats')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'chats'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                User Chats ({chats.filter(c => c.status === 'open').length} open)
               </button>
             </nav>
           </div>
@@ -426,6 +565,57 @@ const AdminDashboard = () => {
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
                         </Button>
+                        <Button
+                          onClick={() => setReplyingToRequest(request.id)}
+                          variant="outline"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Reply
+                        </Button>
+                      </div>
+                    )}
+
+                    {request.status === 'rejected' && (
+                      <div className="pt-4 border-t">
+                        <Button
+                          onClick={() => setReplyingToRequest(request.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Add Reply
+                        </Button>
+                      </div>
+                    )}
+
+                    {replyingToRequest === request.id && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium mb-2">Send Reply to User</h4>
+                        <Textarea
+                          placeholder="Type your reply here..."
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          rows={3}
+                        />
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            onClick={() => handleSendReply(request.id)}
+                            disabled={!replyMessage.trim() || sendReplyMutation.isPending}
+                            size="sm"
+                          >
+                            Send Reply
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setReplyingToRequest(null);
+                              setReplyMessage('');
+                            }}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -531,6 +721,120 @@ const AdminDashboard = () => {
               </div>
             </div>
           </>
+        )}
+
+        {activeTab === 'chats' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Chat List */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Chats</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {chats.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No user chats yet.</p>
+                  ) : (
+                    chats.map((chat) => (
+                      <div
+                        key={chat.id}
+                        onClick={() => setSelectedChat(chat.id)}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedChat === chat.id ? 'bg-primary/10 border-primary' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-medium text-sm">{chat.subject}</h4>
+                          <div className="flex items-center gap-2">
+                            {chat.admin_id && (
+                              <span className="text-xs text-green-600">Assigned</span>
+                            )}
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              chat.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {chat.status}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {new Date(chat.updated_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="lg:col-span-2">
+              <Card className="h-96">
+                <CardHeader>
+                  <CardTitle>
+                    {selectedChat ? 
+                      chats.find(c => c.id === selectedChat)?.subject || 'Chat' : 
+                      'Select a chat'
+                    }
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col h-full">
+                  {selectedChat ? (
+                    <>
+                      <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                        {chatMessages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.sender_id === profile.id ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
+                                message.sender_id === profile.id
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}
+                            >
+                              <p className="text-sm">{message.message}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {new Date(message.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Textarea
+                          placeholder="Type your message..."
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          rows={2}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendChatMessage();
+                            }
+                          }}
+                        />
+                        <Button
+                          onClick={handleSendChatMessage}
+                          disabled={!newMessage.trim() || sendChatMessageMutation.isPending}
+                          size="sm"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>Select a chat to start messaging</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
       </div>
 
