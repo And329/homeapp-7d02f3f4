@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock, FileText, Newspaper, MessageCircle, Send } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock, FileText, Newspaper, MessageCircle, Send, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -63,6 +63,7 @@ const AdminDashboard = () => {
   const [showMap, setShowMap] = useState(false);
   const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats'>('properties');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [replyingToRequest, setReplyingToRequest] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
@@ -150,6 +151,23 @@ const AdminDashboard = () => {
       return data as ChatMessage[];
     },
     enabled: !!selectedChat,
+  });
+
+  const { data: selectedUserRequests = [] } = useQuery({
+    queryKey: ['selected-user-requests', selectedChatUserId],
+    queryFn: async () => {
+      if (!selectedChatUserId) return [];
+      
+      const { data, error } = await supabase
+        .from('property_requests')
+        .select('*')
+        .eq('user_id', selectedChatUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as PropertyRequest[];
+    },
+    enabled: !!selectedChatUserId,
   });
 
   const deleteMutation = useMutation({
@@ -345,6 +363,11 @@ const AdminDashboard = () => {
   const handleSendChatMessage = () => {
     if (!selectedChat || !newMessage.trim()) return;
     sendChatMessageMutation.mutate({ chatId: selectedChat, message: newMessage.trim() });
+  };
+
+  const handleChatSelect = (chat: Chat) => {
+    setSelectedChat(chat.id);
+    setSelectedChatUserId(chat.user_id);
   };
 
   const formatPrice = (price: number, type: string) => {
@@ -570,7 +593,7 @@ const AdminDashboard = () => {
                           variant="outline"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          Reply
+                          Send Reply
                         </Button>
                       </div>
                     )}
@@ -724,7 +747,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'chats' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Chat List */}
             <div className="lg:col-span-1">
               <Card>
@@ -738,7 +761,7 @@ const AdminDashboard = () => {
                     chats.map((chat) => (
                       <div
                         key={chat.id}
-                        onClick={() => setSelectedChat(chat.id)}
+                        onClick={() => handleChatSelect(chat)}
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                           selectedChat === chat.id ? 'bg-primary/10 border-primary' : 'hover:bg-gray-50'
                         }`}
@@ -830,6 +853,48 @@ const AdminDashboard = () => {
                         <p>Select a chat to start messaging</p>
                       </div>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* User Profile & Listings */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    User Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedChatUserId ? (
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Property Listings ({selectedUserRequests.length})</h4>
+                      {selectedUserRequests.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No property requests from this user.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedUserRequests.map((request) => (
+                            <div key={request.id} className="p-3 border rounded-lg">
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="font-medium text-sm">{request.title}</h5>
+                                {getStatusBadge(request.status)}
+                              </div>
+                              <p className="text-xs text-gray-600">{request.location}</p>
+                              <p className="text-xs text-primary font-bold">
+                                {formatPrice(request.price, request.type)}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(request.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Select a chat to view user profile</p>
                   )}
                 </CardContent>
               </Card>
