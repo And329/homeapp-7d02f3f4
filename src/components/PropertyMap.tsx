@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -67,6 +68,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     p.longitude >= -180 && p.longitude <= 180
   );
 
+  console.log('PropertyMap: Valid properties for map display:', validProperties);
+
   // Initialize Mapbox map and add embedded markers
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
@@ -106,26 +109,31 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     map.current.on('load', () => {
       if (!map.current) return;
 
+      console.log('PropertyMap: Map loaded, adding', validProperties.length, 'properties to source');
+
       // Add property data as a source
       map.current.addSource('properties', {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features: validProperties.map(property => ({
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [property.longitude!, property.latitude!]
-            },
-            properties: {
-              id: property.id,
-              title: property.title,
-              location: property.location,
-              price: property.price,
-              type: property.type,
-              isSelected: selectedPropertyId === property.id
-            }
-          }))
+          features: validProperties.map(property => {
+            console.log('PropertyMap: Adding property to map:', property.id, property.title, property.price);
+            return {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [property.longitude!, property.latitude!]
+              },
+              properties: {
+                id: property.id,
+                title: property.title,
+                location: property.location,
+                price: property.price,
+                type: property.type,
+                isSelected: selectedPropertyId === property.id
+              }
+            };
+          })
         },
         cluster: true,
         clusterMaxZoom: 14,
@@ -192,7 +200,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         }
       });
 
-      // Add property labels with background
+      // Add property labels with enhanced background
       map.current.addLayer({
         id: 'property-labels',
         type: 'symbol',
@@ -202,7 +210,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           'text-field': [
             'format',
             'AED ',
-            {},
+            { 'font-scale': 0.9 },
             ['case',
               ['>=', ['get', 'price'], 1000000],
               ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
@@ -210,13 +218,15 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
               ['number-format', ['get', 'price'], {}]
             ],
-            {},
+            { 'font-scale': 1.1 },
             ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
           ],
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 10,
-          'text-offset': [0, -2],
-          'text-anchor': 'bottom'
+          'text-size': 11,
+          'text-offset': [0, -2.2],
+          'text-anchor': 'bottom',
+          'text-allow-overlap': false,
+          'text-ignore-placement': false
         },
         paint: {
           'text-color': '#ffffff',
@@ -226,8 +236,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             '#dc2626',
             '#1e40af'
           ],
-          'text-halo-width': 2,
-          'text-halo-blur': 1
+          'text-halo-width': 3,
+          'text-halo-blur': 1,
+          'text-opacity': 1
         }
       });
 
@@ -339,6 +350,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   // Update selected property styling
   useEffect(() => {
     if (!map.current || !map.current.getSource('properties')) return;
+
+    console.log('PropertyMap: Updating property data with', validProperties.length, 'properties');
 
     const updatedData = {
       type: 'FeatureCollection' as const,
