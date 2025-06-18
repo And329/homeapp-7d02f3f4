@@ -315,7 +315,10 @@ const Properties = () => {
       {/* Map */}
       {showMap && (
         <section className="h-96">
-          <PropertyMap properties={mapProperties} />
+          <PropertyMap 
+            properties={mapProperties} 
+            enableNavigation={true}
+          />
         </section>
       )}
 

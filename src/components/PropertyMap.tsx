@@ -1,5 +1,5 @@
-
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin } from 'lucide-react';
@@ -18,19 +18,22 @@ interface PropertyMapProps {
   selectedPropertyId?: number;
   onPropertySelect?: (propertyId: number) => void;
   height?: string;
+  enableNavigation?: boolean;
 }
 
 const PropertyMap: React.FC<PropertyMapProps> = ({
   properties,
   selectedPropertyId,
   onPropertySelect,
-  height = '400px'
+  height = '400px',
+  enableNavigation = false
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const navigate = useNavigate();
 
   // Load Mapbox token from Supabase Edge Function
   useEffect(() => {
@@ -95,8 +98,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       zoom: defaultZoom,
     });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // Add navigation controls if enabled
+    if (enableNavigation) {
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    }
 
     // Fit to bounds if we have properties
     map.current.on('load', () => {
@@ -112,7 +117,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       map.current?.remove();
       map.current = null;
     };
-  }, [mapboxToken, validProperties.length]);
+  }, [mapboxToken, validProperties.length, enableNavigation]);
 
   // Add markers for properties
   useEffect(() => {
@@ -139,11 +144,13 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       const markerEl = document.createElement('div');
       markerEl.className = `cursor-pointer transition-all duration-200 hover:scale-105 ${
         selectedPropertyId === property.id ? 'scale-110 z-10' : ''
-      }`;
+      } ${enableNavigation ? 'hover:brightness-110' : ''}`;
       
       markerEl.innerHTML = `
         <div class="relative">
-          <div class="bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap border border-blue-700">
+          <div class="bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm font-medium whitespace-nowrap border border-blue-700 ${
+            enableNavigation ? 'hover:bg-blue-700 hover:border-blue-800' : ''
+          }">
             AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}
           </div>
           <div class="absolute left-1/2 top-full transform -translate-x-1/2 -mt-[1px] w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-blue-600"></div>
@@ -157,13 +164,25 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
       // Add click event
       markerEl.addEventListener('click', () => {
-        if (onPropertySelect) {
+        if (enableNavigation) {
+          // Navigate to property details page
+          navigate(`/properties/${property.id}`);
+        } else if (onPropertySelect) {
           onPropertySelect(property.id);
         }
       });
 
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+      // Create popup with enhanced content for navigation-enabled maps
+      const popupContent = enableNavigation ? `
+        <div class="p-3">
+          <h3 class="font-semibold text-sm mb-1">${property.title}</h3>
+          <p class="text-xs text-gray-600 mb-2">${property.location}</p>
+          <p class="text-sm font-bold text-blue-600 mb-2">
+            AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
+          </p>
+          <p class="text-xs text-gray-500 italic">Click to view details</p>
+        </div>
+      ` : `
         <div class="p-3">
           <h3 class="font-semibold text-sm mb-1">${property.title}</h3>
           <p class="text-xs text-gray-600 mb-2">${property.location}</p>
@@ -171,12 +190,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
         </div>
-      `);
+      `;
+
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
 
       marker.setPopup(popup);
       markersRef.current.push(marker);
     });
-  }, [validProperties, selectedPropertyId, onPropertySelect, mapboxToken]);
+  }, [validProperties, selectedPropertyId, onPropertySelect, mapboxToken, enableNavigation, navigate]);
 
   if (isLoading) {
     return (
@@ -248,6 +269,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       
       <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded text-xs text-gray-600 shadow z-10">
         {validProperties.length} properties displayed
+        {enableNavigation && (
+          <span className="block text-blue-600">Click markers to view details</span>
+        )}
       </div>
     </div>
   );
