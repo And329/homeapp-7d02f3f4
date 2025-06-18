@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Map, CheckCircle, XCircle, Clock, FileText, Newspaper } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -9,6 +8,10 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyForm from '@/components/PropertyForm';
+import PropertyRequestApprovalForm from '@/components/PropertyRequestApprovalForm';
+import BlogPostForm from '@/components/BlogPostForm';
+import NewsArticleForm from '@/components/NewsArticleForm';
+import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
 import MapboxTokenSettings from '@/components/MapboxTokenSettings';
 import PropertyMap from '@/components/PropertyMap';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -26,13 +29,19 @@ interface Property {
   created_at: string;
   latitude: number | null;
   longitude: number | null;
+  amenities: string[] | null;
+  images: string[] | null;
 }
 
 const AdminDashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
+  const [isNewsFormOpen, setIsNewsFormOpen] = useState(false);
+  const [isApprovalFormOpen, setIsApprovalFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [approvingRequest, setApprovingRequest] = useState<PropertyRequest | null>(null);
   const [showMap, setShowMap] = useState(false);
-  const [activeTab, setActiveTab] = useState<'properties' | 'requests'>('properties');
+  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content'>('properties');
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,6 +72,32 @@ const AdminDashboard = () => {
     },
   });
 
+  const { data: blogPosts = [], isLoading: blogLoading } = useQuery({
+    queryKey: ['admin-blog-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: newsArticles = [], isLoading: newsLoading } = useQuery({
+    queryKey: ['admin-news-articles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_news_articles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
@@ -88,18 +123,36 @@ const AdminDashboard = () => {
     },
   });
 
-  const approveRequestMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      const { data, error } = await supabase.rpc('approve_property_request', {
-        request_id: requestId
-      });
+  const approveRequestWithDetailsMutation = useMutation({
+    mutationFn: async ({ requestId, updatedData }: { requestId: string, updatedData: any }) => {
+      // First, insert the property with the updated data
+      const { data: propertyData, error: propertyError } = await supabase
+        .from('properties')
+        .insert([updatedData])
+        .select()
+        .single();
 
-      if (error) throw error;
-      return data;
+      if (propertyError) throw propertyError;
+
+      // Then update the request status
+      const { error: requestError } = await supabase
+        .from('property_requests')
+        .update({ 
+          status: 'approved', 
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (requestError) throw requestError;
+
+      return propertyData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      setIsApprovalFormOpen(false);
+      setApprovingRequest(null);
       toast({
         title: "Request Approved",
         description: "The property request has been approved and added to listings.",
@@ -150,10 +203,13 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleApproveRequest = (requestId: string) => {
-    if (window.confirm('Are you sure you want to approve this property request?')) {
-      approveRequestMutation.mutate(requestId);
-    }
+  const handleApproveRequest = (request: PropertyRequest) => {
+    setApprovingRequest(request);
+    setIsApprovalFormOpen(true);
+  };
+
+  const handleApprovalSubmit = (requestId: string, updatedData: any) => {
+    approveRequestWithDetailsMutation.mutate({ requestId, updatedData });
   };
 
   const handleRejectRequest = (requestId: string) => {
@@ -204,7 +260,7 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage properties and listing requests</p>
+          <p className="text-gray-600">Manage properties, requests, and content</p>
         </div>
 
         <MapboxTokenSettings />
@@ -232,6 +288,16 @@ const AdminDashboard = () => {
                 }`}
               >
                 Property Requests ({propertyRequests.filter(r => r.status === 'pending').length} pending)
+              </button>
+              <button
+                onClick={() => setActiveTab('content')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'content'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Content Management
               </button>
             </nav>
           </div>
@@ -284,103 +350,16 @@ const AdminDashboard = () => {
                 <p className="mt-4 text-gray-600">Loading properties...</p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Property
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Location
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Bedrooms
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {properties.map((property) => (
-                        <tr key={property.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {property.title}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {property.bathrooms} baths
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {property.location}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatPrice(property.price, property.type)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              property.type === 'rent' 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              For {property.type === 'rent' ? 'Rent' : 'Sale'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {property.bedrooms}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {property.is_hot_deal && (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                Hot Deal
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(`/property/${property.id}`, '_blank')}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(property)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(property.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="grid gap-4">
+                {properties.map((property) => (
+                  <ExpandablePropertyCard
+                    key={property.id}
+                    property={property}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    showActions={true}
+                  />
+                ))}
 
                 {properties.length === 0 && (
                   <div className="text-center py-8">
@@ -400,102 +379,57 @@ const AdminDashboard = () => {
                 <p className="mt-4 text-gray-600">Loading property requests...</p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Property
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Contact
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Submitted
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {propertyRequests.map((request) => (
-                        <tr key={request.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {request.title}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {request.bedrooms}BR • {request.bathrooms}BA
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {request.location}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900">{request.contact_name}</div>
-                            <div className="text-sm text-gray-500">{request.contact_email}</div>
-                            {request.contact_phone && (
-                              <div className="text-sm text-gray-500">{request.contact_phone}</div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatPrice(request.price, request.type)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              request.type === 'rent' 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              For {request.type === 'rent' ? 'Rent' : 'Sale'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(request.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {request.status === 'pending' && (
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleApproveRequest(request.id)}
-                                  className="text-green-600 hover:text-green-800"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRejectRequest(request.id)}
-                                  className="text-red-600 hover:text-red-800"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="grid gap-4">
+                {propertyRequests.map((request) => (
+                  <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
+                        <p className="text-gray-600">{request.location}</p>
+                        <p className="text-primary font-bold">{formatPrice(request.price, request.type)}</p>
+                        <div className="mt-2">
+                          {getStatusBadge(request.status)}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">
+                          Submitted: {new Date(request.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Contact: {request.contact_name} ({request.contact_email})
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {request.description && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                        <p className="text-gray-700 text-sm">{request.description}</p>
+                      </div>
+                    )}
+
+                    {request.status === 'pending' && (
+                      <div className="flex items-center gap-2 pt-4 border-t">
+                        <Button
+                          onClick={() => handleApproveRequest(request)}
+                          className="text-green-600 hover:text-green-800"
+                          variant="outline"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve & Edit
+                        </Button>
+                        <Button
+                          onClick={() => handleRejectRequest(request.id)}
+                          className="text-red-600 hover:text-red-800"
+                          variant="outline"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
 
                 {propertyRequests.length === 0 && (
                   <div className="text-center py-8">
@@ -506,8 +440,101 @@ const AdminDashboard = () => {
             )}
           </>
         )}
+
+        {activeTab === 'content' && (
+          <>
+            <div className="mb-6 flex items-center gap-4">
+              <Button
+                onClick={() => setIsBlogFormOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Create Blog Post
+              </Button>
+              <Button
+                onClick={() => setIsNewsFormOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Newspaper className="h-4 w-4" />
+                Create News Article
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Blog Posts ({blogPosts.length})</h3>
+                {blogLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {blogPosts.map((post: any) => (
+                      <div key={post.id} className="bg-white p-4 rounded-lg shadow border">
+                        <h4 className="font-medium text-gray-900">{post.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{post.excerpt || 'No excerpt'}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            post.status === 'published' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {post.status}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {blogPosts.length === 0 && (
+                      <p className="text-gray-500 text-sm">No blog posts created yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">News Articles ({newsArticles.length})</h3>
+                {newsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {newsArticles.map((article: any) => (
+                      <div key={article.id} className="bg-white p-4 rounded-lg shadow border">
+                        <h4 className="font-medium text-gray-900">{article.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{article.excerpt || 'No excerpt'}</p>
+                        {article.source && (
+                          <p className="text-xs text-gray-500 mt-1">Source: {article.source}</p>
+                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            article.status === 'published' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {article.status}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(article.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {newsArticles.length === 0 && (
+                      <p className="text-gray-500 text-sm">No news articles created yet.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
+      {/* Modals */}
       {isFormOpen && (
         <PropertyForm
           property={editingProperty}
@@ -519,6 +546,37 @@ const AdminDashboard = () => {
             queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
             setIsFormOpen(false);
             setEditingProperty(null);
+          }}
+        />
+      )}
+
+      {isApprovalFormOpen && approvingRequest && (
+        <PropertyRequestApprovalForm
+          request={approvingRequest}
+          onClose={() => {
+            setIsApprovalFormOpen(false);
+            setApprovingRequest(null);
+          }}
+          onApprove={handleApprovalSubmit}
+        />
+      )}
+
+      {isBlogFormOpen && (
+        <BlogPostForm
+          onClose={() => setIsBlogFormOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+            setIsBlogFormOpen(false);
+          }}
+        />
+      )}
+
+      {isNewsFormOpen && (
+        <NewsArticleForm
+          onClose={() => setIsNewsFormOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-news-articles'] });
+            setIsNewsFormOpen(false);
           }}
         />
       )}
