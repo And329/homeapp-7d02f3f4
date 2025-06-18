@@ -108,7 +108,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         </div>
       </div>
     );
-  };
+  }
 
   return (
     <div className="relative">
