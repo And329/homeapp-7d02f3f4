@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BlogPostFormProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const generateSlug = (title: string) => {
     return title
@@ -32,6 +34,16 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a blog post.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const { supabase } = await import('@/integrations/supabase/client');
@@ -46,11 +58,12 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         meta_description: formData.meta_description || null,
         published_at: formData.status === 'published' ? new Date().toISOString() : null,
+        author_id: user.id,
       };
 
       const { error } = await supabase
         .from('admin_blog_posts')
-        .insert([dataToSubmit]);
+        .insert(dataToSubmit);
 
       if (error) throw error;
 

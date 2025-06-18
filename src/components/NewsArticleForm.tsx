@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NewsArticleFormProps {
   onClose: () => void;
@@ -22,6 +23,7 @@ const NewsArticleForm: React.FC<NewsArticleFormProps> = ({ onClose, onSuccess })
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const generateSlug = (title: string) => {
     return title
@@ -33,6 +35,16 @@ const NewsArticleForm: React.FC<NewsArticleFormProps> = ({ onClose, onSuccess })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a news article.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const { supabase } = await import('@/integrations/supabase/client');
@@ -48,11 +60,12 @@ const NewsArticleForm: React.FC<NewsArticleFormProps> = ({ onClose, onSuccess })
         meta_description: formData.meta_description || null,
         source: formData.source || null,
         published_at: formData.status === 'published' ? new Date().toISOString() : null,
+        author_id: user.id,
       };
 
       const { error } = await supabase
         .from('admin_news_articles')
-        .insert([dataToSubmit]);
+        .insert(dataToSubmit);
 
       if (error) throw error;
 
