@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, MapPin, Bed, Bath, DollarSign, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,12 +75,58 @@ const Properties = () => {
       if (error) throw error;
       
       // Transform the data to match PropertyRequest interface
-      const transformedRequests: PropertyRequest[] = (data || []).map(request => ({
-        ...request,
-        images: Array.isArray(request.images) ? request.images : [],
-        videos: Array.isArray(request.videos) ? request.videos : [],
-        amenities: Array.isArray(request.amenities) ? request.amenities : null,
-      }));
+      const transformedRequests: PropertyRequest[] = (data || []).map(request => {
+        // Safely parse images
+        let images: string[] = [];
+        if (request.images) {
+          if (Array.isArray(request.images)) {
+            images = request.images.filter((img): img is string => typeof img === 'string');
+          }
+        }
+
+        // Safely parse videos
+        let videos: string[] = [];
+        if (request.videos && Array.isArray(request.videos)) {
+          videos = request.videos.filter((video): video is string => typeof video === 'string');
+        }
+
+        // Safely parse amenities
+        let amenities: string[] | null = null;
+        if (request.amenities) {
+          if (Array.isArray(request.amenities)) {
+            amenities = request.amenities.filter((amenity): amenity is string => typeof amenity === 'string');
+          }
+        }
+
+        // Ensure type is properly typed
+        const type = (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent';
+
+        return {
+          id: request.id,
+          user_id: request.user_id || '',
+          title: request.title,
+          description: request.description,
+          price: request.price,
+          location: request.location,
+          latitude: request.latitude,
+          longitude: request.longitude,
+          bedrooms: request.bedrooms,
+          bathrooms: request.bathrooms,
+          type: type as 'rent' | 'sale',
+          property_type: request.property_type,
+          amenities: amenities,
+          images: images,
+          videos: videos,
+          contact_name: request.contact_name,
+          contact_email: request.contact_email,
+          contact_phone: request.contact_phone,
+          status: request.status || 'pending',
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+          approved_by: request.approved_by,
+          approved_at: request.approved_at,
+        } as PropertyRequest;
+      });
       
       setUserRequests(transformedRequests);
     } catch (error) {
