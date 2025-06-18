@@ -19,18 +19,15 @@ const MapboxTokenSettings: React.FC = () => {
   const loadToken = async () => {
     try {
       const { data, error } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'mapbox_token')
-        .single();
+        .rpc('get_setting', { setting_key: 'mapbox_token' });
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading token:', error);
         return;
       }
 
-      if (data?.value) {
-        setToken(data.value);
+      if (data) {
+        setToken(data);
       }
     } catch (error) {
       console.error('Error loading token:', error);
@@ -50,10 +47,9 @@ const MapboxTokenSettings: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('settings')
-        .upsert({
-          key: 'mapbox_token',
-          value: token.trim(),
+        .rpc('upsert_setting', { 
+          setting_key: 'mapbox_token', 
+          setting_value: token.trim() 
         });
 
       if (error) throw error;
@@ -79,9 +75,7 @@ const MapboxTokenSettings: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('settings')
-        .delete()
-        .eq('key', 'mapbox_token');
+        .rpc('delete_setting', { setting_key: 'mapbox_token' });
 
       if (error) throw error;
 

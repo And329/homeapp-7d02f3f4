@@ -37,20 +37,17 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       try {
         console.log('PropertyMap: Loading token from Supabase');
         const { data, error } = await supabase
-          .from('settings')
-          .select('value')
-          .eq('key', 'mapbox_token')
-          .single();
+          .rpc('get_setting', { setting_key: 'mapbox_token' });
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('PropertyMap: Error loading token:', error);
           setIsLoading(false);
           return;
         }
 
-        if (data?.value) {
+        if (data) {
           console.log('PropertyMap: Token loaded successfully');
-          setToken(data.value);
+          setToken(data);
         } else {
           console.log('PropertyMap: No token found');
         }
