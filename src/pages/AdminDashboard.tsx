@@ -13,7 +13,7 @@ import PropertyForm from '@/components/PropertyForm';
 import PropertyRequestApprovalForm from '@/components/PropertyRequestApprovalForm';
 import BlogPostForm from '@/components/BlogPostForm';
 import NewsArticleForm from '@/components/NewsArticleForm';
-import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
+import PropertyCard from '@/components/PropertyCard';
 import MapboxTokenSettings from '@/components/MapboxTokenSettings';
 import PropertyMap from '@/components/PropertyMap';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -265,8 +265,61 @@ const AdminDashboard = () => {
   });
 
   const sendReplyMutation = useMutation({
-    mutationFn: async ({ requestId, message }: { requestId: string; message: string }) => {
-      const { error } = await supabase
+    mutationFn: async ({ requestId, message, userId }: { requestId: string; message: string; userId: string }) => {
+      // First, create or find existing chat for this user about this property request
+      const propertyRequest = propertyRequests.find(req => req.id === requestId);
+      const chatSubject = `Property Request: ${propertyRequest?.title || 'Property'}`;
+      
+      // Check if there's already a chat for this user with this subject
+      let chatId;
+      const { data: existingChats } = await supabase
+        .from('admin_chats')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('subject', chatSubject)
+        .limit(1);
+
+      if (existingChats && existingChats.length > 0) {
+        chatId = existingChats[0].id;
+      } else {
+        // Create new chat
+        const { data: newChat, error: chatError } = await supabase
+          .from('admin_chats')
+          .insert([{
+            user_id: userId,
+            subject: chatSubject,
+            admin_id: profile!.id,
+            status: 'open'
+          }])
+          .select()
+          .single();
+
+        if (chatError) throw chatError;
+        chatId = newChat.id;
+      }
+
+      // Send the reply message in the chat
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert([{
+          chat_id: chatId,
+          sender_id: profile!.id,
+          message
+        }]);
+
+      if (messageError) throw messageError;
+
+      // Update chat timestamp
+      await supabase
+        .from('admin_chats')
+        .update({ 
+          updated_at: new Date().toISOString(),
+          admin_id: profile!.id
+        })
+        .eq('id', chatId);
+
+      // Also insert into property_request_replies for backward compatibility
+      const { error: replyError } = await supabase
         .from('property_request_replies')
         .insert([{
           request_id: requestId,
@@ -274,15 +327,18 @@ const AdminDashboard = () => {
           message
         }]);
 
-      if (error) throw error;
+      if (replyError) throw replyError;
+
+      return chatId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-chats'] });
       setReplyingToRequest(null);
       setReplyMessage('');
       toast({
         title: "Reply sent",
-        description: "Your reply has been sent to the user.",
+        description: "Your reply has been sent to the user and a chat has been created.",
       });
     },
     onError: () => {
@@ -357,7 +413,20 @@ const AdminDashboard = () => {
 
   const handleSendReply = (requestId: string) => {
     if (!replyMessage.trim()) return;
-    sendReplyMutation.mutate({ requestId, message: replyMessage.trim() });
+    const request = propertyRequests.find(req => req.id === requestId);
+    if (!request?.user_id) {
+      toast({
+        title: "Error",
+        description: "Cannot find user for this request.",
+        variant: "destructive",
+      });
+      return;
+    }
+    sendReplyMutation.mutate({ 
+      requestId, 
+      message: replyMessage.trim(),
+      userId: request.user_id
+    });
   };
 
   const handleSendChatMessage = () => {
@@ -513,15 +582,49 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="grid gap-4">
-                {properties.map((property) => (
-                  <ExpandablePropertyCard
-                    key={property.id}
-                    property={property}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    showActions={true}
-                  />
-                ))}
+                {properties.map((property) => {
+                  // Transform property to match PropertyCard interface
+                  const transformedProperty = {
+                    id: property.id.toString(),
+                    title: property.title || 'Untitled Property',
+                    price: property.price || 0,
+                    location: property.location || 'Unknown Location',
+                    bedrooms: property.bedrooms || 0,
+                    bathrooms: property.bathrooms || 0,
+                    area: 1000, // Default area since it's not in the properties table
+                    image: Array.isArray(property.images) && property.images.length > 0 
+                      ? property.images[0] 
+                      : '/placeholder.svg',
+                    type: (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent' as 'rent' | 'sale',
+                    isHotDeal: property.is_hot_deal || false,
+                    description: property.description || '',
+                    amenities: Array.isArray(property.amenities) ? property.amenities : []
+                  };
+
+                  return (
+                    <div key={property.id} className="relative">
+                      <PropertyCard property={transformedProperty} />
+                      <div className="absolute top-4 right-4 z-10 flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(property)}
+                          className="bg-white/90 backdrop-blur-sm"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(property.id)}
+                          className="text-red-600 hover:text-red-800 bg-white/90 backdrop-blur-sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {properties.length === 0 && (
                   <div className="text-center py-8">
