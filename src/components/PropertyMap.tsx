@@ -33,7 +33,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const navigate = useNavigate();
 
   // Load Mapbox token from Supabase Edge Function
@@ -69,7 +68,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     p.longitude >= -180 && p.longitude <= 180
   );
 
-  // Initialize Mapbox map
+  // Initialize Mapbox map and add embedded markers
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
@@ -98,8 +97,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       center: bounds ? bounds.getCenter() : defaultCenter,
       zoom: defaultZoom,
       antialias: true,
-      preserveDrawingBuffer: false,
-      renderWorldCopies: false,
     });
 
     // Add navigation controls if enabled
@@ -107,10 +104,226 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
     }
 
-    // Fit to bounds if we have properties
     map.current.on('load', () => {
+      if (!map.current) return;
+
+      // Add property data as a source
+      map.current.addSource('properties', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: validProperties.map(property => ({
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [property.longitude!, property.latitude!]
+            },
+            properties: {
+              id: property.id,
+              title: property.title,
+              location: property.location,
+              price: property.price,
+              type: property.type,
+              isSelected: selectedPropertyId === property.id
+            }
+          }))
+        },
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50
+      });
+
+      // Add cluster layer
+      map.current.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'properties',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#51bbd6',
+            100,
+            '#f1f075',
+            750,
+            '#f28cb1'
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            20,
+            100,
+            30,
+            750,
+            40
+          ]
+        }
+      });
+
+      // Add cluster count layer
+      map.current.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'properties',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12
+        }
+      });
+
+      // Add individual property markers
+      map.current.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'properties',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': [
+            'case',
+            ['get', 'isSelected'],
+            '#dc2626',
+            '#1e40af'
+          ],
+          'circle-radius': 8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff'
+        }
+      });
+
+      // Add property labels
+      map.current.addLayer({
+        id: 'property-labels',
+        type: 'symbol',
+        source: 'properties',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'text-field': [
+            'format',
+            'AED ',
+            {},
+            ['case',
+              ['>=', ['get', 'price'], 1000000],
+              ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
+              ['>=', ['get', 'price'], 1000],
+              ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
+              ['number-format', ['get', 'price'], {}]
+            ],
+            {},
+            ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
+          ],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 10,
+          'text-offset': [0, -2],
+          'text-anchor': 'bottom'
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': [
+            'case',
+            ['get', 'isSelected'],
+            '#dc2626',
+            '#1e40af'
+          ],
+          'text-halo-width': 1
+        }
+      });
+
+      // Click handlers for clusters
+      map.current.on('click', 'clusters', (e) => {
+        if (!map.current) return;
+        const features = map.current.queryRenderedFeatures(e.point, {
+          layers: ['clusters']
+        });
+
+        const clusterId = features[0].properties!.cluster_id;
+        (map.current.getSource('properties') as mapboxgl.GeoJSONSource).getClusterExpansionZoom(
+          clusterId,
+          (err, zoom) => {
+            if (err || !map.current) return;
+
+            map.current.easeTo({
+              center: (features[0].geometry as any).coordinates,
+              zoom: zoom
+            });
+          }
+        );
+      });
+
+      // Click handlers for individual properties
+      map.current.on('click', 'unclustered-point', (e) => {
+        if (!e.features || !e.features[0]) return;
+        
+        const properties = e.features[0].properties!;
+        const propertyId = properties.id;
+        
+        console.log('PropertyMap: Marker clicked for property', propertyId);
+        
+        if (enableNavigation) {
+          navigate(`/properties/${propertyId}`);
+        } else if (onPropertySelect) {
+          onPropertySelect(propertyId);
+        }
+      });
+
+      // Add popup on hover
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+
+      map.current.on('mouseenter', 'unclustered-point', (e) => {
+        if (!map.current || !e.features || !e.features[0]) return;
+        
+        map.current.getCanvas().style.cursor = 'pointer';
+        
+        const properties = e.features[0].properties!;
+        const coordinates = (e.features[0].geometry as any).coordinates.slice();
+        
+        const popupContent = enableNavigation ? `
+          <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
+            <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
+            <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
+            <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 8px 0;">
+              AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
+            </p>
+            <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
+          </div>
+        ` : `
+          <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
+            <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
+            <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
+            <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0;">
+              AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
+            </p>
+          </div>
+        `;
+
+        popup.setLngLat(coordinates).setHTML(popupContent).addTo(map.current);
+      });
+
+      map.current.on('mouseleave', 'unclustered-point', () => {
+        if (!map.current) return;
+        map.current.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+
+      // Change cursor on hover
+      map.current.on('mouseenter', 'clusters', () => {
+        if (!map.current) return;
+        map.current.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.current.on('mouseleave', 'clusters', () => {
+        if (!map.current) return;
+        map.current.getCanvas().style.cursor = '';
+      });
+
+      // Fit to bounds if we have properties
       if (bounds && validProperties.length > 1) {
-        map.current!.fitBounds(bounds, {
+        map.current.fitBounds(bounds, {
           padding: 50,
           maxZoom: 15
         });
@@ -121,153 +334,33 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       map.current?.remove();
       map.current = null;
     };
-  }, [mapboxToken, validProperties.length, enableNavigation]);
+  }, [mapboxToken, validProperties, selectedPropertyId, onPropertySelect, enableNavigation, navigate]);
 
-  // Add markers for properties
+  // Update selected property styling
   useEffect(() => {
-    if (!map.current || !mapboxToken) return;
+    if (!map.current || !map.current.getSource('properties')) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    validProperties.forEach((property) => {
-      if (!property.latitude || !property.longitude) return;
-
-      // Format price for display
-      const formatPrice = (price: number) => {
-        if (price >= 1000000) {
-          return `${(price / 1000000).toFixed(1)}M`;
-        } else if (price >= 1000) {
-          return `${(price / 1000).toFixed(0)}K`;
+    const updatedData = {
+      type: 'FeatureCollection' as const,
+      features: validProperties.map(property => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [property.longitude!, property.latitude!]
+        },
+        properties: {
+          id: property.id,
+          title: property.title,
+          location: property.location,
+          price: property.price,
+          type: property.type,
+          isSelected: selectedPropertyId === property.id
         }
-        return price.toLocaleString();
-      };
+      }))
+    };
 
-      // Create marker element with proper styling
-      const markerEl = document.createElement('div');
-      markerEl.style.cssText = `
-        width: auto;
-        height: auto;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        position: relative;
-        transform-origin: center bottom;
-        transition: transform 0.2s ease;
-      `;
-      
-      // Create price badge
-      const priceDiv = document.createElement('div');
-      priceDiv.style.cssText = `
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        color: white;
-        padding: 6px 10px;
-        border-radius: 16px;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-        border: 2px solid white;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-        margin-bottom: 2px;
-        z-index: 1;
-      `;
-      priceDiv.textContent = `AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}`;
-
-      // Create arrow
-      const arrow = document.createElement('div');
-      arrow.style.cssText = `
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-top: 10px solid #1e40af;
-        margin-top: -2px;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-      `;
-
-      markerEl.appendChild(priceDiv);
-      markerEl.appendChild(arrow);
-
-      // Add selection state
-      if (selectedPropertyId === property.id) {
-        markerEl.style.transform = 'scale(1.15)';
-        markerEl.style.zIndex = '1000';
-        priceDiv.style.background = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
-        arrow.style.borderTopColor = '#dc2626';
-      }
-
-      // Add hover effects
-      markerEl.addEventListener('mouseenter', () => {
-        if (selectedPropertyId !== property.id) {
-          markerEl.style.transform = 'scale(1.1)';
-        }
-        priceDiv.style.transform = 'translateY(-2px)';
-      });
-
-      markerEl.addEventListener('mouseleave', () => {
-        if (selectedPropertyId !== property.id) {
-          markerEl.style.transform = 'scale(1)';
-        }
-        priceDiv.style.transform = 'translateY(0)';
-      });
-
-      // Add click event
-      markerEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('PropertyMap: Marker clicked for property', property.id);
-        
-        if (enableNavigation) {
-          navigate(`/properties/${property.id}`);
-        } else if (onPropertySelect) {
-          onPropertySelect(property.id);
-        }
-      });
-
-      // Create marker with proper coordinates
-      const marker = new mapboxgl.Marker({
-        element: markerEl,
-        anchor: 'bottom'
-      })
-        .setLngLat([property.longitude, property.latitude])
-        .addTo(map.current!);
-
-      // Create popup
-      const popupContent = enableNavigation ? `
-        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
-          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
-          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 8px 0;">
-            AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
-          </p>
-          <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
-        </div>
-      ` : `
-        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
-          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
-          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0;">
-            AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
-          </p>
-        </div>
-      `;
-
-      const popup = new mapboxgl.Popup({ 
-        offset: 20,
-        closeButton: false,
-        className: 'custom-popup',
-        maxWidth: '300px'
-      }).setHTML(popupContent);
-
-      marker.setPopup(popup);
-      markersRef.current.push(marker);
-    });
-
-    console.log('PropertyMap: Added', markersRef.current.length, 'markers to map');
-  }, [validProperties, selectedPropertyId, onPropertySelect, mapboxToken, enableNavigation, navigate]);
+    (map.current.getSource('properties') as mapboxgl.GeoJSONSource).setData(updatedData);
+  }, [selectedPropertyId, validProperties]);
 
   if (isLoading) {
     return (
