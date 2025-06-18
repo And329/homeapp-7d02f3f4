@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
-import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
+import PropertyCard from '@/components/PropertyCard';
 
 interface AdminReply {
   id: string;
@@ -193,12 +193,18 @@ const UserProfile = () => {
     },
   });
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change or when a chat is selected
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages]);
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    // Small delay to ensure DOM is updated
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [chatMessages, selectedChat]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -279,34 +285,29 @@ const UserProfile = () => {
                     {userRequests.map((request) => {
                       const replies = adminReplies.filter(reply => reply.request_id === request.id);
                       
-                      // Transform PropertyRequest to match what ExpandablePropertyCard expects
+                      // Transform PropertyRequest to match what PropertyCard expects
                       const transformedProperty = {
                         id: request.id,
                         title: request.title,
-                        description: request.description,
                         price: request.price,
                         location: request.location,
                         bedrooms: request.bedrooms,
                         bathrooms: request.bathrooms,
+                        area: 1000, // Default area since it's not in PropertyRequest
+                        image: Array.isArray(request.images) && request.images.length > 0 
+                          ? request.images[0] 
+                          : '/placeholder.svg',
                         type: request.type,
-                        amenities: request.amenities,
-                        images: request.images,
-                        latitude: request.latitude,
-                        longitude: request.longitude,
-                        status: request.status,
-                        created_at: request.created_at
+                        isHotDeal: false,
+                        description: request.description,
+                        amenities: Array.isArray(request.amenities) ? request.amenities : []
                       };
                       
                       return (
-                        <div key={request.id}>
-                          <div className="relative">
-                            <ExpandablePropertyCard 
-                              property={transformedProperty}
-                              showActions={false}
-                            />
-                            <div className="absolute top-4 right-4">
-                              {getStatusBadge(request.status)}
-                            </div>
+                        <div key={request.id} className="relative">
+                          <PropertyCard property={transformedProperty} />
+                          <div className="absolute top-4 right-4 z-10">
+                            {getStatusBadge(request.status)}
                           </div>
                           
                           {request.status === 'rejected' && replies.length > 0 && (
