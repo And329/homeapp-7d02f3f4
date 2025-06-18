@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Star, TrendingUp, Users, Award } from 'lucide-react';
+import { Search, MapPin, Star, TrendingUp, Users, Award, Shield } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';

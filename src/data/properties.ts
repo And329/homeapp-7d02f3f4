@@ -64,7 +64,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   const { data, error } = await supabase
     .from('properties')
     .select('*')
-    .eq('id', id)
+    .eq('id', parseInt(id))
     .single();
 
   if (error || !data) {
