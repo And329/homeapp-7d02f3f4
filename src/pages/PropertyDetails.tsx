@@ -1,0 +1,231 @@
+
+import React, { useState } from 'react';
+import { useParams, Navigate } from 'react-router-dom';
+import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { getPropertyById } from '../data/properties';
+
+const PropertyDetails = () => {
+  const { id } = useParams();
+  const property = getPropertyById(id || '');
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [showContactForm, setShowContactForm] = useState(false);
+
+  if (!property) {
+    return <Navigate to="/properties" replace />;
+  }
+
+  const formatPrice = (price: number, type: 'rent' | 'sale') => {
+    if (type === 'rent') {
+      return `AED ${price.toLocaleString()}/month`;
+    }
+    return `AED ${price.toLocaleString()}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      {/* Image Gallery */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          <div className="lg:col-span-3">
+            <img
+              src={property.images[selectedImage]}
+              alt={property.title}
+              className="w-full h-96 lg:h-[500px] object-cover rounded-xl"
+            />
+          </div>
+          <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto">
+            {property.images.map((image, index) => (
+              <img
+                key={index}
+                src={image}
+                alt={`${property.title} ${index + 1}`}
+                onClick={() => setSelectedImage(index)}
+                className={`w-20 h-20 lg:w-full lg:h-24 object-cover rounded-lg cursor-pointer flex-shrink-0 ${
+                  selectedImage === index ? 'ring-2 ring-primary' : ''
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Property Details */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <MapPin className="h-5 w-5 mr-2" />
+                    <span className="text-lg">{property.location}</span>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    <Heart className="h-5 w-5 text-gray-600" />
+                  </button>
+                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    <Share2 className="h-5 w-5 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-6">
+                <div className="text-3xl font-bold text-primary">
+                  {formatPrice(property.price, property.type)}
+                </div>
+                <div className="bg-primary text-white px-4 py-2 rounded-full font-semibold">
+                  For {property.type === 'rent' ? 'Rent' : 'Sale'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <Bed className="h-6 w-6 text-primary mx-auto mb-2" />
+                  <div className="font-semibold">{property.bedrooms}</div>
+                  <div className="text-sm text-gray-600">Bedrooms</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <Bath className="h-6 w-6 text-primary mx-auto mb-2" />
+                  <div className="font-semibold">{property.bathrooms}</div>
+                  <div className="text-sm text-gray-600">Bathrooms</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <Square className="h-6 w-6 text-primary mx-auto mb-2" />
+                  <div className="font-semibold">{property.area}</div>
+                  <div className="text-sm text-gray-600">Sq Ft</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <Car className="h-6 w-6 text-primary mx-auto mb-2" />
+                  <div className="font-semibold">{property.parking || 'N/A'}</div>
+                  <div className="text-sm text-gray-600">Parking</div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h2 className="text-xl font-semibold mb-3">Description</h2>
+                <p className="text-gray-700 leading-relaxed">{property.description}</p>
+              </div>
+            </div>
+
+            {/* Amenities */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {property.amenities.map((amenity, index) => (
+                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span className="text-sm">{amenity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Property Info */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Property Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Property Type</span>
+                  <span className="font-semibold">{property.propertyType}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Year Built</span>
+                  <span className="font-semibold">{property.yearBuilt || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Area</span>
+                  <span className="font-semibold">{property.area} sq ft</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Parking Spaces</span>
+                  <span className="font-semibold">{property.parking || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+              <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
+              
+              <div className="space-y-3 mb-6">
+                <button className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Now
+                </button>
+                <button 
+                  onClick={() => setShowContactForm(!showContactForm)}
+                  className="w-full border border-primary text-primary py-3 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Message
+                </button>
+              </div>
+
+              {showContactForm && (
+                <form className="space-y-4 animate-fade-in-up">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Your Name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Your Email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="tel"
+                      placeholder="Phone (Optional)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <textarea
+                      placeholder="Your Message"
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    ></textarea>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-primary text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Send Message
+                  </button>
+                </form>
+              )}
+
+              {/* Map Placeholder */}
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="font-semibold mb-3">Location</h4>
+                <div className="bg-gray-100 h-48 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
+                    <p className="text-gray-600">Interactive Map</p>
+                    <p className="text-sm text-gray-500">Coming Soon</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default PropertyDetails;
