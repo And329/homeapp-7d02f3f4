@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -68,7 +69,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     p.longitude >= -180 && p.longitude <= 180
   );
 
-  // Initialize Mapbox map with optimized settings
+  // Initialize Mapbox map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
@@ -96,10 +97,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       style: 'mapbox://styles/mapbox/light-v11',
       center: bounds ? bounds.getCenter() : defaultCenter,
       zoom: defaultZoom,
-      // Optimize rendering performance
       antialias: true,
       preserveDrawingBuffer: false,
-      // Reduce rendering lag
       renderWorldCopies: false,
     });
 
@@ -124,7 +123,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     };
   }, [mapboxToken, validProperties.length, enableNavigation]);
 
-  // Add optimized markers for properties
+  // Add markers for properties
   useEffect(() => {
     if (!map.current || !mapboxToken) return;
 
@@ -145,95 +144,82 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         return price.toLocaleString();
       };
 
-      // Create optimized marker element
+      // Create marker element with proper styling
       const markerEl = document.createElement('div');
-      markerEl.className = 'property-marker';
       markerEl.style.cssText = `
+        width: auto;
+        height: auto;
         cursor: pointer;
-        transition: transform 0.15s ease-out;
-        transform-origin: center bottom;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         position: relative;
+        transform-origin: center bottom;
+        transition: transform 0.2s ease;
+      `;
+      
+      // Create price badge
+      const priceDiv = document.createElement('div');
+      priceDiv.style.cssText = `
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: 2px solid white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+        margin-bottom: 2px;
         z-index: 1;
       `;
-      
-      // Add selection state
-      if (selectedPropertyId === property.id) {
-        markerEl.style.transform = 'scale(1.1)';
-        markerEl.style.zIndex = '1000';
-      }
-      
-      markerEl.innerHTML = `
-        <div style="
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          pointer-events: none;
-        ">
-          <div style="
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
-            border: 1.5px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 1;
-            transition: all 0.15s ease;
-            pointer-events: auto;
-          ">
-            AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}
-          </div>
-          <div style="
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 8px solid #1e40af;
-            margin-top: -1px;
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
-          "></div>
-        </div>
+      priceDiv.textContent = `AED ${formatPrice(property.price)}${property.type === 'rent' ? '/mo' : ''}`;
+
+      // Create arrow
+      const arrow = document.createElement('div');
+      arrow.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 10px solid #1e40af;
+        margin-top: -2px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
       `;
 
-      // Create marker with better anchor
-      const marker = new mapboxgl.Marker({
-        element: markerEl,
-        anchor: 'bottom'
-      })
-        .setLngLat([property.longitude, property.latitude])
-        .addTo(map.current!);
+      markerEl.appendChild(priceDiv);
+      markerEl.appendChild(arrow);
+
+      // Add selection state
+      if (selectedPropertyId === property.id) {
+        markerEl.style.transform = 'scale(1.15)';
+        markerEl.style.zIndex = '1000';
+        priceDiv.style.background = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
+        arrow.style.borderTopColor = '#dc2626';
+      }
 
       // Add hover effects
-      const priceDiv = markerEl.querySelector('div > div') as HTMLElement;
-      
       markerEl.addEventListener('mouseenter', () => {
-        if (!markerEl.style.transform.includes('scale')) {
-          markerEl.style.transform = 'scale(1.05)';
+        if (selectedPropertyId !== property.id) {
+          markerEl.style.transform = 'scale(1.1)';
         }
-        if (priceDiv) {
-          priceDiv.style.background = 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)';
-          priceDiv.style.transform = 'translateY(-1px)';
-        }
+        priceDiv.style.transform = 'translateY(-2px)';
       });
 
       markerEl.addEventListener('mouseleave', () => {
         if (selectedPropertyId !== property.id) {
           markerEl.style.transform = 'scale(1)';
         }
-        if (priceDiv) {
-          priceDiv.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)';
-          priceDiv.style.transform = 'translateY(0)';
-        }
+        priceDiv.style.transform = 'translateY(0)';
       });
 
       // Add click event
       markerEl.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
+        console.log('PropertyMap: Marker clicked for property', property.id);
+        
         if (enableNavigation) {
           navigate(`/properties/${property.id}`);
         } else if (onPropertySelect) {
@@ -241,35 +227,46 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         }
       });
 
-      // Create popup with enhanced content
+      // Create marker with proper coordinates
+      const marker = new mapboxgl.Marker({
+        element: markerEl,
+        anchor: 'bottom'
+      })
+        .setLngLat([property.longitude, property.latitude])
+        .addTo(map.current!);
+
+      // Create popup
       const popupContent = enableNavigation ? `
-        <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="font-weight: 600; font-size: 13px; margin: 0 0 4px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 11px; color: #6b7280; margin: 0 0 6px 0;">${property.location}</p>
-          <p style="font-size: 13px; font-weight: 700; color: #1e40af; margin: 0 0 6px 0;">
+        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
+          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
+          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
+          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 8px 0;">
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
-          <p style="font-size: 10px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
+          <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
         </div>
       ` : `
-        <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="font-weight: 600; font-size: 13px; margin: 0 0 4px 0; color: #1f2937;">${property.title}</h3>
-          <p style="font-size: 11px; color: #6b7280; margin: 0 0 6px 0;">${property.location}</p>
-          <p style="font-size: 13px; font-weight: 700; color: #1e40af; margin: 0;">
+        <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
+          <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${property.title}</h3>
+          <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${property.location}</p>
+          <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0;">
             AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
           </p>
         </div>
       `;
 
       const popup = new mapboxgl.Popup({ 
-        offset: 15,
+        offset: 20,
         closeButton: false,
-        className: 'custom-popup'
+        className: 'custom-popup',
+        maxWidth: '300px'
       }).setHTML(popupContent);
 
       marker.setPopup(popup);
       markersRef.current.push(marker);
     });
+
+    console.log('PropertyMap: Added', markersRef.current.length, 'markers to map');
   }, [validProperties, selectedPropertyId, onPropertySelect, mapboxToken, enableNavigation, navigate]);
 
   if (isLoading) {
