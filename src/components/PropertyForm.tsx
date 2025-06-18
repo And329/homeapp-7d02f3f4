@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import PropertyAmenities from '@/components/PropertyAmenities';
+import PropertyImageUpload from '@/components/PropertyImageUpload';
 
 interface PropertyFormProps {
   property?: any;
@@ -21,6 +22,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     type: 'rent' as 'rent' | 'sale',
     description: '',
     is_hot_deal: false,
+    amenities: [] as string[],
+    images: [] as string[],
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -36,6 +39,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         type: property.type || 'rent',
         description: property.description || '',
         is_hot_deal: property.is_hot_deal || false,
+        amenities: property.amenities || [],
+        images: property.images || [],
       });
     }
   }, [property]);
@@ -54,17 +59,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         type: formData.type,
         description: formData.description,
         is_hot_deal: formData.is_hot_deal,
+        amenities: formData.amenities,
+        images: formData.images,
       };
 
       let result;
       if (property) {
-        // Update existing property
         result = await supabase
           .from('properties')
           .update(dataToSubmit)
           .eq('id', property.id);
       } else {
-        // Create new property
         result = await supabase
           .from('properties')
           .insert([dataToSubmit]);
@@ -99,7 +104,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {property ? 'Edit Property' : 'Add New Property'}
@@ -217,6 +222,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
               placeholder="Enter property description..."
             />
           </div>
+
+          <PropertyImageUpload
+            images={formData.images}
+            onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+          />
+
+          <PropertyAmenities
+            selectedAmenities={formData.amenities}
+            onAmenitiesChange={(amenities) => setFormData(prev => ({ ...prev, amenities }))}
+          />
 
           <div className="flex items-center">
             <input
