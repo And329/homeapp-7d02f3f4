@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Property {
@@ -147,12 +148,12 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     console.log('Using database lat/lng fields:', coordinates);
   }
   // Then check if location is a JSON object with coordinates
-  else if (data.location && typeof data.location === 'object' && data.location.lat && data.location.lng) {
+  else if (data.location && typeof data.location === 'object' && data.location !== null && data.location.lat && data.location.lng) {
     coordinates = { lat: data.location.lat, lng: data.location.lng };
     console.log('Using location object coordinates:', coordinates);
   }
   // Finally, try to parse location as JSON string
-  else if (data.location && typeof data.location === 'string') {
+  else if (data.location && typeof data.location === 'string' && data.location !== null) {
     try {
       const locationData = JSON.parse(data.location);
       if (locationData.lat && locationData.lng) {
@@ -196,7 +197,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     id: data.id.toString(),
     title: data.title || 'Untitled Property',
     price: data.price || 0,
-    location: typeof data.location === 'string' && !data.location.startsWith('{') 
+    location: (data.location && typeof data.location === 'string' && !data.location.startsWith('{'))
       ? data.location 
       : `${coordinates.lat}, ${coordinates.lng}`,
     bedrooms: data.bedrooms || 0,
