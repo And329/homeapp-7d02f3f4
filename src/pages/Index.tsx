@@ -1,66 +1,84 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, TrendingUp, Award, Users, Shield } from 'lucide-react';
+import { Search, MapPin, Star, TrendingUp, Users, Award } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyCard from '../components/PropertyCard';
 import { getHotDeals } from '../data/properties';
 
 const Index = () => {
-  const hotDeals = getHotDeals();
+  const { data: hotDeals = [], isLoading } = useQuery({
+    queryKey: ['hotDeals'],
+    queryFn: getHotDeals,
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 uae-gradient opacity-90"></div>
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <img 
-          src="https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=1920&h=1080&fit=crop" 
-          alt="Dubai Skyline" 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        
-        <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up">
-            Find Your Dream Home in the UAE
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 animate-fade-in-up opacity-90">
-            Discover luxury properties, exclusive deals, and exceptional service with HomeApp
-          </p>
-          
-          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-2xl mx-auto animate-scale-in">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Location, property type, or keywords..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
-                />
-              </div>
-              <button className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center">
-                <Search className="h-5 w-5 mr-2" />
-                Search Properties
-              </button>
+      <section className="uae-gradient text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up">
+              Welcome to <span className="text-blue-200">HomeApp</span>
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto animate-fade-in-up">
+              Your premier destination for UAE real estate. Discover luxury properties, 
+              investment opportunities, and your dream home.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up">
+              <Link 
+                to="/properties" 
+                className="bg-white text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors"
+              >
+                Explore Properties
+              </Link>
+              <Link 
+                to="/contact" 
+                className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-primary transition-colors"
+              >
+                Contact Us
+              </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="flex flex-col md:flex-row gap-4 mt-8 justify-center">
-            <Link 
-              to="/properties/rent" 
-              className="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Browse Rentals
-            </Link>
-            <Link 
-              to="/properties/sale" 
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors"
-            >
-              Properties for Sale
-            </Link>
+      {/* Quick Search */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="bg-gray-50 rounded-2xl p-8 shadow-lg">
+            <h2 className="text-2xl font-bold text-center mb-6">Find Your Perfect Property</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Location"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                  <option>Property Type</option>
+                  <option>Apartment</option>
+                  <option>Villa</option>
+                  <option>Townhouse</option>
+                </select>
+              </div>
+              <div>
+                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                  <option>For Rent / Sale</option>
+                  <option>For Rent</option>
+                  <option>For Sale</option>
+                </select>
+              </div>
+              <button className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <Search className="h-5 w-5 mr-2" />
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -69,24 +87,32 @@ const Index = () => {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">🔥 Hot Deals</h2>
+            <h2 className="text-4xl font-bold mb-4">🔥 Hot Deals</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Exclusive properties with special offers and unbeatable prices. Limited time only!
+              Don't miss out on these exclusive property offers with special pricing and premium locations
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {hotDeals.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading hot deals...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {hotDeals.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          )}
           
           <div className="text-center mt-8">
             <Link 
               to="/properties" 
-              className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
             >
-              View All Hot Deals
+              View All Properties
+              <TrendingUp className="h-5 w-5 ml-2" />
             </Link>
           </div>
         </div>
@@ -113,7 +139,7 @@ const Index = () => {
             
             <div className="text-center p-6">
               <div className="bg-primary text-white p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <TrendingUp className="h-8 w-8" />
+                <Star className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Market Expertise</h3>
               <p className="text-gray-600">Deep understanding of UAE property market trends and investment opportunities</p>

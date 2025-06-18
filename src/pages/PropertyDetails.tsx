@@ -2,17 +2,38 @@
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getPropertyById } from '../data/properties';
 
 const PropertyDetails = () => {
   const { id } = useParams();
-  const property = getPropertyById(id || '');
   const [selectedImage, setSelectedImage] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
 
-  if (!property) {
+  const { data: property, isLoading, error } = useQuery({
+    queryKey: ['property', id],
+    queryFn: () => getPropertyById(id || ''),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading property details...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !property) {
     return <Navigate to="/properties" replace />;
   }
 

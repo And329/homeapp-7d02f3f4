@@ -2,10 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Filter, Map, List, Search } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyCard from '../components/PropertyCard';
-import { properties } from '../data/properties';
+import { getProperties } from '../data/properties';
 
 const Properties = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
@@ -16,6 +17,11 @@ const Properties = () => {
     bedrooms: 'all' as 'all' | '0' | '1' | '2' | '3' | '4' | '5+',
     location: '',
     propertyType: 'all' as 'all' | 'Apartment' | 'Villa' | 'Townhouse' | 'Penthouse' | 'Studio'
+  });
+
+  const { data: properties = [], isLoading, error } = useQuery({
+    queryKey: ['properties'],
+    queryFn: getProperties,
   });
 
   const filteredProperties = useMemo(() => {
@@ -31,11 +37,40 @@ const Properties = () => {
       if (filters.propertyType !== 'all' && property.propertyType !== filters.propertyType) return false;
       return true;
     });
-  }, [filters]);
+  }, [properties, filters]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading properties...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <p className="text-red-600">Error loading properties. Please try again later.</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,7 +253,7 @@ const Properties = () => {
             </div>
           )}
 
-          {filteredProperties.length === 0 && (
+          {filteredProperties.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
                 <Search className="h-16 w-16 mx-auto" />
