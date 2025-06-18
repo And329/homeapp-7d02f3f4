@@ -135,11 +135,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         <div class="bg-primary text-white px-2 py-1 rounded-md shadow-lg text-xs font-semibold whitespace-nowrap max-w-[120px] text-center">
           AED ${property.price >= 1000000 ? (property.price / 1000000).toFixed(1) + 'M' : property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}
         </div>
-        <div class="absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-primary"></div>
+        <div class="absolute left-1/2 top-full transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-primary"></div>
       `;
 
-      // Create marker
-      const marker = new mapboxgl.Marker(markerEl)
+      // Create marker with proper anchor
+      const marker = new mapboxgl.Marker(markerEl, { anchor: 'bottom' })
         .setLngLat([property.longitude, property.latitude])
         .addTo(map.current!);
 
