@@ -4,21 +4,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Settings } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const MapboxTokenSettings: React.FC = () => {
   const [token, setToken] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load existing token from localStorage
-    const savedToken = localStorage.getItem('mapbox_token');
-    if (savedToken) {
-      setToken(savedToken);
-    }
+    loadToken();
   }, []);
 
-  const handleSaveToken = () => {
+  const loadToken = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'mapbox_token')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading token:', error);
+        return;
+      }
+
+      if (data?.value) {
+        setToken(data.value);
+      }
+    } catch (error) {
+      console.error('Error loading token:', error);
+    }
+  };
+
+  const handleSaveToken = async () => {
     if (!token.trim()) {
       toast({
         title: "Error",
@@ -28,22 +47,60 @@ const MapboxTokenSettings: React.FC = () => {
       return;
     }
 
-    localStorage.setItem('mapbox_token', token);
-    setIsEditing(false);
-    toast({
-      title: "Token saved",
-      description: "Mapbox token has been saved successfully",
-    });
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .upsert({
+          key: 'mapbox_token',
+          value: token.trim(),
+        });
+
+      if (error) throw error;
+
+      setIsEditing(false);
+      toast({
+        title: "Token saved",
+        description: "Mapbox token has been saved globally for all users",
+      });
+    } catch (error) {
+      console.error('Error saving token:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save token. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleClearToken = () => {
-    localStorage.removeItem('mapbox_token');
-    setToken('');
-    setIsEditing(false);
-    toast({
-      title: "Token cleared",
-      description: "Mapbox token has been removed",
-    });
+  const handleClearToken = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .delete()
+        .eq('key', 'mapbox_token');
+
+      if (error) throw error;
+
+      setToken('');
+      setIsEditing(false);
+      toast({
+        title: "Token cleared",
+        description: "Mapbox token has been removed",
+      });
+    } catch (error) {
+      console.error('Error clearing token:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear token. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,7 +114,7 @@ const MapboxTokenSettings: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <p className="text-sm text-gray-600">
-              {token ? 'Mapbox token is configured' : 'No Mapbox token configured'}
+              {token ? 'Mapbox token is configured globally' : 'No Mapbox token configured'}
             </p>
             {token && (
               <p className="text-xs text-gray-400 font-mono">
@@ -69,6 +126,7 @@ const MapboxTokenSettings: React.FC = () => {
             onClick={() => setIsEditing(true)}
             variant="outline"
             size="sm"
+            disabled={isLoading}
           >
             {token ? 'Update Token' : 'Add Token'}
           </Button>
@@ -85,6 +143,7 @@ const MapboxTokenSettings: React.FC = () => {
               onChange={(e) => setToken(e.target.value)}
               placeholder="pk.eyJ1IjoieW91cnVzZXJuYW1lIiwiYSI6ImNsZXh..."
               className="font-mono"
+              disabled={isLoading}
             />
             <p className="text-xs text-gray-500 mt-1">
               Get your token from{' '}
@@ -99,13 +158,18 @@ const MapboxTokenSettings: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={handleSaveToken} size="sm">
-              Save Token
+            <Button 
+              onClick={handleSaveToken} 
+              size="sm"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save Token'}
             </Button>
             <Button
               onClick={() => setIsEditing(false)}
               variant="outline"
               size="sm"
+              disabled={isLoading}
             >
               Cancel
             </Button>
@@ -114,8 +178,9 @@ const MapboxTokenSettings: React.FC = () => {
                 onClick={handleClearToken}
                 variant="destructive"
                 size="sm"
+                disabled={isLoading}
               >
-                Clear Token
+                {isLoading ? 'Clearing...' : 'Clear Token'}
               </Button>
             )}
           </div>

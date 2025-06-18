@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMapProps {
   properties: Array<{
@@ -29,27 +30,38 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get token from localStorage and listen for storage changes
-    const getToken = () => {
-      const savedToken = localStorage.getItem('mapbox_token');
-      console.log('PropertyMap: Retrieved token from localStorage:', savedToken ? 'Token exists' : 'No token');
-      setToken(savedToken);
-    };
+    const loadToken = async () => {
+      try {
+        console.log('PropertyMap: Loading token from Supabase');
+        const { data, error } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'mapbox_token')
+          .single();
 
-    getToken();
+        if (error && error.code !== 'PGRST116') {
+          console.error('PropertyMap: Error loading token:', error);
+          setIsLoading(false);
+          return;
+        }
 
-    // Listen for storage changes in case token is updated
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'mapbox_token') {
-        console.log('PropertyMap: Token updated in localStorage');
-        getToken();
+        if (data?.value) {
+          console.log('PropertyMap: Token loaded successfully');
+          setToken(data.value);
+        } else {
+          console.log('PropertyMap: No token found');
+        }
+      } catch (error) {
+        console.error('PropertyMap: Error loading token:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    loadToken();
   }, []);
 
   useEffect(() => {
@@ -163,6 +175,17 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
     console.log('PropertyMap: Added', markers.current.length, 'markers');
   }, [properties, selectedPropertyId, onPropertySelect]);
+
+  if (isLoading) {
+    return (
+      <div className={`bg-gray-100 rounded-lg flex items-center justify-center`} style={{ height }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-gray-600 font-medium">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!token) {
     return (
