@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Map } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -9,6 +8,8 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyForm from '@/components/PropertyForm';
+import MapboxTokenSettings from '@/components/MapboxTokenSettings';
+import PropertyMap from '@/components/PropertyMap';
 
 interface Property {
   id: number;
@@ -21,11 +22,14 @@ interface Property {
   is_hot_deal: boolean;
   description: string;
   created_at: string;
+  latitude: number;
+  longitude: number;
 }
 
 const AdminDashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -111,7 +115,9 @@ const AdminDashboard = () => {
           <p className="text-gray-600">Manage your property listings</p>
         </div>
 
-        <div className="mb-6">
+        <MapboxTokenSettings />
+
+        <div className="mb-6 flex items-center justify-between">
           <Button
             onClick={() => {
               setEditingProperty(null);
@@ -122,7 +128,33 @@ const AdminDashboard = () => {
             <Plus className="h-4 w-4" />
             Add New Property
           </Button>
+
+          <Button
+            onClick={() => setShowMap(!showMap)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Map className="h-4 w-4" />
+            {showMap ? 'Hide Map' : 'Show Map'}
+          </Button>
         </div>
+
+        {showMap && (
+          <div className="mb-6">
+            <PropertyMap
+              properties={properties.map(p => ({
+                id: p.id,
+                title: p.title,
+                location: p.location,
+                price: p.price,
+                type: p.type,
+                latitude: p.latitude,
+                longitude: p.longitude,
+              }))}
+              height="500px"
+            />
+          </div>
+        )}
 
         {isLoading ? (
           <div className="text-center py-8">
