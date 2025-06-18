@@ -1,48 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React from 'react';
 import { MapPin } from 'lucide-react';
-
-// Fix for default markers in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom icons for different property types
-const createCustomIcon = (type: 'rent' | 'sale', isSelected: boolean = false) => {
-  const color = type === 'rent' ? '#3b82f6' : '#10b981';
-  const size = isSelected ? 35 : 25;
-  
-  return L.divIcon({
-    html: `
-      <div style="
-        width: ${size}px;
-        height: ${size}px;
-        border-radius: 50%;
-        background-color: ${color};
-        border: 2px solid white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        ${isSelected ? 'transform: scale(1.1); z-index: 1000;' : ''}
-      ">
-        •
-      </div>
-    `,
-    className: 'custom-div-icon',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-};
 
 interface PropertyMapProps {
   properties: Array<{
@@ -65,6 +23,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   onPropertySelect,
   height = '400px'
 }) => {
+  console.log('PropertyMap: Rendering static map placeholder with', properties.length, 'properties');
+
   // Filter properties with valid coordinates
   const validProperties = properties.filter(
     p => p.latitude && p.longitude && 
@@ -73,84 +33,52 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     p.longitude >= -180 && p.longitude <= 180
   );
 
-  console.log('PropertyMap: Rendering with', validProperties.length, 'valid properties');
-
-  // Default center (Dubai coordinates)
-  const defaultCenter: [number, number] = [25.2048, 55.2708];
-  
-  // Calculate bounds if we have properties
-  const getMapCenter = (): [number, number] => {
-    if (validProperties.length === 0) return defaultCenter;
-    
-    if (validProperties.length === 1) {
-      return [validProperties[0].latitude!, validProperties[0].longitude!];
-    }
-    
-    const avgLat = validProperties.reduce((sum, p) => sum + p.latitude!, 0) / validProperties.length;
-    const avgLng = validProperties.reduce((sum, p) => sum + p.longitude!, 0) / validProperties.length;
-    
-    return [avgLat, avgLng];
-  };
-
-  const getMapZoom = (): number => {
-    if (validProperties.length === 0) return 10;
-    if (validProperties.length === 1) return 15;
-    return 12;
-  };
-
-  if (validProperties.length === 0) {
-    return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center`} style={{ height }}>
-        <div className="text-center">
-          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 font-medium">No Properties to Show</p>
-          <p className="text-sm text-gray-500">Properties need valid coordinates to appear on map</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative">
-      <MapContainer
-        center={getMapCenter()}
-        zoom={getMapZoom()}
-        style={{ height, borderRadius: '8px' }}
-        className="z-0"
+      <div 
+        className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex flex-col items-center justify-center border border-blue-200" 
+        style={{ height }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {validProperties.map((property) => (
-          <Marker
-            key={property.id}
-            position={[property.latitude!, property.longitude!]}
-            icon={createCustomIcon(property.type, selectedPropertyId === property.id)}
-            eventHandlers={{
-              click: () => {
-                if (onPropertySelect) {
-                  onPropertySelect(property.id);
-                }
-              },
-            }}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold text-sm">{property.title}</h3>
-                <p className="text-xs text-gray-600">{property.location}</p>
-                <p className="text-sm font-bold text-blue-600">
-                  AED {property.price.toLocaleString()}{property.type === 'rent' ? '/month' : ''}
-                </p>
+        <div className="text-center p-6">
+          <MapPin className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Interactive Map Temporarily Disabled</h3>
+          <p className="text-gray-600 mb-4">
+            We're working on improving the map experience. For now, you can view property locations in the listings.
+          </p>
+          {validProperties.length > 0 && (
+            <div className="bg-white rounded-lg p-4 max-w-md mx-auto">
+              <h4 className="font-medium text-gray-800 mb-3">Properties in this area:</h4>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {validProperties.slice(0, 5).map((property) => (
+                  <div 
+                    key={property.id}
+                    className={`text-sm p-2 rounded cursor-pointer transition-colors ${
+                      selectedPropertyId === property.id 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => onPropertySelect && onPropertySelect(property.id)}
+                  >
+                    <div className="font-medium">{property.title}</div>
+                    <div className="text-gray-600">{property.location}</div>
+                    <div className="text-blue-600 font-semibold">
+                      AED {property.price.toLocaleString()}{property.type === 'rent' ? '/month' : ''}
+                    </div>
+                  </div>
+                ))}
+                {validProperties.length > 5 && (
+                  <div className="text-xs text-gray-500 text-center pt-1">
+                    +{validProperties.length - 5} more properties
+                  </div>
+                )}
               </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            </div>
+          )}
+        </div>
+      </div>
       
       <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded text-xs text-gray-600 shadow z-10">
-        {validProperties.length} properties shown
+        {validProperties.length} properties in area
       </div>
     </div>
   );
