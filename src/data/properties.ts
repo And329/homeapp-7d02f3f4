@@ -45,6 +45,8 @@ export const getProperties = async (): Promise<Property[]> => {
 
   // Transform database data to match our Property interface
   const transformedProperties: Property[] = data.map((property: any) => {
+    console.log('Processing property:', property);
+
     // Parse location coordinates if it's a JSON string
     let coordinates = { lat: 25.0772, lng: 55.1395 }; // Default Dubai coordinates
     if (property.location) {
@@ -60,21 +62,33 @@ export const getProperties = async (): Promise<Property[]> => {
       }
     }
 
-    // Use actual images from database or fallback to placeholder
+    // Handle images array - ensure it's always a string array
     let images = [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ];
     
-    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      images = property.images;
+    if (property.images && Array.isArray(property.images)) {
+      // Filter out non-string values and ensure we have valid URLs
+      const validImages = property.images.filter((img): img is string => 
+        typeof img === 'string' && img.length > 0
+      );
+      if (validImages.length > 0) {
+        images = validImages;
+      }
     }
 
     // Parse amenities if it's an object
     let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
     if (property.amenities && typeof property.amenities === 'object') {
-      amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+      if (Array.isArray(property.amenities)) {
+        amenities = property.amenities.filter((amenity): amenity is string => 
+          typeof amenity === 'string'
+        );
+      } else {
+        amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+      }
     }
 
     return {
@@ -86,7 +100,7 @@ export const getProperties = async (): Promise<Property[]> => {
         : property.location || 'Location not specified',
       bedrooms: property.bedrooms || 0,
       bathrooms: property.bathrooms || 0,
-      area: property.area || 0,
+      area: 1000, // Default area since it's not in the database
       image: images[0],
       images: images,
       type: property.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
@@ -140,21 +154,32 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     }
   }
 
-  // Use actual images from database or fallback
+  // Handle images array
   let images = [
     'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
   ];
   
-  if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-    images = data.images;
+  if (data.images && Array.isArray(data.images)) {
+    const validImages = data.images.filter((img): img is string => 
+      typeof img === 'string' && img.length > 0
+    );
+    if (validImages.length > 0) {
+      images = validImages;
+    }
   }
 
   // Parse amenities
   let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
   if (data.amenities && typeof data.amenities === 'object') {
-    amenities = Object.keys(data.amenities).filter(key => data.amenities[key]);
+    if (Array.isArray(data.amenities)) {
+      amenities = data.amenities.filter((amenity): amenity is string => 
+        typeof amenity === 'string'
+      );
+    } else {
+      amenities = Object.keys(data.amenities).filter(key => data.amenities[key]);
+    }
   }
 
   return {
@@ -166,7 +191,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
       : data.location || 'Location not specified',
     bedrooms: data.bedrooms || 0,
     bathrooms: data.bathrooms || 0,
-    area: data.area || 0,
+    area: 1000, // Default area
     image: images[0],
     images: images,
     type: data.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
@@ -213,21 +238,32 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
       }
     }
 
-    // Use actual images from database or fallback
+    // Handle images array
     let images = [
       'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
       'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
     ];
     
-    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      images = property.images;
+    if (property.images && Array.isArray(property.images)) {
+      const validImages = property.images.filter((img): img is string => 
+        typeof img === 'string' && img.length > 0
+      );
+      if (validImages.length > 0) {
+        images = validImages;
+      }
     }
 
     // Parse amenities
     let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
     if (property.amenities && typeof property.amenities === 'object') {
-      amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+      if (Array.isArray(property.amenities)) {
+        amenities = property.amenities.filter((amenity): amenity is string => 
+          typeof amenity === 'string'
+        );
+      } else {
+        amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+      }
     }
 
     return {
@@ -239,7 +275,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
         : property.location || 'Location not specified',
       bedrooms: property.bedrooms || 0,
       bathrooms: property.bathrooms || 0,
-      area: property.area || 0,
+      area: 1000, // Default area
       image: images[0],
       images: images,
       type: property.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
