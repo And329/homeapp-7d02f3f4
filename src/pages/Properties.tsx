@@ -8,40 +8,9 @@ import PropertyMap from '../components/PropertyMap';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { transformProperty } from '@/utils/propertyTransform';
-
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: string;
-  images: string[];
-  amenities: string[];
-  latitude?: number;
-  longitude?: number;
-  description?: string;
-  is_hot_deal?: boolean;
-}
-
-interface PropertyRequest {
-  id: string;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: string;
-  description: string;
-  status: string;
-  images: string[];
-  videos: string[];
-  amenities: string[];
-  user_id: string;
-  created_at: string;
-}
+import { transformDatabaseProperty } from '@/utils/propertyTransform';
+import { Property } from '@/types/property';
+import { PropertyRequest } from '@/types/propertyRequest';
 
 const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -69,7 +38,7 @@ const Properties = () => {
 
         if (error) throw error;
 
-        const transformedProperties = data?.map(transformProperty) || [];
+        const transformedProperties = data?.map(transformDatabaseProperty) || [];
         setProperties(transformedProperties);
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -103,7 +72,16 @@ const Properties = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUserRequests(data || []);
+      
+      // Transform the data to match PropertyRequest interface
+      const transformedRequests: PropertyRequest[] = (data || []).map(request => ({
+        ...request,
+        images: Array.isArray(request.images) ? request.images : [],
+        videos: Array.isArray(request.videos) ? request.videos : [],
+        amenities: Array.isArray(request.amenities) ? request.amenities : null,
+      }));
+      
+      setUserRequests(transformedRequests);
     } catch (error) {
       console.error('Error fetching user requests:', error);
       toast({
@@ -172,6 +150,17 @@ const Properties = () => {
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
+
+  // Transform properties for map display
+  const mapProperties = filteredProperties.map(property => ({
+    id: parseInt(property.id),
+    title: property.title,
+    location: property.location,
+    price: property.price,
+    type: property.type as 'rent' | 'sale',
+    latitude: property.coordinates.lat,
+    longitude: property.coordinates.lng,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -279,7 +268,7 @@ const Properties = () => {
       {/* Map */}
       {showMap && (
         <section className="h-96">
-          <PropertyMap properties={filteredProperties} />
+          <PropertyMap properties={mapProperties} />
         </section>
       )}
 
@@ -294,7 +283,7 @@ const Properties = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {userRequests.map((request) => (
                   <div key={request.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    {request.images.length > 0 && (
+                    {request.images && request.images.length > 0 && (
                       <img
                         src={request.images[0]}
                         alt={request.title}

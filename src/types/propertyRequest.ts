@@ -14,6 +14,7 @@ export interface PropertyRequest {
   property_type: string | null;
   amenities: string[] | null;
   images: string[] | null;
+  videos: string[] | null;
   contact_name: string;
   contact_email: string;
   contact_phone: string | null;

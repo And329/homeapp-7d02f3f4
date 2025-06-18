@@ -84,3 +84,6 @@ export const transformDatabaseProperty = (property: any): Property => {
     parking: 1
   };
 };
+
+// Export the alias for backward compatibility
+export const transformProperty = transformDatabaseProperty;
