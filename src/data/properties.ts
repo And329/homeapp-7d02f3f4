@@ -153,15 +153,18 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     console.log('Using location object coordinates:', coordinates);
   }
   // Finally, try to parse location as JSON string
-  else if (data.location && typeof data.location === 'string' && data.location !== null && data.location.trim() !== '') {
-    try {
-      const locationData = JSON.parse(data.location);
-      if (locationData && locationData.lat && locationData.lng) {
-        coordinates = { lat: locationData.lat, lng: locationData.lng };
-        console.log('Parsed coordinates from location JSON:', coordinates);
+  else if (data.location && typeof data.location === 'string') {
+    const locationStr = data.location.trim();
+    if (locationStr !== '') {
+      try {
+        const locationData = JSON.parse(locationStr);
+        if (locationData && locationData.lat && locationData.lng) {
+          coordinates = { lat: locationData.lat, lng: locationData.lng };
+          console.log('Parsed coordinates from location JSON:', coordinates);
+        }
+      } catch (e) {
+        console.log('Could not parse location as JSON for property', data.id);
       }
-    } catch (e) {
-      console.log('Could not parse location as JSON for property', data.id);
     }
   }
 
