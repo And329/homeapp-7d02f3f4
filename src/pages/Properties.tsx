@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Search, Filter, Grid, List } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -36,6 +37,7 @@ const Properties = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>('all');
   const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const navigate = useNavigate();
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['properties'],
@@ -87,6 +89,10 @@ const Properties = () => {
     propertyType: 'Apartment',
     owner_id: property.owner_id
   });
+
+  const handlePropertyClick = (property: Property) => {
+    navigate(`/properties/${property.id}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -194,10 +200,7 @@ const Properties = () => {
               <PropertyCard
                 key={property.id}
                 property={transformProperty(property)}
-                onClick={() => {
-                  // Handle property details navigation
-                  window.location.href = `/property/${property.id}`;
-                }}
+                onClick={() => handlePropertyClick(property)}
                 showContactButton={true}
               />
             ))}
