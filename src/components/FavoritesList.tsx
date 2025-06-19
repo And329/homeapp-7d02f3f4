@@ -54,6 +54,13 @@ const FavoritesList = () => {
             {favorites.map((favorite) => {
               if (!favorite.properties) return null;
               
+              // Handle images conversion from Json to string array
+              const imagesArray = Array.isArray(favorite.properties.images) 
+                ? favorite.properties.images 
+                : ['/placeholder.svg'];
+              
+              const firstImage = imagesArray.length > 0 ? imagesArray[0] : '/placeholder.svg';
+              
               const property = {
                 id: favorite.properties.id,
                 title: favorite.properties.title,
@@ -62,10 +69,8 @@ const FavoritesList = () => {
                 bedrooms: favorite.properties.bedrooms,
                 bathrooms: favorite.properties.bathrooms,
                 area: 1000,
-                image: Array.isArray(favorite.properties.images) && favorite.properties.images.length > 0 
-                  ? favorite.properties.images[0] 
-                  : '/placeholder.svg',
-                images: Array.isArray(favorite.properties.images) ? favorite.properties.images : ['/placeholder.svg'],
+                image: typeof firstImage === 'string' ? firstImage : '/placeholder.svg',
+                images: imagesArray.map(img => typeof img === 'string' ? img : '/placeholder.svg'),
                 type: favorite.properties.type as 'rent' | 'sale',
                 isHotDeal: false,
                 description: favorite.properties.description || '',
