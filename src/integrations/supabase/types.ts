@@ -331,6 +331,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          emirate: string | null
           id: string
           images: Json | null
           is_approved: boolean
@@ -350,6 +351,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          emirate?: string | null
           id?: string
           images?: Json | null
           is_approved?: boolean
@@ -369,6 +371,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          emirate?: string | null
           id?: string
           images?: Json | null
           is_approved?: boolean
@@ -396,6 +399,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           description: string | null
+          emirate: string | null
           id: string
           images: Json | null
           latitude: number | null
@@ -422,6 +426,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          emirate?: string | null
           id?: string
           images?: Json | null
           latitude?: number | null
@@ -448,6 +453,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          emirate?: string | null
           id?: string
           images?: Json | null
           latitude?: number | null
