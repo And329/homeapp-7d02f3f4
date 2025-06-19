@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -86,7 +85,7 @@ const PropertyDetails = () => {
       const { data: dbProperty, error: propError } = await supabase
         .from('properties')
         .select('*')
-        .eq('id', property.id)
+        .eq('id', parseInt(property.id))
         .single();
       
       console.log('PropertyDetails: Database property data:', dbProperty);
