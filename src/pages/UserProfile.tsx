@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
@@ -49,6 +48,23 @@ const UserProfile = () => {
     enabled: !!user,
   });
 
+  // Fetch user's approved properties (for getting property IDs)
+  const { data: userProperties = [] } = useQuery({
+    queryKey: ['user-properties', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title')
+        .eq('owner_id', user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   // Delete property request mutation
   const deletePropertyRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
@@ -73,16 +89,22 @@ const UserProfile = () => {
       if (request && request.status === 'approved') {
         console.log('Request was approved, deleting associated property...');
         
-        // Find and delete properties that match this user and title
-        const { error: propertyDeleteError } = await supabase
-          .from('properties')
-          .delete()
-          .eq('owner_id', user.id)
-          .eq('title', request.title);
+        // Find the property ID that matches this request's title
+        const matchingProperty = userProperties.find(prop => prop.title === request.title);
+        
+        if (matchingProperty) {
+          const { error: propertyDeleteError } = await supabase
+            .from('properties')
+            .delete()
+            .eq('id', matchingProperty.id)
+            .eq('owner_id', user.id);
 
-        if (propertyDeleteError) {
-          console.error('Error deleting associated property:', propertyDeleteError);
-          // Don't throw here - we still want to delete the request
+          if (propertyDeleteError) {
+            console.error('Error deleting associated property:', propertyDeleteError);
+            // Don't throw here - we still want to delete the request
+          } else {
+            console.log('Associated property deleted successfully');
+          }
         }
       }
 
@@ -102,6 +124,7 @@ const UserProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       toast({
