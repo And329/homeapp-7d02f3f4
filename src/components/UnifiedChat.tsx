@@ -30,23 +30,24 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const { messages, sendMessage, isSendingMessage } = useMessages(selectedConversation);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
 
-  // Auto-scroll to bottom when messages change, but only if user isn't typing
+  // Auto-scroll to bottom when messages change, but only if user hasn't manually scrolled
   useEffect(() => {
-    if (messagesEndRef.current && shouldAutoScroll && !newMessage) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && !isUserScrolling) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [messages, shouldAutoScroll, newMessage]);
+  }, [messages, isUserScrolling]);
 
-  // Disable auto-scroll when user is typing
-  useEffect(() => {
-    if (newMessage) {
-      setShouldAutoScroll(false);
-    } else {
-      setShouldAutoScroll(true);
+  // Handle scroll events to detect user scrolling
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+      setIsUserScrolling(!isAtBottom);
     }
-  }, [newMessage]);
+  };
 
   // Auto-select conversation if starting a new chat
   useEffect(() => {
@@ -78,7 +79,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     
     sendMessage({ content: newMessage.trim() });
     setNewMessage('');
-    setShouldAutoScroll(true); // Re-enable auto-scroll after sending
+    setIsUserScrolling(false); // Re-enable auto-scroll after sending
   };
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
@@ -188,7 +189,11 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
           <div className={`${selectedConversation ? 'block' : 'hidden lg:block'} w-full lg:w-2/3 lg:pl-4`}>
             {selectedConversation ? (
               <div className="flex flex-col h-full">
-                <div className="flex-1 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-gray-50">
+                <div 
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-gray-50"
+                  onScroll={handleScroll}
+                >
                   {messages.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
                       <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -232,8 +237,6 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                         handleSendMessage();
                       }
                     }}
-                    onFocus={() => setShouldAutoScroll(false)}
-                    onBlur={() => setShouldAutoScroll(true)}
                   />
                   <Button
                     onClick={handleSendMessage}

@@ -52,6 +52,7 @@ export const useAdminHandlers = (
       });
 
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
     } catch (error) {
       console.error('useAdminHandlers: Failed to approve request:', error);
@@ -97,9 +98,29 @@ export const useAdminHandlers = (
 
   const handleSendReply = async (requestId: string) => {
     console.log('useAdminHandlers: Sending reply for request:', requestId);
+    console.log('useAdminHandlers: Reply message:', state.replyMessage);
+    
+    if (!state.replyMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
-      await sendReplyMutation.mutateAsync({ requestId });
+      // First create the conversation
+      const conversationId = await sendReplyMutation.mutateAsync({ requestId });
+      
+      // Then send the actual message
+      if (conversationId && state.replyMessage.trim()) {
+        await sendChatMessageMutation.mutateAsync({
+          conversationId,
+          message: state.replyMessage
+        });
+      }
+      
       state.setReplyingToRequest(null);
       state.setReplyMessage('');
     } catch (error) {

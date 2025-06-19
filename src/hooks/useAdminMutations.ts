@@ -51,7 +51,10 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
           type: updatedData.type,
           amenities: updatedData.amenities,
           images: updatedData.images,
-          is_hot_deal: false
+          is_hot_deal: false,
+          is_approved: true,
+          created_by: profile?.id,
+          owner_id: propertyRequests.find(r => r.id === requestId)?.user_id
         }])
         .select()
         .single();
@@ -182,15 +185,15 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
       queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       toast({
-        title: "Reply sent",
-        description: "Your reply has been sent to the user and a conversation has been created.",
+        title: "Conversation created",
+        description: "A conversation has been created. You can now send your message.",
       });
     },
     onError: (error) => {
       console.error('Send reply error:', error);
       toast({
         title: "Error",
-        description: `Failed to send reply: ${error.message}`,
+        description: `Failed to create conversation: ${error.message}`,
         variant: "destructive",
       });
     },

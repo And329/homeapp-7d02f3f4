@@ -59,9 +59,29 @@ const UserProfile = () => {
         .eq('user_id', user!.id);
 
       if (error) throw error;
+
+      // Also delete the associated property if it was approved
+      const request = userRequests.find(r => r.id === requestId);
+      if (request && request.status === 'approved') {
+        // Find and delete the associated property
+        const { data: properties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('owner_id', user!.id)
+          .eq('title', request.title);
+
+        if (properties && properties.length > 0) {
+          await supabase
+            .from('properties')
+            .delete()
+            .eq('id', properties[0].id)
+            .eq('owner_id', user!.id);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
       toast({
         title: "Listing deleted",
         description: "Your property listing has been deleted successfully.",
