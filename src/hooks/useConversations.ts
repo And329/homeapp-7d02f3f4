@@ -13,6 +13,7 @@ export interface Conversation {
   subject: string;
   last_message_at: string;
   created_at: string;
+  is_admin_support: boolean;
   other_participant?: {
     id: string;
     full_name: string | null;
@@ -62,12 +63,11 @@ export const useConversations = () => {
       // Get participant profiles for better name display
       const participantIds = new Set<string>();
       conversationsData.forEach(conv => {
-        const otherParticipantId = conv.participant_1_id === user.id 
-          ? conv.participant_2_id 
-          : conv.participant_1_id;
-        
-        // Skip admin-support conversations (they don't have real user IDs)
-        if (otherParticipantId !== 'admin-support') {
+        if (!conv.is_admin_support) {
+          // Only fetch profiles for non-admin conversations
+          const otherParticipantId = conv.participant_1_id === user.id 
+            ? conv.participant_2_id 
+            : conv.participant_1_id;
           participantIds.add(otherParticipantId);
         }
       });
@@ -82,7 +82,6 @@ export const useConversations = () => {
 
         if (profilesError) {
           console.error('useConversations: Error fetching profiles:', profilesError);
-          // Continue without profiles rather than failing completely
         } else {
           profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
         }
@@ -95,7 +94,7 @@ export const useConversations = () => {
         
         let otherParticipant = null;
         
-        if (otherParticipantId === 'admin-support') {
+        if (conv.is_admin_support) {
           // Special handling for admin support conversations
           otherParticipant = {
             id: 'admin-support',
@@ -146,31 +145,6 @@ export const useConversations = () => {
 
       if (user.id === otherUserId) {
         throw new Error('Cannot create conversation with yourself');
-      }
-
-      // Special handling for admin support conversations
-      if (otherUserId === 'admin-support') {
-        // For admin support, we create a conversation directly without using the function
-        // since 'admin-support' is not a real user ID
-        const { data: conversation, error } = await supabase
-          .from('conversations')
-          .insert({
-            participant_1_id: user.id,
-            participant_2_id: otherUserId,
-            subject: subject,
-            property_id: propertyId || null,
-            property_request_id: propertyRequestId || null
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('useConversations: Error creating admin conversation:', error);
-          throw error;
-        }
-
-        console.log('useConversations: Created admin conversation:', conversation);
-        return conversation;
       }
 
       // Use the database function for regular user conversations

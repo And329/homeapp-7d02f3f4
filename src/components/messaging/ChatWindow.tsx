@@ -34,7 +34,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   // Handle initial scroll and new messages
   useEffect(() => {
     if (!messagesLoading && messages.length > 0) {
-      // Small delay to ensure DOM is updated
       setTimeout(() => {
         scrollToBottom();
       }, 100);
@@ -67,7 +66,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return profile?.full_name || profile?.email || 'You';
     }
     
-    // Handle admin support messages
+    // Handle admin support messages or other users
     if (otherUserName === 'Admin Support') {
       return 'Admin Support';
     }

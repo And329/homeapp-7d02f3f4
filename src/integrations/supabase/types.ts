@@ -166,6 +166,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_admin_support: boolean | null
           last_message_at: string
           participant_1_id: string
           participant_2_id: string
@@ -176,6 +177,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_admin_support?: boolean | null
           last_message_at?: string
           participant_1_id: string
           participant_2_id: string
@@ -186,6 +188,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_admin_support?: boolean | null
           last_message_at?: string
           participant_1_id?: string
           participant_2_id?: string
@@ -233,6 +236,13 @@ export type Database = {
           sender_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
@@ -525,7 +535,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      conversation_participants: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_admin_support: boolean | null
+          last_message_at: string | null
+          participant_1_id: string | null
+          participant_1_name: string | null
+          participant_2_id: string | null
+          participant_2_name: string | null
+          property_id: string | null
+          property_request_id: string | null
+          subject: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_property_request_id_fkey"
+            columns: ["property_request_id"]
+            isOneToOne: false
+            referencedRelation: "property_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_property_request: {

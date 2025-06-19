@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useConversations } from '@/hooks/useConversations';
+import { useAdminConversations } from '@/hooks/useAdminConversations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle } from 'lucide-react';
@@ -12,8 +12,7 @@ const ADMIN_EMAIL = '329@riseup.net';
 const AdminChat: React.FC = () => {
   const { user, profile } = useAuth();
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const { createConversationAsync } = useConversations();
+  const { createAdminConversation, isCreating } = useAdminConversations();
 
   // Simple admin check
   const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL || profile?.role === 'admin';
@@ -21,23 +20,13 @@ const AdminChat: React.FC = () => {
   const handleStartAdminChat = async () => {
     if (!user) return;
     
-    setIsCreating(true);
     try {
-      console.log('AdminChat: Starting chat with admin support');
-      
-      // Create conversation with a fixed admin user ID approach
-      // We'll use a special subject to identify admin conversations
-      const conversation = await createConversationAsync({
-        otherUserId: 'admin-support', // Special identifier for admin conversations
-        subject: `Admin Support - ${user.email || 'User'}`
-      });
-      
-      console.log('AdminChat: Created admin conversation:', conversation);
+      console.log('AdminChat: Starting admin support conversation');
+      const conversation = await createAdminConversation();
+      console.log('AdminChat: Created conversation:', conversation);
       setConversationId(conversation.id);
     } catch (error) {
       console.error('AdminChat: Failed to start admin chat:', error);
-    } finally {
-      setIsCreating(false);
     }
   };
 
