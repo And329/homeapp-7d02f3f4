@@ -3,11 +3,29 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
 
+interface Property {
+  id: number;
+  title: string;
+  price: number;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  type: 'rent' | 'sale';
+  is_hot_deal: boolean;
+  description: string;
+  created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  amenities: string[] | null;
+  images: string[] | null;
+}
+
 export const useAdminHandlers = (
   queryClient: any,
   sendReplyMutation: any,
-  setReplyingToRequest: (id: string | null) => void,
-  setReplyMessage: (message: string) => void
+  sendChatMessageMutation: any,
+  deleteMutation: any,
+  state: any
 ) => {
   const { toast } = useToast();
 
@@ -17,7 +35,6 @@ export const useAdminHandlers = (
     
     try {
       // Use the database function to approve the request
-      // This function will create the property with the correct owner_id
       const { data, error } = await supabase.rpc('approve_property_request', {
         request_id: request.id
       });
@@ -34,7 +51,6 @@ export const useAdminHandlers = (
         description: "The property request has been approved and the property has been created.",
       });
 
-      // Refresh the requests list
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
     } catch (error) {
@@ -84,17 +100,60 @@ export const useAdminHandlers = (
     
     try {
       await sendReplyMutation.mutateAsync({ requestId });
-      setReplyingToRequest(null);
-      setReplyMessage('');
+      state.setReplyingToRequest(null);
+      state.setReplyMessage('');
     } catch (error) {
       console.error('useAdminHandlers: Failed to send reply:', error);
-      // Error handling is done in the mutation itself
     }
+  };
+
+  const handleEdit = (property: Property) => {
+    state.setEditingProperty(property);
+    state.setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this property?')) {
+      await deleteMutation.mutateAsync(id);
+    }
+  };
+
+  const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
+    console.log('Handling approval submit:', { requestId, updatedData });
+    // Implementation for approval submit if needed
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!state.newMessage.trim() || !state.selectedConversation) return;
+    
+    try {
+      await sendChatMessageMutation.mutateAsync({
+        conversationId: state.selectedConversation,
+        message: state.newMessage
+      });
+      state.setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send chat message:', error);
+    }
+  };
+
+  const handleConversationSelect = (conversation: any) => {
+    state.setSelectedConversation(conversation.id);
+    state.setSelectedChatUserId(
+      conversation.participant_1_id === state.profile?.id 
+        ? conversation.participant_2_id 
+        : conversation.participant_1_id
+    );
   };
 
   return {
     handleApproveRequest,
     handleRejectRequest,
     handleSendReply,
+    handleEdit,
+    handleDelete,
+    handleApprovalSubmit,
+    handleSendChatMessage,
+    handleConversationSelect,
   };
 };

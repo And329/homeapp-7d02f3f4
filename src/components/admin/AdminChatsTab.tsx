@@ -6,28 +6,31 @@ import { Textarea } from '@/components/ui/textarea';
 import { Send, User, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
-import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
+import { useAdminHandlers } from '@/hooks/useAdminHandlers';
+import { useAdminState } from '@/hooks/useAdminState';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AdminChatsTab: React.FC = () => {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const state = useAdminState();
   const mutations = useAdminMutations(profile, []);
   
-  const {
-    selectedConversation,
-    selectedChatUserId,
-    newMessage,
-    setNewMessage,
-    handleConversationSelect,
-    handleSendChatMessage,
-  } = useAdminHandlers(mutations, []);
+  const handlers = useAdminHandlers(
+    queryClient,
+    mutations.sendReplyMutation,
+    mutations.sendChatMessageMutation,
+    mutations.deleteMutation,
+    state
+  );
 
   const {
     conversations,
     messages,
-  } = useAdminQueries(selectedConversation, selectedChatUserId);
+  } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
-  const selectedConv = conversations.find(c => c.id === selectedConversation);
+  const selectedConv = conversations.find(c => c.id === state.selectedConversation);
 
   return (
     <div className="space-y-6">
@@ -38,7 +41,7 @@ const AdminChatsTab: React.FC = () => {
         <CardContent>
           <div className="flex h-96">
             {/* Conversations List */}
-            <div className={`${selectedConversation ? 'hidden lg:block' : 'block'} w-full lg:w-1/3 border-r pr-4`}>
+            <div className={`${state.selectedConversation ? 'hidden lg:block' : 'block'} w-full lg:w-1/3 border-r pr-4`}>
               <div className="space-y-2 h-full overflow-y-auto">
                 {conversations.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
@@ -49,9 +52,9 @@ const AdminChatsTab: React.FC = () => {
                   conversations.map((conversation) => (
                     <div
                       key={conversation.id}
-                      onClick={() => handleConversationSelect(conversation)}
+                      onClick={() => handlers.handleConversationSelect(conversation)}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedConversation === conversation.id 
+                        state.selectedConversation === conversation.id 
                           ? 'bg-primary/10 border-primary' 
                           : 'hover:bg-gray-50'
                       }`}
@@ -79,8 +82,8 @@ const AdminChatsTab: React.FC = () => {
             </div>
 
             {/* Messages Area */}
-            <div className={`${selectedConversation ? 'block' : 'hidden lg:block'} w-full lg:w-2/3 lg:pl-4`}>
-              {selectedConversation ? (
+            <div className={`${state.selectedConversation ? 'block' : 'hidden lg:block'} w-full lg:w-2/3 lg:pl-4`}>
+              {state.selectedConversation ? (
                 <div className="flex flex-col h-full">
                   <div className="border-b pb-2 mb-4">
                     <h3 className="font-medium">
@@ -122,19 +125,19 @@ const AdminChatsTab: React.FC = () => {
                   <div className="flex gap-2">
                     <Textarea
                       placeholder="Type your message as admin..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      value={state.newMessage}
+                      onChange={(e) => state.setNewMessage(e.target.value)}
                       rows={2}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          handleSendChatMessage();
+                          handlers.handleSendChatMessage();
                         }
                       }}
                     />
                     <Button
-                      onClick={handleSendChatMessage}
-                      disabled={!newMessage.trim()}
+                      onClick={handlers.handleSendChatMessage}
+                      disabled={!state.newMessage.trim()}
                     >
                       <Send className="h-4 w-4" />
                     </Button>

@@ -17,10 +17,12 @@ import AdminChatsTab from '@/components/admin/AdminChatsTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
+import { useAdminState } from '@/hooks/useAdminState';
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const state = useAdminState();
 
   const {
     properties,
@@ -34,49 +36,17 @@ const AdminDashboard = () => {
     conversations,
     messages,
     selectedUserRequests,
-  } = useAdminQueries(null, null); // Initialize with null first
+  } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
   const mutations = useAdminMutations(profile, propertyRequests);
 
-  const {
-    // State management
-    isFormOpen,
-    setIsFormOpen,
-    isBlogFormOpen,
-    setIsBlogFormOpen,
-    isNewsFormOpen,
-    setIsNewsFormOpen,
-    isApprovalFormOpen,
-    setIsApprovalFormOpen,
-    editingProperty,
-    setEditingProperty,
-    approvingRequest,
-    setApprovingRequest,
-    showMap,
-    setShowMap,
-    activeTab,
-    setActiveTab,
-    selectedConversation,
-    selectedChatUserId,
-    newMessage,
-    setNewMessage,
-    replyingToRequest,
-    setReplyingToRequest,
-    replyMessage,
-    setReplyMessage,
-    // Handlers
-    handleEdit,
-    handleDelete,
-    handleApproveRequest,
-    handleApprovalSubmit,
-    handleRejectRequest,
-    handleSendReply,
-    handleSendChatMessage,
-    handleConversationSelect,
-  } = useAdminHandlers(mutations, propertyRequests);
-
-  // Update queries with selected chat data
-  const queriesWithChat = useAdminQueries(selectedConversation, selectedChatUserId);
+  const handlers = useAdminHandlers(
+    queryClient,
+    mutations.sendReplyMutation,
+    mutations.sendChatMessageMutation,
+    mutations.deleteMutation,
+    state
+  );
 
   if (!profile || profile.role !== 'admin') {
     return (
@@ -106,102 +76,102 @@ const AdminDashboard = () => {
         <MapboxTokenSettings />
 
         <AdminTabNavigation
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTab={state.activeTab}
+          setActiveTab={state.setActiveTab}
           propertiesCount={properties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
           openChatsCount={conversations.length}
         />
 
-        {activeTab === 'properties' && (
+        {state.activeTab === 'properties' && (
           <AdminPropertiesTab
             properties={properties}
             propertiesLoading={propertiesLoading}
-            showMap={showMap}
-            setShowMap={setShowMap}
+            showMap={state.showMap}
+            setShowMap={state.setShowMap}
             onAddProperty={() => {
-              setEditingProperty(null);
-              setIsFormOpen(true);
+              state.setEditingProperty(null);
+              state.setIsFormOpen(true);
             }}
-            onEditProperty={handleEdit}
-            onDeleteProperty={handleDelete}
+            onEditProperty={handlers.handleEdit}
+            onDeleteProperty={handlers.handleDelete}
           />
         )}
 
-        {activeTab === 'requests' && (
+        {state.activeTab === 'requests' && (
           <AdminRequestsTab
             propertyRequests={propertyRequests}
             requestsLoading={requestsLoading}
-            replyingToRequest={replyingToRequest}
-            replyMessage={replyMessage}
-            setReplyingToRequest={setReplyingToRequest}
-            setReplyMessage={setReplyMessage}
+            replyingToRequest={state.replyingToRequest}
+            replyMessage={state.replyMessage}
+            setReplyingToRequest={state.setReplyingToRequest}
+            setReplyMessage={state.setReplyMessage}
             sendReplyMutation={mutations.sendReplyMutation}
-            onApproveRequest={handleApproveRequest}
-            onRejectRequest={handleRejectRequest}
-            onSendReply={handleSendReply}
+            onApproveRequest={handlers.handleApproveRequest}
+            onRejectRequest={handlers.handleRejectRequest}
+            onSendReply={handlers.handleSendReply}
           />
         )}
 
-        {activeTab === 'content' && (
+        {state.activeTab === 'content' && (
           <AdminContentTab
             blogPosts={blogPosts}
             newsArticles={newsArticles}
             blogLoading={blogLoading}
             newsLoading={newsLoading}
-            onCreateBlogPost={() => setIsBlogFormOpen(true)}
-            onCreateNewsArticle={() => setIsNewsFormOpen(true)}
+            onCreateBlogPost={() => state.setIsBlogFormOpen(true)}
+            onCreateNewsArticle={() => state.setIsNewsFormOpen(true)}
           />
         )}
 
-        {activeTab === 'chats' && (
+        {state.activeTab === 'chats' && (
           <AdminChatsTab />
         )}
       </div>
 
       {/* Modals */}
-      {isFormOpen && (
+      {state.isFormOpen && (
         <PropertyForm
-          property={editingProperty}
+          property={state.editingProperty}
           onClose={() => {
-            setIsFormOpen(false);
-            setEditingProperty(null);
+            state.setIsFormOpen(false);
+            state.setEditingProperty(null);
           }}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
-            setIsFormOpen(false);
-            setEditingProperty(null);
+            state.setIsFormOpen(false);
+            state.setEditingProperty(null);
           }}
         />
       )}
 
-      {isApprovalFormOpen && approvingRequest && (
+      {state.isApprovalFormOpen && state.approvingRequest && (
         <PropertyRequestApprovalForm
-          request={approvingRequest}
+          request={state.approvingRequest}
           onClose={() => {
-            setIsApprovalFormOpen(false);
-            setApprovingRequest(null);
+            state.setIsApprovalFormOpen(false);
+            state.setApprovingRequest(null);
           }}
-          onApprove={handleApprovalSubmit}
+          onApprove={handlers.handleApprovalSubmit}
         />
       )}
 
-      {isBlogFormOpen && (
+      {state.isBlogFormOpen && (
         <BlogPostForm
-          onClose={() => setIsBlogFormOpen(false)}
+          onClose={() => state.setIsBlogFormOpen(false)}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
-            setIsBlogFormOpen(false);
+            state.setIsBlogFormOpen(false);
           }}
         />
       )}
 
-      {isNewsFormOpen && (
+      {state.isNewsFormOpen && (
         <NewsArticleForm
-          onClose={() => setIsNewsFormOpen(false)}
+          onClose={() => state.setIsNewsFormOpen(false)}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['admin-news-articles'] });
-            setIsNewsFormOpen(false);
+            state.setIsNewsFormOpen(false);
           }}
         />
       )}
