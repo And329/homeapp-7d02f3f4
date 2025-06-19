@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -161,6 +160,8 @@ const PropertyDetails = () => {
       <Navbar />
       
       <section className="container mx-auto px-4 py-8">
+        
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           <div className="lg:col-span-3">
             <img

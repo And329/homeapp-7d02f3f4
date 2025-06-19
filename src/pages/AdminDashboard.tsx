@@ -18,7 +18,6 @@ import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
-import { transformDatabaseProperty } from '@/utils/propertyTransform';
 import { Property } from '@/types/property';
 
 const AdminDashboard = () => {
@@ -40,8 +39,16 @@ const AdminDashboard = () => {
     selectedUserRequests,
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
-  // Transform database properties to match the expected Property interface
-  const properties: Property[] = rawProperties;
+  // Transform properties to match AdminPropertiesTab expectations
+  const properties = rawProperties.map(property => ({
+    ...property,
+    is_hot_deal: property.isHotDeal || false,
+    latitude: property.coordinates?.lat || null,
+    longitude: property.coordinates?.lng || null,
+    area: property.area || 1000,
+    image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
+    propertyType: property.propertyType || 'Apartment'
+  }));
 
   const mutations = useAdminMutations(profile, propertyRequests);
 
@@ -54,12 +61,38 @@ const AdminDashboard = () => {
   );
 
   // Updated handlers to work with transformed properties and string IDs
-  const handleEdit = (property: Property) => {
-    handlers.handleEdit(property);
+  const handleEdit = (property: any) => {
+    // Convert back to Property type for editing
+    const propertyForEdit: Property = {
+      id: property.id,
+      title: property.title,
+      price: property.price,
+      location: property.location,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area,
+      image: property.image,
+      images: property.images,
+      type: property.type,
+      isHotDeal: property.is_hot_deal,
+      description: property.description,
+      amenities: property.amenities,
+      coordinates: {
+        lat: property.latitude || 0,
+        lng: property.longitude || 0
+      },
+      propertyType: property.propertyType,
+      yearBuilt: property.yearBuilt,
+      parking: property.parking,
+      owner_id: property.owner_id,
+      is_approved: property.is_approved,
+      created_at: property.created_at
+    };
+    handlers.handleEdit(propertyForEdit);
   };
 
-  const handleDelete = async (id: string) => {
-    await handlers.handleDelete(id);
+  const handleDelete = async (id: any) => {
+    await handlers.handleDelete(String(id));
   };
 
   if (!profile || profile.role !== 'admin') {
