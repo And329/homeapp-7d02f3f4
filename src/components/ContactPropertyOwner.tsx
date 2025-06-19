@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UnifiedChat from './UnifiedChat';
 
 interface ContactPropertyOwnerProps {
-  propertyId?: number;
+  propertyId?: string; // Changed from number to string
   propertyRequestId?: string;
   ownerId: string;
   propertyTitle: string;

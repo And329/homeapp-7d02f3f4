@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -11,6 +10,16 @@ import { getPropertyById } from '../data/properties';
 import { updatePropertyOwner } from '../api/properties';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+
+interface MapProperty {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  type: 'rent' | 'sale';
+  latitude: number;
+  longitude: number;
+}
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -136,8 +145,8 @@ const PropertyDetails = () => {
   const coords = getCoordinates();
 
   // Create map properties with string IDs to match PropertyMap interface
-  const mapProperties = coords ? [{
-    id: property.id, // Keep as string
+  const mapProperties: MapProperty[] = coords ? [{
+    id: property.id,
     title: property.title,
     location: property.location,
     price: property.price,
@@ -272,7 +281,7 @@ const PropertyDetails = () => {
               {coords ? (
                 <PropertyMap
                   properties={mapProperties}
-                  selectedPropertyId={property.id} // Keep as string
+                  selectedPropertyId={property.id}
                   height="400px"
                 />
               ) : (

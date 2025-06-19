@@ -19,6 +19,7 @@ import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
+import { Property } from '@/types/property';
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
@@ -40,7 +41,7 @@ const AdminDashboard = () => {
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
   // Transform database properties to match the expected Property interface
-  const properties = rawProperties.map(transformDatabaseProperty);
+  const properties: Property[] = rawProperties.map(transformDatabaseProperty);
 
   const mutations = useAdminMutations(profile, propertyRequests);
 
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
   );
 
   // Updated handlers to work with transformed properties and string IDs
-  const handleEdit = (property: any) => {
+  const handleEdit = (property: Property) => {
     // Convert back to database format for editing
     const dbProperty = {
       ...property,

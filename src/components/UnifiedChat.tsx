@@ -13,14 +13,47 @@ import { cn } from '@/lib/utils';
 
 interface UnifiedChatProps {
   className?: string;
+  propertyId?: string;
+  propertyRequestId?: string;
+  otherUserId?: string;
+  propertyTitle?: string;
+  onClose?: () => void;
 }
 
-const UnifiedChat: React.FC<UnifiedChatProps> = ({ className }) => {
+const UnifiedChat: React.FC<UnifiedChatProps> = ({ 
+  className,
+  propertyId,
+  propertyRequestId,
+  otherUserId,
+  propertyTitle,
+  onClose
+}) => {
   const { user } = useAuth();
-  const { conversations, conversationsLoading } = useConversations();
+  const { conversations, conversationsLoading, createConversationAsync } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(selectedConversationId);
+
+  // If specific conversation parameters are provided, create or find the conversation
+  React.useEffect(() => {
+    if (otherUserId && propertyTitle && user) {
+      const initializeConversation = async () => {
+        try {
+          const conversation = await createConversationAsync({
+            otherUserId,
+            propertyId,
+            propertyRequestId,
+            subject: propertyTitle
+          });
+          setSelectedConversationId(conversation.id);
+        } catch (error) {
+          console.error('Failed to initialize conversation:', error);
+        }
+      };
+      
+      initializeConversation();
+    }
+  }, [otherUserId, propertyId, propertyRequestId, propertyTitle, user, createConversationAsync]);
 
   // Get property details for conversations
   const { data: properties = [] } = useQuery({
@@ -73,12 +106,12 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({ className }) => {
 
   const getConversationTitle = (conversation: any) => {
     if (conversation.property_id) {
-      const property = properties.find(p => p.id === conversation.property_id); // Both are strings now
+      const property = properties.find(p => p.id === conversation.property_id);
       return property ? `Property: ${property.title}` : conversation.subject;
     }
     
     if (conversation.property_request_id) {
-      const request = propertyRequests.find(r => r.id === conversation.property_request_id); // Both are strings now
+      const request = propertyRequests.find(r => r.id === conversation.property_request_id);
       return request ? `Request: ${request.title}` : conversation.subject;
     }
     
@@ -108,11 +141,16 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({ className }) => {
   return (
     <Card className={cn("h-full flex", className)}>
       <div className="w-1/3 border-r">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             Conversations
           </CardTitle>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              ×
+            </Button>
+          )}
         </CardHeader>
         <ScrollArea className="h-[calc(100%-80px)]">
           {conversations.length === 0 ? (

@@ -32,8 +32,8 @@ const Properties = () => {
     },
   });
 
-  // Now rawProperties are already transformed to the correct Property interface
-  const properties = rawProperties;
+  // Explicitly type the properties as Property array
+  const properties: Property[] = rawProperties;
 
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
