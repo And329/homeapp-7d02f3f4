@@ -62,7 +62,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       console.log('PropertyCard: Creating conversation...');
       await createConversationAsync({
         otherUserId: property.owner_id,
-        propertyId: typeof property.id === 'number' ? property.id : parseInt(property.id),
+        propertyId: property.id, // Keep as string, no conversion needed
         subject: `Inquiry about: ${property.title}`
       });
       

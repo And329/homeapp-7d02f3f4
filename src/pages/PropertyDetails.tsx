@@ -135,8 +135,9 @@ const PropertyDetails = () => {
 
   const coords = getCoordinates();
 
+  // Create map properties with string IDs to match PropertyMap interface
   const mapProperties = coords ? [{
-    id: property.id, // Changed from parseInt(property.id) to property.id (string)
+    id: property.id, // Keep as string
     title: property.title,
     location: property.location,
     price: property.price,
@@ -271,7 +272,7 @@ const PropertyDetails = () => {
               {coords ? (
                 <PropertyMap
                   properties={mapProperties}
-                  selectedPropertyId={property.id} // Changed from parseInt(property.id) to property.id (string)
+                  selectedPropertyId={property.id} // Keep as string
                   height="400px"
                 />
               ) : (

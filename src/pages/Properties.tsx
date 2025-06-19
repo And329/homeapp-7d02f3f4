@@ -18,7 +18,7 @@ const Properties = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const navigate = useNavigate();
 
-  const { data: properties = [], isLoading } = useQuery({
+  const { data: rawProperties = [], isLoading } = useQuery({
     queryKey: ['properties'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,6 +31,9 @@ const Properties = () => {
       return (data || []).map(transformDatabaseProperty);
     },
   });
+
+  // Now rawProperties are already transformed to the correct Property interface
+  const properties = rawProperties;
 
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

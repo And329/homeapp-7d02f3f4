@@ -18,6 +18,7 @@ import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
+import { transformDatabaseProperty } from '@/utils/propertyTransform';
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
@@ -25,7 +26,7 @@ const AdminDashboard = () => {
   const state = useAdminState();
 
   const {
-    properties,
+    properties: rawProperties,
     propertiesLoading,
     propertyRequests,
     requestsLoading,
@@ -38,6 +39,9 @@ const AdminDashboard = () => {
     selectedUserRequests,
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
+  // Transform database properties to match the expected Property interface
+  const properties = rawProperties.map(transformDatabaseProperty);
+
   const mutations = useAdminMutations(profile, propertyRequests);
 
   const handlers = useAdminHandlers(
@@ -47,6 +51,22 @@ const AdminDashboard = () => {
     mutations.deleteMutation,
     state
   );
+
+  // Updated handlers to work with transformed properties and string IDs
+  const handleEdit = (property: any) => {
+    // Convert back to database format for editing
+    const dbProperty = {
+      ...property,
+      is_hot_deal: property.isHotDeal,
+      latitude: property.coordinates?.lat,
+      longitude: property.coordinates?.lng,
+    };
+    handlers.handleEdit(dbProperty);
+  };
+
+  const handleDelete = async (id: string) => {
+    await handlers.handleDelete(id);
+  };
 
   if (!profile || profile.role !== 'admin') {
     return (
@@ -93,8 +113,8 @@ const AdminDashboard = () => {
               state.setEditingProperty(null);
               state.setIsFormOpen(true);
             }}
-            onEditProperty={handlers.handleEdit}
-            onDeleteProperty={handlers.handleDelete}
+            onEditProperty={handleEdit}
+            onDeleteProperty={handleDelete}
           />
         )}
 
