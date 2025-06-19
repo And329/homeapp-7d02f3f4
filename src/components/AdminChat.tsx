@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
@@ -10,96 +10,40 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const AdminChat: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
-  const { user } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  // Get current user's profile to check if they are admin
-  const { data: currentUserProfile } = useQuery({
-    queryKey: ['current-user-profile', user?.id],
+  // Get admin users from the database
+  const { data: adminUsers = [], isLoading: loadingAdmins, error: adminError } = useQuery({
+    queryKey: ['admin-users'],
     queryFn: async () => {
-      if (!user) return null;
+      console.log('AdminChat: Fetching admin users...');
       
-      console.log('AdminChat: Checking current user profile for:', user.id);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, role, email')
-        .eq('id', user.id)
-        .single();
+        .select('id, full_name, email, role')
+        .eq('role', 'admin');
 
       if (error) {
-        console.error('AdminChat: Error fetching current user profile:', error);
-        return null;
+        console.error('AdminChat: Error fetching admin users:', error);
+        throw error;
       }
-      
-      console.log('AdminChat: Current user profile:', data);
-      return data;
+
+      console.log('AdminChat: Found admin users:', data);
+      return data || [];
     },
     enabled: !!user,
   });
 
-  // Get admin users from the database - with comprehensive debugging
-  const { data: adminUsers = [], isLoading: loadingAdmins, error: adminError } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: async () => {
-      console.log('AdminChat: Starting admin users query...');
-      
-      try {
-        // First check what's in the profiles table
-        const { data: allProfiles, error: allError } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, email');
-        
-        console.log('AdminChat: All profiles query result:', { data: allProfiles, error: allError });
-        
-        if (allError) {
-          console.error('AdminChat: Error fetching all profiles:', allError);
-          throw new Error(`Failed to fetch profiles: ${allError.message}`);
-        }
+  // Find available admin for chat
+  const availableAdmin = profile?.role === 'admin' 
+    ? adminUsers.find(admin => admin.id !== user?.id)
+    : adminUsers[0];
 
-        if (!allProfiles || allProfiles.length === 0) {
-          console.warn('AdminChat: No profiles found in database');
-          return [];
-        }
-
-        // Log all profiles and their roles
-        console.log('AdminChat: All profiles in database:', allProfiles);
-        console.log('AdminChat: Profiles by role:', allProfiles.reduce((acc, profile) => {
-          const role = profile.role || 'null';
-          acc[role] = (acc[role] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>));
-
-        // Look for admin users specifically
-        const adminProfiles = allProfiles.filter(profile => {
-          const isAdmin = profile.role === 'admin';
-          if (isAdmin) {
-            console.log('AdminChat: Found admin user:', profile);
-          }
-          return isAdmin;
-        });
-
-        console.log('AdminChat: Found admin users:', adminProfiles);
-        return adminProfiles;
-        
-      } catch (error) {
-        console.error('AdminChat: Query failed with error:', error);
-        throw error;
-      }
-    },
-  });
-
-  // If current user is admin, find other admins. Otherwise, use any admin.
-  const availableAdmins = currentUserProfile?.role === 'admin' 
-    ? adminUsers.filter(admin => admin.id !== user?.id)
-    : adminUsers;
-
-  const adminUser = availableAdmins.length > 0 ? availableAdmins[0] : null;
-
-  console.log('AdminChat: Final state:', {
-    currentUserRole: currentUserProfile?.role,
-    totalAdminUsers: adminUsers.length,
-    availableAdmins: availableAdmins.length,
-    selectedAdmin: adminUser?.id,
-    adminError: adminError?.message
+  console.log('AdminChat: Current state:', {
+    userRole: profile?.role,
+    totalAdmins: adminUsers.length,
+    availableAdmin: availableAdmin?.id,
+    loading: loading || loadingAdmins
   });
 
   if (!user) {
@@ -123,7 +67,7 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  if (loadingAdmins) {
+  if (loading || loadingAdmins) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -135,7 +79,7 @@ const AdminChat: React.FC = () => {
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-3">Loading admin users...</span>
+            <span className="ml-3">Loading...</span>
           </div>
         </CardContent>
       </Card>
@@ -152,20 +96,15 @@ const AdminChat: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <p className="text-red-600">
-              Error loading admin users: {adminError.message}
-            </p>
-            <p className="text-sm text-gray-500">
-              Please try refreshing the page or contact support.
-            </p>
-          </div>
+          <p className="text-red-600 mb-4">
+            Error loading admin users. Please try again later.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  if (!adminUser) {
+  if (!availableAdmin) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -175,30 +114,14 @@ const AdminChat: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <p className="text-gray-600">
-              {currentUserProfile?.role === 'admin' 
-                ? "You are an admin user. No other admin users are currently available for chat."
-                : "No admin users are currently available. Please try again later or contact us through other means."
-              }
-            </p>
-            <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded">
-              <p className="font-semibold mb-2">Debug info:</p>
-              <p>Total admin users found: {adminUsers.length}</p>
-              <p>Your role: {currentUserProfile?.role || 'unknown'}</p>
-              <p>Your user ID: {user?.id}</p>
-              <p>Available admins for chat: {availableAdmins.length}</p>
-              {adminUsers.length > 0 && (
-                <div className="mt-2">
-                  <p className="font-medium">Admin users in database:</p>
-                  {adminUsers.map((admin, index) => (
-                    <p key={admin.id} className="ml-2">
-                      {index + 1}. {admin.full_name || admin.email || admin.id} (Role: {admin.role})
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
+          <p className="text-gray-600 mb-4">
+            {profile?.role === 'admin' 
+              ? "No other admin users are currently available for chat."
+              : "No admin users are currently available. Please try again later."
+            }
+          </p>
+          <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded">
+            <p>Debug: Found {adminUsers.length} admin users total</p>
           </div>
         </CardContent>
       </Card>
@@ -209,7 +132,7 @@ const AdminChat: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto">
         <UnifiedChat
-          otherUserId={adminUser.id}
+          otherUserId={availableAdmin.id}
           propertyTitle="General Support"
           onClose={() => setShowChat(false)}
           className="h-[600px]"
@@ -240,7 +163,7 @@ const AdminChat: React.FC = () => {
           size="lg"
         >
           <MessageCircle className="h-5 w-5" />
-          <span>Start Chat with {adminUser.full_name || adminUser.email || 'Admin'}</span>
+          <span>Start Chat with {availableAdmin.full_name || availableAdmin.email || 'Admin'}</span>
         </Button>
         
         <p className="text-xs text-gray-500 text-center">

@@ -5,9 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
   id: string;
-  email: string;
-  full_name: string;
+  email: string | null;
+  full_name: string | null;
   role: 'admin' | 'user';
+  profile_picture?: string | null;
 }
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,69 +39,122 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
+      console.log('AuthContext: Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name, role, profile_picture')
         .eq('id', userId)
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching profile:', error);
-        return;
+        console.error('AuthContext: Error fetching profile:', error);
+        return null;
       }
 
-      if (data) {
-        setProfile({
-          id: data.id,
-          email: data.email,
-          full_name: data.full_name,
-          role: data.role as 'admin' | 'user'
-        });
+      if (!data) {
+        console.log('AuthContext: No profile found, creating one for user:', userId);
+        
+        // Create profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: user?.email || null,
+            full_name: user?.user_metadata?.full_name || null,
+            role: 'user'
+          })
+          .select('id, email, full_name, role, profile_picture')
+          .single();
+
+        if (createError) {
+          console.error('AuthContext: Error creating profile:', createError);
+          return null;
+        }
+
+        console.log('AuthContext: Created new profile:', newProfile);
+        return newProfile as Profile;
       }
+      
+      console.log('AuthContext: Found existing profile:', data);
+      return data as Profile;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('AuthContext: Exception fetching profile:', error);
+      return null;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
     }
   };
 
   useEffect(() => {
+    console.log('AuthContext: Setting up auth state listener');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session);
+        console.log('AuthContext: Auth state changed:', event, !!session?.user);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetch to avoid potential auth deadlock
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
+          // Fetch profile after a short delay to avoid auth deadlock
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+            setLoading(false);
+          }, 100);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      
-      setLoading(false);
-    });
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('AuthContext: Error getting session:', error);
+          setLoading(false);
+          return;
+        }
 
-    return () => subscription.unsubscribe();
+        if (session?.user) {
+          console.log('AuthContext: Found existing session for user:', session.user.id);
+          setSession(session);
+          setUser(session.user);
+          
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('AuthContext: Exception getting initial session:', error);
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    return () => {
+      console.log('AuthContext: Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log('AuthContext: Signing in user:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -108,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    console.log('AuthContext: Signing up user:', email);
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -124,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    console.log('AuthContext: Signing out user');
     await supabase.auth.signOut();
     setProfile(null);
   };
@@ -139,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     loading,
     isAdmin,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

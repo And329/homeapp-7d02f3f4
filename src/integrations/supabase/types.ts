@@ -532,6 +532,16 @@ export type Database = {
         Args: { request_id: string }
         Returns: string
       }
+      create_conversation: {
+        Args: {
+          p_participant_1_id: string
+          p_participant_2_id: string
+          p_subject?: string
+          p_property_id?: string
+          p_property_request_id?: string
+        }
+        Returns: string
+      }
       delete_setting: {
         Args: { setting_key: string }
         Returns: undefined

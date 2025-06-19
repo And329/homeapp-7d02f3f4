@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Conversation {
   id: string;
-  property_id: string | null; // Changed from number | null to string | null
+  property_id: string | null;
   property_request_id: string | null;
   participant_1_id: string;
   participant_2_id: string;
@@ -53,7 +53,11 @@ export const useConversations = () => {
         throw error;
       }
 
-      console.log('useConversations: Fetched conversations:', conversationsData);
+      console.log('useConversations: Fetched conversations:', conversationsData?.length || 0);
+
+      if (!conversationsData || conversationsData.length === 0) {
+        return [];
+      }
 
       // Get participant profiles
       const participantIds = new Set<string>();
@@ -77,7 +81,7 @@ export const useConversations = () => {
 
       if (profilesError) {
         console.error('useConversations: Error fetching profiles:', profilesError);
-        throw profilesError;
+        // Continue without profiles rather than failing completely
       }
 
       const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -92,7 +96,7 @@ export const useConversations = () => {
     enabled: !!user,
   });
 
-  // Create or find conversation
+  // Create or find conversation using the database function
   const createConversationMutation = useMutation({
     mutationFn: async ({ 
       otherUserId, 
@@ -101,7 +105,7 @@ export const useConversations = () => {
       subject 
     }: {
       otherUserId: string;
-      propertyId?: string; // Changed from number to string
+      propertyId?: string;
       propertyRequestId?: string;
       subject: string;
     }) => {
@@ -115,53 +119,38 @@ export const useConversations = () => {
         subject
       });
 
-      // Prevent users from creating conversations with themselves
       if (user.id === otherUserId) {
-        console.error('useConversations: Cannot create conversation with self');
         throw new Error('Cannot create conversation with yourself');
       }
 
-      // Check if conversation already exists
-      let query = supabase
-        .from('conversations')
-        .select('*')
-        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherUserId}),and(participant_1_id.eq.${otherUserId},participant_2_id.eq.${user.id})`);
-
-      if (propertyId) {
-        query = query.eq('property_id', propertyId);
-      }
-      if (propertyRequestId) {
-        query = query.eq('property_request_id', propertyRequestId);
-      }
-
-      const { data: existing } = await query.maybeSingle();
-
-      if (existing) {
-        console.log('useConversations: Found existing conversation:', existing);
-        return existing;
-      }
-
-      // Create new conversation
-      console.log('useConversations: Creating new conversation');
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert({
-          participant_1_id: user.id,
-          participant_2_id: otherUserId,
-          property_id: propertyId || null,
-          property_request_id: propertyRequestId || null,
-          subject
-        })
-        .select()
-        .single();
+      // Use the database function
+      const { data: conversationId, error } = await supabase.rpc('create_conversation', {
+        p_participant_1_id: user.id,
+        p_participant_2_id: otherUserId,
+        p_subject: subject,
+        p_property_id: propertyId || null,
+        p_property_request_id: propertyRequestId || null
+      });
 
       if (error) {
         console.error('useConversations: Error creating conversation:', error);
         throw error;
       }
 
-      console.log('useConversations: Created new conversation:', data);
-      return data;
+      // Fetch the conversation details
+      const { data: conversation, error: fetchError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+
+      if (fetchError) {
+        console.error('useConversations: Error fetching created conversation:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('useConversations: Created conversation:', conversation);
+      return conversation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -209,7 +198,7 @@ export const useMessages = (conversationId: string | null) => {
         throw error;
       }
 
-      console.log('useMessages: Fetched messages:', data);
+      console.log('useMessages: Fetched messages:', data?.length || 0);
       return data as Message[];
     },
     enabled: !!conversationId,
@@ -220,7 +209,7 @@ export const useMessages = (conversationId: string | null) => {
     mutationFn: async ({ content }: { content: string }) => {
       if (!conversationId || !user) throw new Error('Invalid conversation or user');
 
-      console.log('useMessages: Sending message:', { conversationId, content });
+      console.log('useMessages: Sending message');
 
       const { error } = await supabase
         .from('messages')
@@ -234,8 +223,6 @@ export const useMessages = (conversationId: string | null) => {
         console.error('useMessages: Error sending message:', error);
         throw error;
       }
-
-      console.log('useMessages: Message sent successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
