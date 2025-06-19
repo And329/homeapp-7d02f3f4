@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { MessageCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import UserChat from './UserChat';
+import UnifiedChat from './UnifiedChat';
 
 interface ContactPropertyOwnerProps {
   propertyId?: number;
@@ -22,30 +22,19 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
   ownerId,
   propertyTitle,
   contactName,
-  contactEmail,
-  contactPhone,
   ownerProfilePicture
 }) => {
   const [showChat, setShowChat] = useState(false);
 
-  console.log('ContactPropertyOwner props:', {
-    propertyId,
-    propertyRequestId,
-    ownerId,
-    propertyTitle,
-    contactName,
-    contactEmail,
-    contactPhone
-  });
-
   if (showChat) {
     return (
-      <UserChat
+      <UnifiedChat
         propertyId={propertyId}
         propertyRequestId={propertyRequestId}
-        ownerId={ownerId}
+        otherUserId={ownerId}
         propertyTitle={propertyTitle}
         onClose={() => setShowChat(false)}
+        className="sticky top-24"
       />
     );
   }
@@ -79,10 +68,7 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
         </div>
 
         <Button
-          onClick={() => {
-            console.log('Starting chat with owner:', ownerId);
-            setShowChat(true);
-          }}
+          onClick={() => setShowChat(true)}
           className="w-full flex items-center justify-center space-x-2"
           size="lg"
         >

@@ -60,36 +60,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_chats: {
-        Row: {
-          admin_id: string | null
-          created_at: string
-          id: string
-          status: string
-          subject: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          admin_id?: string | null
-          created_at?: string
-          id?: string
-          status?: string
-          subject: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          admin_id?: string | null
-          created_at?: string
-          id?: string
-          status?: string
-          subject?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       admin_news_articles: {
         Row: {
           author_id: string
@@ -192,34 +162,82 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_messages: {
+      conversations: {
         Row: {
-          chat_id: string
           created_at: string
           id: string
-          message: string
+          last_message_at: string
+          participant_1_id: string
+          participant_2_id: string
+          property_id: number | null
+          property_request_id: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          participant_1_id: string
+          participant_2_id: string
+          property_id?: number | null
+          property_request_id?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          participant_1_id?: string
+          participant_2_id?: string
+          property_id?: number | null
+          property_request_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_property_request_id_fkey"
+            columns: ["property_request_id"]
+            isOneToOne: false
+            referencedRelation: "property_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
           sender_id: string
         }
         Insert: {
-          chat_id: string
+          content: string
+          conversation_id: string
           created_at?: string
           id?: string
-          message: string
           sender_id: string
         }
         Update: {
-          chat_id?: string
+          content?: string
+          conversation_id?: string
           created_at?: string
           id?: string
-          message?: string
           sender_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "chat_messages_chat_id_fkey"
-            columns: ["chat_id"]
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: "admin_chats"
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -359,38 +377,6 @@ export type Database = {
         }
         Relationships: []
       }
-      property_request_replies: {
-        Row: {
-          admin_id: string
-          created_at: string
-          id: string
-          message: string
-          request_id: string
-        }
-        Insert: {
-          admin_id: string
-          created_at?: string
-          id?: string
-          message: string
-          request_id: string
-        }
-        Update: {
-          admin_id?: string
-          created_at?: string
-          id?: string
-          message?: string
-          request_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "property_request_replies_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "property_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       property_requests: {
         Row: {
           amenities: Json | null
@@ -492,89 +478,6 @@ export type Database = {
           value?: string
         }
         Relationships: []
-      }
-      user_chat_messages: {
-        Row: {
-          chat_id: string
-          created_at: string
-          id: string
-          message: string
-          sender_id: string
-        }
-        Insert: {
-          chat_id: string
-          created_at?: string
-          id?: string
-          message: string
-          sender_id: string
-        }
-        Update: {
-          chat_id?: string
-          created_at?: string
-          id?: string
-          message?: string
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_chat_messages_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "user_chats"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_chats: {
-        Row: {
-          created_at: string
-          id: string
-          owner_id: string
-          property_id: number | null
-          property_request_id: string | null
-          requester_id: string
-          status: string
-          subject: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          owner_id: string
-          property_id?: number | null
-          property_request_id?: string | null
-          requester_id: string
-          status?: string
-          subject: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          owner_id?: string
-          property_id?: number | null
-          property_request_id?: string | null
-          requester_id?: string
-          status?: string
-          subject?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_chats_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_chats_property_request_id_fkey"
-            columns: ["property_request_id"]
-            isOneToOne: false
-            referencedRelation: "property_requests"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
