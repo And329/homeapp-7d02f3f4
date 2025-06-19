@@ -67,24 +67,44 @@ const AdminChatsTab: React.FC<AdminChatsTabProps> = ({
   onChatSelect,
   onSendChatMessage,
 }) => {
-  // Fetch user-to-user chats
+  // Fetch user-to-user chats with profile information
   const { data: userChats = [] } = useQuery({
     queryKey: ['user-chats-admin'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get the user chats
+      const { data: chatsData, error: chatsError } = await supabase
         .from('user_chats')
-        .select(`
-          *,
-          requester:profiles!user_chats_requester_id_fkey(full_name, email),
-          owner:profiles!user_chats_owner_id_fkey(full_name, email)
-        `)
+        .select('*')
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
-      return data as (UserChat & {
-        requester: { full_name: string; email: string };
-        owner: { full_name: string; email: string };
-      })[];
+      if (chatsError) throw chatsError;
+
+      // Then get profile information for all unique user IDs
+      const userIds = new Set<string>();
+      chatsData.forEach(chat => {
+        userIds.add(chat.requester_id);
+        userIds.add(chat.owner_id);
+      });
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', Array.from(userIds));
+
+      if (profilesError) throw profilesError;
+
+      // Create a profiles map for quick lookup
+      const profilesMap = new Map();
+      profiles.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Combine chats with profile data
+      return chatsData.map(chat => ({
+        ...chat,
+        requester: profilesMap.get(chat.requester_id) || { full_name: 'Unknown User', email: 'N/A' },
+        owner: profilesMap.get(chat.owner_id) || { full_name: 'Unknown User', email: 'N/A' }
+      }));
     },
   });
 
