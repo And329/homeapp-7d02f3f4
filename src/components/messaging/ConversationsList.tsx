@@ -21,7 +21,7 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
 
   if (!user) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardContent className="flex items-center justify-center py-8">
           <p className="text-gray-500">Please sign in to view conversations</p>
         </CardContent>
@@ -31,7 +31,7 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
 
   if (conversationsLoading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
@@ -50,7 +50,7 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
 
   if (conversations.length === 0) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
@@ -69,14 +69,14 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0 py-3 px-4">
+        <CardTitle className="flex items-center space-x-2 text-lg">
           <MessageCircle className="h-5 w-5" />
           <span>Conversations ({conversations.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="flex-1 overflow-y-auto p-2 space-y-1">
         {conversations.map((conversation) => {
           const otherUserId = conversation.participant_1_id === user.id 
             ? conversation.participant_2_id 
@@ -104,8 +104,8 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{displayName}</div>
-                  <div className="text-sm opacity-75 truncate">{conversation.subject}</div>
+                  <div className="font-medium truncate text-sm">{displayName}</div>
+                  <div className="text-xs opacity-75 truncate">{conversation.subject}</div>
                   <div className="text-xs opacity-50">
                     {new Date(conversation.last_message_at).toLocaleDateString()}
                   </div>
