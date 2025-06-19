@@ -110,13 +110,13 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   
   console.log('API: Current user for property creation:', user);
   
-  // Ensure owner_id is set to current user
+  // Ensure owner_id is set to current user - this is critical!
   const propertyWithOwner = {
     ...propertyData,
-    owner_id: user.id
+    owner_id: user.id // Force set the owner_id to current user
   };
   
-  console.log('API: Property data with owner_id:', propertyWithOwner);
+  console.log('API: Property data with owner_id set:', propertyWithOwner);
   
   const { data, error } = await supabase
     .from('properties')
@@ -129,8 +129,24 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     throw error;
   }
 
-  console.log('API: Property created successfully:', data);
+  console.log('API: Property created successfully with owner_id:', data);
   return transformDatabaseProperty(data);
+};
+
+export const updatePropertyOwner = async (propertyId: number, ownerId: string): Promise<void> => {
+  console.log('API: Updating property owner:', { propertyId, ownerId });
+  
+  const { error } = await supabase
+    .from('properties')
+    .update({ owner_id: ownerId })
+    .eq('id', propertyId);
+
+  if (error) {
+    console.error('API: Error updating property owner:', error);
+    throw error;
+  }
+
+  console.log('API: Property owner updated successfully');
 };
 
 export const deleteProperty = async (id: number): Promise<void> => {

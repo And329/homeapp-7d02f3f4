@@ -31,7 +31,7 @@ const PropertyDetails = () => {
   console.log('PropertyDetails: Loading state:', isLoading);
   console.log('PropertyDetails: Error state:', error);
 
-  // Get property owner profile for contact information with additional debugging
+  // Get property owner profile for contact information
   const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
     queryKey: ['property-owner', property?.owner_id],
     queryFn: async () => {
@@ -42,14 +42,6 @@ const PropertyDetails = () => {
       
       console.log('PropertyDetails: Fetching owner profile for ID:', property.owner_id);
       
-      // First, let's check if this owner exists in auth.users (we can't query it directly, but we can check profiles)
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      console.log('PropertyDetails: All profiles in database:', allProfiles);
-      if (profilesError) console.error('PropertyDetails: Error fetching all profiles:', profilesError);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, profile_picture')
@@ -58,13 +50,7 @@ const PropertyDetails = () => {
 
       if (error) {
         console.error('PropertyDetails: Error fetching owner profile:', error);
-        // Return a minimal profile object even if the query fails
-        return {
-          id: property.owner_id,
-          full_name: null,
-          email: null,
-          profile_picture: null
-        };
+        return null;
       }
       
       console.log('PropertyDetails: Owner profile data:', data);
@@ -73,37 +59,26 @@ const PropertyDetails = () => {
     enabled: !!property?.owner_id,
   });
 
-  // Additional debug query to check property-user relationship
-  const { data: debugData } = useQuery({
-    queryKey: ['debug-property-owner', property?.id, property?.owner_id],
+  // Debug query to check all profiles and find potential owner matches
+  const { data: debugProfiles } = useQuery({
+    queryKey: ['debug-all-profiles'],
     queryFn: async () => {
-      if (!property?.id || !property?.owner_id) return null;
+      console.log('PropertyDetails: Fetching all profiles for debugging');
       
-      console.log('PropertyDetails: Debug - Checking property-owner relationship');
-      
-      // Get property details directly from database
-      const { data: dbProperty, error: propError } = await supabase
-        .from('properties')
+      const { data, error } = await supabase
+        .from('profiles')
         .select('*')
-        .eq('id', parseInt(property.id))
-        .single();
+        .order('created_at', { ascending: false });
       
-      console.log('PropertyDetails: Database property data:', dbProperty);
-      if (propError) console.error('PropertyDetails: Error fetching property from DB:', propError);
+      if (error) {
+        console.error('PropertyDetails: Error fetching all profiles:', error);
+        return [];
+      }
       
-      // Check all properties and their owners
-      const { data: allProperties, error: allPropsError } = await supabase
-        .from('properties')
-        .select('id, title, owner_id')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      console.log('PropertyDetails: Recent properties in database:', allProperties);
-      if (allPropsError) console.error('PropertyDetails: Error fetching all properties:', allPropsError);
-      
-      return { dbProperty, allProperties };
+      console.log('PropertyDetails: All profiles in system:', data);
+      return data;
     },
-    enabled: !!property?.id && !!property?.owner_id,
+    enabled: !!property && !property.owner_id, // Only run when property has no owner
   });
 
   if (isLoading) {
@@ -211,11 +186,25 @@ const PropertyDetails = () => {
           <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
             <h3 className="font-semibold text-yellow-800">Debug Information:</h3>
             <p><strong>Property ID:</strong> {property.id}</p>
-            <p><strong>Property Owner ID:</strong> {property.owner_id || 'Not set'}</p>
+            <p><strong>Property Owner ID:</strong> {property.owner_id || 'NULL - This is the problem!'}</p>
             <p><strong>Current User ID:</strong> {user?.id || 'Not logged in'}</p>
+            <p><strong>Current User Email:</strong> {user?.email || 'Not logged in'}</p>
             <p><strong>Owner Profile Loaded:</strong> {ownerProfile ? 'Yes' : 'No'}</p>
             {ownerProfile && (
-              <p><strong>Owner Email:</strong> {ownerProfile.email || 'Not available'}</p>
+              <div>
+                <p><strong>Owner Email:</strong> {ownerProfile.email || 'Not available'}</p>
+                <p><strong>Owner Name:</strong> {ownerProfile.full_name || 'Not available'}</p>
+              </div>
+            )}
+            {debugProfiles && debugProfiles.length > 0 && (
+              <div className="mt-2">
+                <p><strong>All Profiles in System:</strong></p>
+                {debugProfiles.map((profile: any) => (
+                  <div key={profile.id} className="text-sm">
+                    - {profile.email} (ID: {profile.id}) - {profile.full_name}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -392,9 +381,18 @@ const PropertyDetails = () => {
               </div>
             ) : (
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
-                <p className="text-gray-600">No owner information available for this property.</p>
-                <p className="text-sm text-gray-500 mt-2">Property owner ID: {property.owner_id || 'Not set'}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <h3 className="text-xl font-semibold mb-2 text-red-800">Property Owner Missing</h3>
+                  <p className="text-red-700 text-sm mb-2">
+                    This property doesn't have an owner assigned. This is a data issue that needs to be fixed.
+                  </p>
+                  <p className="text-sm text-red-600">
+                    Property ID: {property.id} | Owner ID: {property.owner_id || 'NULL'}
+                  </p>
+                </div>
+                <p className="text-gray-600">
+                  Unable to display contact information because this property doesn't have an owner assigned in the database.
+                </p>
               </div>
             )}
           </div>
