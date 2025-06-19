@@ -13,8 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
 import PropertyCard from '@/components/PropertyCard';
-import UnifiedChat from '@/components/UnifiedChat';
 import FavoritesList from '@/components/FavoritesList';
+import MessagingInterface from '@/components/messaging/MessagingInterface';
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -86,8 +86,6 @@ const UserProfile = () => {
     mutationFn: async (requestId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('Deleting property request:', requestId);
-
       const { data: request, error: requestError } = await supabase
         .from('property_requests')
         .select('status, title')
@@ -95,14 +93,9 @@ const UserProfile = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (requestError) {
-        console.error('Error fetching request:', requestError);
-        throw requestError;
-      }
+      if (requestError) throw requestError;
 
       if (request && request.status === 'approved') {
-        console.log('Request was approved, deleting associated property...');
-        
         const matchingProperty = userProperties.find(prop => prop.title === request.title);
         
         if (matchingProperty) {
@@ -114,8 +107,6 @@ const UserProfile = () => {
 
           if (propertyDeleteError) {
             console.error('Error deleting associated property:', propertyDeleteError);
-          } else {
-            console.log('Associated property deleted successfully');
           }
         }
       }
@@ -126,12 +117,7 @@ const UserProfile = () => {
         .eq('id', requestId)
         .eq('user_id', user.id);
 
-      if (deleteError) {
-        console.error('Error deleting request:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('Property request deleted successfully');
+      if (deleteError) throw deleteError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
@@ -144,7 +130,6 @@ const UserProfile = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Delete mutation error:', error);
       toast({
         title: "Error",
         description: `Failed to delete listing: ${error.message || 'Please try again.'}`,
@@ -173,7 +158,6 @@ const UserProfile = () => {
 
   const handleDeleteListing = (requestId: string) => {
     if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
-      console.log('User confirmed deletion of request:', requestId);
       deletePropertyRequestMutation.mutate(requestId);
     }
   };
@@ -337,17 +321,7 @@ const UserProfile = () => {
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Messages</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UnifiedChat className="h-[600px]" />
-              </CardContent>
-            </Card>
+            <MessagingInterface />
           </TabsContent>
         </Tabs>
       </div>
