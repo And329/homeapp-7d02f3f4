@@ -47,113 +47,169 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch other user's profile
+  // Fetch other user's profile with better error handling
   const { data: otherUserProfile } = useQuery({
     queryKey: ['user-profile', otherUserId],
     queryFn: async () => {
-      if (!otherUserId) return null;
-      console.log('UnifiedChat: Fetching profile for user:', otherUserId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('id', otherUserId)
-        .single();
-
-      if (error) {
-        console.error('UnifiedChat: Error fetching user profile:', error);
+      if (!otherUserId) {
+        console.log('UnifiedChat: No otherUserId provided');
         return null;
       }
       
-      console.log('UnifiedChat: Found user profile:', data);
-      return data as Profile;
+      console.log('UnifiedChat: Fetching profile for user:', otherUserId);
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('id', otherUserId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('UnifiedChat: Error fetching user profile:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.warn('UnifiedChat: No profile found for user:', otherUserId);
+          // Return a fallback profile
+          return {
+            id: otherUserId,
+            full_name: null,
+            email: null
+          } as Profile;
+        }
+        
+        console.log('UnifiedChat: Found user profile:', data);
+        return data as Profile;
+      } catch (error) {
+        console.error('UnifiedChat: Exception fetching user profile:', error);
+        return null;
+      }
     },
     enabled: !!otherUserId,
   });
 
-  // Fetch current user's profile
+  // Fetch current user's profile with better error handling
   const { data: currentUserProfile } = useQuery({
     queryKey: ['current-user-profile', user?.id],
     queryFn: async () => {
-      if (!user) return null;
-      
-      console.log('UnifiedChat: Fetching current user profile:', user.id);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('UnifiedChat: Error fetching current user profile:', error);
+      if (!user) {
+        console.log('UnifiedChat: No current user');
         return null;
       }
       
-      console.log('UnifiedChat: Current user profile:', data);
-      return data as Profile;
+      console.log('UnifiedChat: Fetching current user profile:', user.id);
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('UnifiedChat: Error fetching current user profile:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.warn('UnifiedChat: No profile found for current user:', user.id);
+          // Return a fallback profile
+          return {
+            id: user.id,
+            full_name: null,
+            email: user.email || null
+          } as Profile;
+        }
+        
+        console.log('UnifiedChat: Current user profile:', data);
+        return data as Profile;
+      } catch (error) {
+        console.error('UnifiedChat: Exception fetching current user profile:', error);
+        return null;
+      }
     },
     enabled: !!user,
   });
 
-  // Find or create conversation
-  const { data: conversation, isLoading: loadingConversation } = useQuery({
+  // Find or create conversation with comprehensive error handling
+  const { data: conversation, isLoading: loadingConversation, error: conversationError } = useQuery({
     queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId],
     queryFn: async () => {
       if (!user || !otherUserId) {
         console.log('UnifiedChat: Missing user or otherUserId:', { user: user?.id, otherUserId });
-        return null;
+        throw new Error('Missing user information');
+      }
+
+      if (user.id === otherUserId) {
+        console.log('UnifiedChat: Cannot create conversation with self');
+        throw new Error('Cannot create conversation with yourself');
       }
 
       console.log('UnifiedChat: Looking for conversation between:', user.id, 'and', otherUserId);
 
-      // Look for existing conversation between these two users
-      let query = supabase
-        .from('conversations')
-        .select('*')
-        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherUserId}),and(participant_1_id.eq.${otherUserId},participant_2_id.eq.${user.id})`);
+      try {
+        // Look for existing conversation between these two users
+        let query = supabase
+          .from('conversations')
+          .select('*')
+          .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherUserId}),and(participant_1_id.eq.${otherUserId},participant_2_id.eq.${user.id})`);
 
-      if (propertyId) {
-        query = query.eq('property_id', propertyId);
-      }
+        if (propertyId) {
+          query = query.eq('property_id', propertyId);
+        }
 
-      if (propertyRequestId) {
-        query = query.eq('property_request_id', propertyRequestId);
-      }
+        if (propertyRequestId) {
+          query = query.eq('property_request_id', propertyRequestId);
+        }
 
-      const { data: existingConversation, error: findError } = await query.maybeSingle();
+        const { data: existingConversation, error: findError } = await query.maybeSingle();
 
-      if (findError) {
-        console.error('UnifiedChat: Error finding conversation:', findError);
-        return null;
-      }
+        if (findError) {
+          console.error('UnifiedChat: Error finding conversation:', findError);
+          throw new Error(`Failed to find conversation: ${findError.message}`);
+        }
 
-      if (existingConversation) {
-        console.log('UnifiedChat: Found existing conversation:', existingConversation);
-        return existingConversation;
-      }
+        if (existingConversation) {
+          console.log('UnifiedChat: Found existing conversation:', existingConversation);
+          return existingConversation;
+        }
 
-      // Create new conversation if none exists
-      console.log('UnifiedChat: Creating new conversation');
-      const { data: newConversation, error: createError } = await supabase
-        .from('conversations')
-        .insert({
+        // Create new conversation if none exists
+        console.log('UnifiedChat: Creating new conversation');
+        
+        const conversationData = {
           participant_1_id: user.id,
           participant_2_id: otherUserId,
           property_id: propertyId || null,
           property_request_id: propertyRequestId || null,
           subject: propertyTitle || 'General Chat',
-        })
-        .select()
-        .single();
+        };
 
-      if (createError) {
-        console.error('UnifiedChat: Error creating conversation:', createError);
-        return null;
+        console.log('UnifiedChat: Conversation data to insert:', conversationData);
+
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert(conversationData)
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('UnifiedChat: Error creating conversation:', createError);
+          throw new Error(`Failed to create conversation: ${createError.message}`);
+        }
+
+        console.log('UnifiedChat: Created new conversation:', newConversation);
+        return newConversation;
+        
+      } catch (error) {
+        console.error('UnifiedChat: Exception in conversation query:', error);
+        throw error;
       }
-
-      console.log('UnifiedChat: Created new conversation:', newConversation);
-      return newConversation;
     },
     enabled: !!user && !!otherUserId,
+    retry: 1,
   });
 
   // Update conversationId when conversation data changes
@@ -167,50 +223,68 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      if (!conversationId) return [];
-
-      console.log('UnifiedChat: Fetching messages for conversation:', conversationId);
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('UnifiedChat: Error fetching messages:', error);
+      if (!conversationId) {
+        console.log('UnifiedChat: No conversation ID for messages query');
         return [];
       }
 
-      console.log('UnifiedChat: Fetched messages:', data);
-      return data as Message[];
+      console.log('UnifiedChat: Fetching messages for conversation:', conversationId);
+      
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('UnifiedChat: Error fetching messages:', error);
+          return [];
+        }
+
+        console.log('UnifiedChat: Fetched messages:', data);
+        return data as Message[];
+      } catch (error) {
+        console.error('UnifiedChat: Exception fetching messages:', error);
+        return [];
+      }
     },
     enabled: !!conversationId,
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !conversationId) {
-        console.error('UnifiedChat: Missing user or conversation ID:', { 
-          user: user?.id, 
-          conversationId,
-          newMessage: newMessage.substring(0, 50) 
-        });
-        throw new Error('User or conversation ID is missing');
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      if (!conversationId) {
+        throw new Error('No conversation available');
+      }
+      
+      if (!newMessage.trim()) {
+        throw new Error('Message cannot be empty');
       }
 
-      console.log('UnifiedChat: Sending message:', { conversationId, message: newMessage.substring(0, 50) });
+      console.log('UnifiedChat: Sending message:', { 
+        conversationId, 
+        message: newMessage.substring(0, 50),
+        senderId: user.id 
+      });
 
-      const { error } = await supabase.from('messages').insert([
-        {
-          conversation_id: conversationId,
-          sender_id: user.id,
-          content: newMessage,
-        },
-      ]);
+      const messageData = {
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: newMessage.trim(),
+      };
+
+      const { error } = await supabase
+        .from('messages')
+        .insert([messageData]);
 
       if (error) {
         console.error('UnifiedChat: Error sending message:', error);
-        throw error;
+        throw new Error(`Failed to send message: ${error.message}`);
       }
       
       console.log('UnifiedChat: Message sent successfully');
@@ -282,7 +356,36 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center p-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span>Setting up conversation...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (conversationError) {
+    return (
+      <Card className={`flex flex-col ${className}`}>
+        <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
+          <CardTitle className="text-base sm:text-lg font-semibold">
+            Chat Error
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center text-red-600">
+            <p className="mb-2">Failed to load conversation</p>
+            <p className="text-sm">{conversationError.message}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
