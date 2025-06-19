@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -112,8 +113,19 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   
   // Ensure owner_id is set to current user - this is critical!
   const propertyWithOwner = {
-    ...propertyData,
-    owner_id: user.id // Force set the owner_id to current user
+    title: propertyData.title,
+    description: propertyData.description,
+    price: propertyData.price,
+    location: propertyData.location,
+    latitude: propertyData.latitude,
+    longitude: propertyData.longitude,
+    bedrooms: propertyData.bedrooms,
+    bathrooms: propertyData.bathrooms,
+    type: propertyData.type,
+    amenities: propertyData.amenities,
+    images: propertyData.images,
+    is_hot_deal: propertyData.is_hot_deal || false,
+    owner_id: user.id // Explicitly set the owner_id
   };
   
   console.log('API: Property data with owner_id set:', propertyWithOwner);
@@ -130,12 +142,27 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     throw error;
   }
 
-  console.log('API: Property created successfully with owner_id:', data);
+  console.log('API: Property created successfully:', data);
   console.log('API: Verifying created property owner_id:', data.owner_id);
   
   if (!data.owner_id) {
     console.error('API: CRITICAL ERROR - Property was created but owner_id is still NULL!');
-    console.error('API: This should never happen. Property data:', data);
+    console.error('API: This indicates a database constraint or RLS policy issue');
+    console.error('API: Property data:', data);
+    
+    // Try to update the property with the owner_id
+    console.log('API: Attempting to fix owner_id by updating the property...');
+    const { error: updateError } = await supabase
+      .from('properties')
+      .update({ owner_id: user.id })
+      .eq('id', data.id);
+    
+    if (updateError) {
+      console.error('API: Failed to update owner_id:', updateError);
+    } else {
+      console.log('API: Successfully updated owner_id');
+      data.owner_id = user.id;
+    }
   }
 
   return transformDatabaseProperty(data);

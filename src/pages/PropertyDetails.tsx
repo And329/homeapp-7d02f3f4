@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import PropertyMap from '../components/PropertyMap';
 import ContactPropertyOwner from '../components/ContactPropertyOwner';
 import { getPropertyById } from '../data/properties';
+import { updatePropertyOwner } from '../api/properties';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -59,26 +60,29 @@ const PropertyDetails = () => {
     enabled: !!property?.owner_id,
   });
 
-  // Debug query to check all profiles and find potential owner matches
-  const { data: debugProfiles } = useQuery({
-    queryKey: ['debug-all-profiles'],
+  // Debug: Let's also check what's in the database for this specific property
+  const { data: rawPropertyData } = useQuery({
+    queryKey: ['raw-property-debug', id],
     queryFn: async () => {
-      console.log('PropertyDetails: Fetching all profiles for debugging');
+      if (!id) return null;
+      
+      console.log('PropertyDetails: Fetching raw property data for debugging...');
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('properties')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('id', parseInt(id))
+        .single();
       
       if (error) {
-        console.error('PropertyDetails: Error fetching all profiles:', error);
-        return [];
+        console.error('PropertyDetails: Error fetching raw property:', error);
+        return null;
       }
       
-      console.log('PropertyDetails: All profiles in system:', data);
+      console.log('PropertyDetails: Raw property data from database:', data);
       return data;
     },
-    enabled: !!property && !property.owner_id, // Only run when property has no owner
+    enabled: !!id,
   });
 
   if (isLoading) {
@@ -181,7 +185,7 @@ const PropertyDetails = () => {
       
       {/* Image Gallery */}
       <section className="container mx-auto px-4 py-8">
-        {/* Debug information - remove in production */}
+        {/* Enhanced Debug information */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
             <h3 className="font-semibold text-yellow-800">Debug Information:</h3>
@@ -196,14 +200,12 @@ const PropertyDetails = () => {
                 <p><strong>Owner Name:</strong> {ownerProfile.full_name || 'Not available'}</p>
               </div>
             )}
-            {debugProfiles && debugProfiles.length > 0 && (
+            {rawPropertyData && (
               <div className="mt-2">
-                <p><strong>All Profiles in System:</strong></p>
-                {debugProfiles.map((profile: any) => (
-                  <div key={profile.id} className="text-sm">
-                    - {profile.email} (ID: {profile.id}) - {profile.full_name}
-                  </div>
-                ))}
+                <p><strong>Raw Database Data:</strong></p>
+                <pre className="text-xs bg-gray-100 p-2 rounded">
+                  {JSON.stringify(rawPropertyData, null, 2)}
+                </pre>
               </div>
             )}
           </div>
@@ -233,7 +235,6 @@ const PropertyDetails = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Property Details */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <div className="flex items-start justify-between mb-4">
@@ -292,7 +293,6 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Amenities */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -305,7 +305,6 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Property Info */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Property Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -328,7 +327,6 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Interactive Map */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Location</h2>
               {coords ? (
@@ -349,7 +347,6 @@ const PropertyDetails = () => {
             </div>
           </div>
 
-          {/* Contact Sidebar */}
           <div className="lg:col-span-1">
             {user && property.owner_id ? (
               property.owner_id === user.id ? (
@@ -389,6 +386,22 @@ const PropertyDetails = () => {
                   <p className="text-sm text-red-600">
                     Property ID: {property.id} | Owner ID: {property.owner_id || 'NULL'}
                   </p>
+                  {user && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          console.log('Attempting to fix owner_id for property:', property.id);
+                          await updatePropertyOwner(parseInt(property.id), user.id);
+                          window.location.reload();
+                        } catch (error) {
+                          console.error('Failed to fix owner_id:', error);
+                        }
+                      }}
+                      className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    >
+                      Fix Owner Assignment
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-600">
                   Unable to display contact information because this property doesn't have an owner assigned in the database.
