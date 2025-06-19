@@ -1,23 +1,7 @@
 
 import { useState } from 'react';
 import { PropertyRequest } from '@/types/propertyRequest';
-
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: 'rent' | 'sale';
-  is_hot_deal: boolean;
-  description: string;
-  created_at: string;
-  latitude: number | null;
-  longitude: number | null;
-  amenities: string[] | null;
-  images: string[] | null;
-}
+import { Property } from '@/types/property';
 
 export const useAdminState = () => {
   // Form states

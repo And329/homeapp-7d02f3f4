@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -17,8 +18,8 @@ interface MapProperty {
   location: string;
   price: number;
   type: 'rent' | 'sale';
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 const PropertyDetails = () => {
@@ -280,7 +281,7 @@ const PropertyDetails = () => {
               <h2 className="text-xl font-semibold mb-4">Location</h2>
               {coords ? (
                 <PropertyMap
-                  properties={mapProperties}
+                  properties={mapProperties as any}
                   selectedPropertyId={property.id}
                   height="400px"
                 />

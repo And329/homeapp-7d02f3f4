@@ -41,7 +41,7 @@ const AdminDashboard = () => {
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
   // Transform database properties to match the expected Property interface
-  const properties: Property[] = rawProperties.map(transformDatabaseProperty);
+  const properties: Property[] = rawProperties;
 
   const mutations = useAdminMutations(profile, propertyRequests);
 
@@ -55,14 +55,7 @@ const AdminDashboard = () => {
 
   // Updated handlers to work with transformed properties and string IDs
   const handleEdit = (property: Property) => {
-    // Convert back to database format for editing
-    const dbProperty = {
-      ...property,
-      is_hot_deal: property.isHotDeal,
-      latitude: property.coordinates?.lat,
-      longitude: property.coordinates?.lng,
-    };
-    handlers.handleEdit(dbProperty);
+    handlers.handleEdit(property);
   };
 
   const handleDelete = async (id: string) => {
