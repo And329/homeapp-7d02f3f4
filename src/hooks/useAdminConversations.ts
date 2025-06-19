@@ -15,14 +15,20 @@ export const useAdminConversations = () => {
 
       console.log('useAdminConversations: Creating admin support conversation for user:', user.id);
 
-      // Find admin user ID (fallback to a UUID if no admin found)
-      const { data: adminProfile } = await supabase
+      // Find admin user ID - use the correct admin email
+      const { data: adminProfile, error: adminError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', '329@riseup.net')
         .single();
 
-      const adminUserId = adminProfile?.id || '35cf20da-12bb-49bc-8d47-a5e273553dab'; // fallback admin ID
+      if (adminError || !adminProfile) {
+        console.error('useAdminConversations: Admin profile not found:', adminError);
+        throw new Error('Admin profile not found');
+      }
+
+      const adminUserId = adminProfile.id;
+      console.log('useAdminConversations: Found admin user ID:', adminUserId);
 
       // Create admin support conversation
       const { data: conversation, error } = await supabase
