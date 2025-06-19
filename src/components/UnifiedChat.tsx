@@ -31,23 +31,44 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const { messages, sendMessage, isSendingMessage } = useMessages(selectedConversation);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
 
-  // Auto-scroll to bottom when messages change, but only if user hasn't manually scrolled
+  // Auto-scroll logic - only scroll if user hasn't manually scrolled up
   useEffect(() => {
-    if (messagesEndRef.current && !isUserScrolling) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const container = messagesContainerRef.current;
+    const endElement = messagesEndRef.current;
+    
+    if (!container || !endElement) return;
+    
+    // Check if this is a new message (not just a re-render)
+    const hasNewMessages = messages.length > lastMessageCount;
+    
+    if (hasNewMessages && shouldAutoScroll) {
+      // Smooth scroll to bottom
+      endElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [messages, isUserScrolling]);
+    
+    setLastMessageCount(messages.length);
+  }, [messages, shouldAutoScroll, lastMessageCount]);
 
   // Handle scroll events to detect user scrolling
   const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
-      setIsUserScrolling(!isAtBottom);
-    }
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+    
+    // Update auto-scroll preference based on user's scroll position
+    setShouldAutoScroll(isNearBottom);
   };
+
+  // Reset auto-scroll when conversation changes
+  useEffect(() => {
+    setShouldAutoScroll(true);
+    setLastMessageCount(0);
+  }, [selectedConversation]);
 
   // Auto-select conversation if starting a new chat
   useEffect(() => {
@@ -79,7 +100,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     
     sendMessage({ content: newMessage.trim() });
     setNewMessage('');
-    setIsUserScrolling(false); // Re-enable auto-scroll after sending
+    setShouldAutoScroll(true); // Re-enable auto-scroll after sending
   };
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);

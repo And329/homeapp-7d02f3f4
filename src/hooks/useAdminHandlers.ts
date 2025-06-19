@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -58,7 +57,7 @@ export const useAdminHandlers = (
       console.error('useAdminHandlers: Failed to approve request:', error);
       toast({
         title: "Error",
-        description: "Failed to approve request. Please try again.",
+        description: `Failed to approve request: ${error.message || 'Please try again.'}`,
         variant: "destructive",
       });
     }
@@ -113,18 +112,29 @@ export const useAdminHandlers = (
       // First create the conversation
       const conversationId = await sendReplyMutation.mutateAsync({ requestId });
       
-      // Then send the actual message
+      // Then send the actual message with the reply content
       if (conversationId && state.replyMessage.trim()) {
         await sendChatMessageMutation.mutateAsync({
           conversationId,
-          message: state.replyMessage
+          message: state.replyMessage.trim()
+        });
+        
+        // Clear the reply form after successful send
+        state.setReplyingToRequest(null);
+        state.setReplyMessage('');
+        
+        toast({
+          title: "Reply sent",
+          description: "Your reply has been sent successfully.",
         });
       }
-      
-      state.setReplyingToRequest(null);
-      state.setReplyMessage('');
     } catch (error) {
       console.error('useAdminHandlers: Failed to send reply:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send reply. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

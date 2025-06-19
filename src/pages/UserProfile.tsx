@@ -52,46 +52,68 @@ const UserProfile = () => {
   // Delete property request mutation
   const deletePropertyRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const { error } = await supabase
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Deleting property request:', requestId);
+
+      // First, get the request details to check if it was approved
+      const { data: request, error: requestError } = await supabase
+        .from('property_requests')
+        .select('status, title')
+        .eq('id', requestId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (requestError) {
+        console.error('Error fetching request:', requestError);
+        throw requestError;
+      }
+
+      // If the request was approved, delete the associated property first
+      if (request && request.status === 'approved') {
+        console.log('Request was approved, deleting associated property...');
+        
+        // Find and delete properties that match this user and title
+        const { error: propertyDeleteError } = await supabase
+          .from('properties')
+          .delete()
+          .eq('owner_id', user.id)
+          .eq('title', request.title);
+
+        if (propertyDeleteError) {
+          console.error('Error deleting associated property:', propertyDeleteError);
+          // Don't throw here - we still want to delete the request
+        }
+      }
+
+      // Delete the property request
+      const { error: deleteError } = await supabase
         .from('property_requests')
         .delete()
         .eq('id', requestId)
-        .eq('user_id', user!.id);
+        .eq('user_id', user.id);
 
-      if (error) throw error;
-
-      // Also delete the associated property if it was approved
-      const request = userRequests.find(r => r.id === requestId);
-      if (request && request.status === 'approved') {
-        // Find and delete the associated property
-        const { data: properties } = await supabase
-          .from('properties')
-          .select('id')
-          .eq('owner_id', user!.id)
-          .eq('title', request.title);
-
-        if (properties && properties.length > 0) {
-          await supabase
-            .from('properties')
-            .delete()
-            .eq('id', properties[0].id)
-            .eq('owner_id', user!.id);
-        }
+      if (deleteError) {
+        console.error('Error deleting request:', deleteError);
+        throw deleteError;
       }
+
+      console.log('Property request deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       toast({
         title: "Listing deleted",
         description: "Your property listing has been deleted successfully.",
       });
     },
-    onError: (error) => {
-      console.error('Delete error:', error);
+    onError: (error: any) => {
+      console.error('Delete mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete listing. Please try again.",
+        description: `Failed to delete listing: ${error.message || 'Please try again.'}`,
         variant: "destructive",
       });
     },
@@ -117,6 +139,7 @@ const UserProfile = () => {
 
   const handleDeleteListing = (requestId: string) => {
     if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      console.log('User confirmed deletion of request:', requestId);
       deletePropertyRequestMutation.mutate(requestId);
     }
   };
@@ -205,7 +228,11 @@ const UserProfile = () => {
                               className="bg-white/90 hover:bg-red-50 hover:border-red-200"
                               disabled={deletePropertyRequestMutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                              {deletePropertyRequestMutation.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              )}
                             </Button>
                           </div>
                         </div>
