@@ -314,7 +314,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">
-                        {otherProfile?.full_name || otherProfile?.email || otherParticipant?.full_name || otherParticipant?.email || 'Unknown'}
+                        {otherProfile?.full_name || otherParticipant?.full_name || 'Unknown'}
                       </CardTitle>
                       {isAdminChat && (
                         <Badge className="bg-green-100 text-green-700 border-green-200">
