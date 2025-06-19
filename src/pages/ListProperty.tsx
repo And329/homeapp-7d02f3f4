@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building, MapPin, DollarSign, Home, Send } from 'lucide-react';
+import { Building, MapPin, DollarSign, Home, Send, Square } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyVideoUpload from '@/components/PropertyVideoUpload';
+import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import { createProperty } from '@/api/properties';
 
 const propertyRequestSchema = z.object({
@@ -22,6 +24,7 @@ const propertyRequestSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.string().min(1, 'Price is required'),
   location: z.string().min(1, 'Location is required'),
+  area: z.string().min(1, 'Area is required'),
   bedrooms: z.string().min(1, 'Number of bedrooms is required'),
   bathrooms: z.string().min(1, 'Number of bathrooms is required'),
   type: z.enum(['rent', 'sale']),
@@ -38,6 +41,8 @@ const ListProperty = () => {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [propertyImages, setPropertyImages] = useState<string[]>([]);
   const [propertyVideos, setPropertyVideos] = useState<string[]>([]);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -48,6 +53,7 @@ const ListProperty = () => {
       description: '',
       price: '',
       location: '',
+      area: '',
       bedrooms: '',
       bathrooms: '',
       type: 'sale',
@@ -57,6 +63,12 @@ const ListProperty = () => {
       contactPhone: '',
     },
   });
+
+  const handleLocationChange = (location: string, lat?: number, lng?: number) => {
+    form.setValue('location', location);
+    setLatitude(lat || null);
+    setLongitude(lng || null);
+  };
 
   const onSubmit = async (data: PropertyRequestForm) => {
     if (!user) {
@@ -80,6 +92,9 @@ const ListProperty = () => {
           description: data.description,
           price: parseInt(data.price),
           location: data.location,
+          latitude: latitude,
+          longitude: longitude,
+          area: parseInt(data.area),
           bedrooms: parseInt(data.bedrooms),
           bathrooms: parseInt(data.bathrooms),
           type: data.type,
@@ -103,6 +118,8 @@ const ListProperty = () => {
       setSelectedAmenities([]);
       setPropertyImages([]);
       setPropertyVideos([]);
+      setLatitude(null);
+      setLongitude(null);
     } catch (error) {
       console.error('Error submitting property request:', error);
       toast({
@@ -195,7 +212,7 @@ const ListProperty = () => {
                 />
 
                 {/* Property Specifications */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormField
                     control={form.control}
                     name="price"
@@ -207,6 +224,23 @@ const ListProperty = () => {
                         </FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="5000000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="area"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          <Square className="h-4 w-4 mr-1" />
+                          Area (sq ft) *
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="1200" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -243,22 +277,14 @@ const ListProperty = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          Location *
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Downtown Dubai, Marina, JBR" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div>
+                    <PropertyLocationPicker
+                      location={form.watch('location')}
+                      latitude={latitude || undefined}
+                      longitude={longitude || undefined}
+                      onLocationChange={handleLocationChange}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}

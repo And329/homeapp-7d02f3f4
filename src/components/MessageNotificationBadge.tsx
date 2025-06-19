@@ -1,0 +1,52 @@
+
+import React from 'react';
+import { MessageCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useMessageNotifications } from '@/hooks/useMessageNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface MessageNotificationBadgeProps {
+  onClick?: () => void;
+  className?: string;
+}
+
+const MessageNotificationBadge: React.FC<MessageNotificationBadgeProps> = ({ 
+  onClick, 
+  className = "" 
+}) => {
+  const { user } = useAuth();
+  const { unreadCount, markAsRead } = useMessageNotifications();
+
+  if (!user) return null;
+
+  const handleClick = () => {
+    if (unreadCount > 0) {
+      markAsRead();
+    }
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className={`relative p-2 ${className}`}
+    >
+      <MessageCircle className="h-5 w-5" />
+      {unreadCount > 0 && (
+        <Badge 
+          variant="destructive" 
+          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+        >
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </Badge>
+      )}
+    </Button>
+  );
+};
+
+export default MessageNotificationBadge;
