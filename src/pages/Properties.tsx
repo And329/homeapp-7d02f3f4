@@ -19,15 +19,22 @@ const Properties = () => {
   const navigate = useNavigate();
 
   const { data: rawProperties = [], isLoading } = useQuery({
-    queryKey: ['properties'],
+    queryKey: ['properties', 'approved'], // Add 'approved' to key for better cache invalidation
     queryFn: async () => {
+      console.log('Properties: Fetching approved properties from Supabase...');
+      
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Properties: Error fetching properties:', error);
+        throw error;
+      }
+      
+      console.log('Properties: Found properties:', data?.length || 0);
       return (data || []).map(transformDatabaseProperty);
     },
   });

@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -9,12 +8,19 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
   const propertiesQuery = useQuery({
     queryKey: ['admin-properties'],
     queryFn: async () => {
+      console.log('Admin: Fetching ALL properties...');
+      
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Admin: Error fetching properties:', error);
+        throw error;
+      }
+      
+      console.log('Admin: Found properties:', data?.length || 0);
       return data.map(transformDatabaseProperty) as Property[];
     },
   });
