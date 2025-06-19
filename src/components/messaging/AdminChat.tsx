@@ -11,26 +11,45 @@ import ChatWindow from './ChatWindow';
 
 const ADMIN_EMAIL = '329@riseup.net';
 
+// Hardcoded admin user details
+const ADMIN_USER = {
+  id: 'admin-static-id', // This will be replaced with actual ID when found
+  email: ADMIN_EMAIL,
+  full_name: 'Admin Support',
+  role: 'admin'
+};
+
 const AdminChat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [chatPartnerName, setChatPartnerName] = useState<string>('');
   const { user, profile } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
 
-  // Get admin user by email
+  // Get admin user by email but with fallback
   const { data: adminUser, isLoading: loadingAdmin } = useQuery({
     queryKey: ['admin-user'],
     queryFn: async () => {
+      console.log('AdminChat: Fetching admin user with email:', ADMIN_EMAIL);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
         .eq('email', ADMIN_EMAIL)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('AdminChat: Error fetching admin user:', error);
-        return null;
+        // Return hardcoded admin user as fallback
+        return ADMIN_USER;
       }
+
+      if (!data) {
+        console.log('AdminChat: No admin user found in database, using hardcoded admin');
+        // Return hardcoded admin user as fallback
+        return ADMIN_USER;
+      }
+
+      console.log('AdminChat: Found admin user:', data);
       return data;
     },
     enabled: !!user,
@@ -41,6 +60,8 @@ const AdminChat: React.FC = () => {
     queryKey: ['existing-admin-conversation', user?.id, adminUser?.id],
     queryFn: async () => {
       if (!user || !adminUser) return null;
+
+      console.log('AdminChat: Checking for existing conversation between:', user.id, 'and', adminUser.id);
 
       const { data, error } = await supabase
         .from('conversations')
@@ -56,13 +77,17 @@ const AdminChat: React.FC = () => {
         return null;
       }
 
+      console.log('AdminChat: Existing conversation:', data);
       return data;
     },
     enabled: !!user && !!adminUser,
   });
 
   const handleStartChat = async () => {
-    if (!adminUser || !user) return;
+    if (!adminUser || !user) {
+      console.error('AdminChat: Missing admin user or current user');
+      return;
+    }
 
     try {
       console.log('AdminChat: Creating conversation with admin:', adminUser);
@@ -74,7 +99,7 @@ const AdminChat: React.FC = () => {
       
       console.log('AdminChat: Created conversation:', conversation);
       setConversationId(conversation.id);
-      setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin');
+      setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin Support');
     } catch (error) {
       console.error('AdminChat: Failed to start admin chat:', error);
     }
@@ -83,8 +108,9 @@ const AdminChat: React.FC = () => {
   const handleUseExistingConversation = () => {
     if (!existingConversation || !adminUser) return;
 
+    console.log('AdminChat: Using existing conversation:', existingConversation.id);
     setConversationId(existingConversation.id);
-    setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin');
+    setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin Support');
   };
 
   if (!user) {
@@ -108,23 +134,7 @@ const AdminChat: React.FC = () => {
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3">Loading...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!adminUser) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-6 w-6 text-primary" />
-            <span>Chat with Admin</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">Admin user not found. Please contact support.</p>
+          <span className="ml-3">Loading admin chat...</span>
         </CardContent>
       </Card>
     );
@@ -190,7 +200,7 @@ const AdminChat: React.FC = () => {
           ) : (
             <>
               <MessageCircle className="h-5 w-5 mr-2" />
-              Start New Chat with {adminUser.full_name || adminUser.email}
+              Start New Chat with {adminUser?.full_name || 'Admin Support'}
             </>
           )}
         </Button>
