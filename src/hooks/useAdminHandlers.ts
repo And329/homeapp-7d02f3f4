@@ -27,6 +27,8 @@ interface Conversation {
   subject: string;
   created_at: string;
   last_message_at: string;
+  property_id?: number | null;
+  property_request_id?: string | null;
 }
 
 export const useAdminHandlers = (
@@ -132,16 +134,36 @@ export const useAdminHandlers = (
   };
 
   const handleSendChatMessage = () => {
-    if (!selectedConversation || !newMessage.trim()) return;
+    console.log('handleSendChatMessage called', { selectedConversation, newMessage });
+    
+    if (!selectedConversation || !newMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please select a conversation and enter a message.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (mutations?.sendChatMessageMutation) {
-      mutations.sendChatMessageMutation.mutate({ conversationId: selectedConversation, message: newMessage.trim() });
+      mutations.sendChatMessageMutation.mutate({ 
+        conversationId: selectedConversation, 
+        message: newMessage.trim() 
+      });
       setNewMessage('');
+    } else {
+      toast({
+        title: "Error",
+        description: "Chat message function is not available.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleConversationSelect = (conversation: Conversation) => {
+    console.log('handleConversationSelect called with:', conversation);
     setSelectedConversation(conversation.id);
-    // Determine the other participant ID
+    // Set the other participant as the selected user (not the current admin)
     setSelectedChatUserId(conversation.participant_1_id);
   };
 

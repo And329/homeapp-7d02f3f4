@@ -176,6 +176,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       toast({
         title: "Reply sent",
@@ -194,24 +195,40 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
 
   const sendChatMessageMutation = useMutation({
     mutationFn: async ({ conversationId, message }: { conversationId: string; message: string }) => {
+      console.log('sendChatMessageMutation called with:', { conversationId, message, profileId: profile?.id });
+      
+      if (!profile?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('messages')
         .insert([{
           conversation_id: conversationId,
-          sender_id: profile!.id,
+          sender_id: profile.id,
           content: message
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Message insertion error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      toast({
+        title: "Message sent",
+        description: "Your message has been sent successfully.",
+      });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Send chat message error:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: `Failed to send message: ${error.message}`,
         variant: "destructive",
       });
     },
