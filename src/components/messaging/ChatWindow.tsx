@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User } from 'lucide-react';
+import { Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,9 +82,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="flex-shrink-0 py-3 px-4 border-b">
-        <CardTitle className="flex items-center space-x-2 text-lg">
-          <User className="h-5 w-5" />
-          <span>{otherUserName}</span>
+        <CardTitle className="flex items-center justify-between text-lg">
+          <div className="flex items-center space-x-2">
+            <User className="h-5 w-5" />
+            <span>{otherUserName}</span>
+          </div>
+          {onClose && (
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
 

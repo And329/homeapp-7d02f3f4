@@ -3,7 +3,10 @@ import React, { useState } from 'react';
 import { MessageCircle, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import UnifiedChat from './UnifiedChat';
+import { useConversations } from '@/hooks/useConversations';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import ChatWindow from './messaging/ChatWindow';
 
 interface ContactPropertyOwnerProps {
   propertyId?: string;
@@ -24,19 +27,70 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
   contactName,
   ownerProfilePicture
 }) => {
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const { user } = useAuth();
+  const { createConversationAsync, isCreatingConversation } = useConversations();
+  const { toast } = useToast();
 
-  if (showChat) {
+  const handleStartConversation = async () => {
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to contact the property owner.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (ownerId === user.id) {
+      toast({
+        title: "Cannot contact yourself",
+        description: "You cannot start a conversation with yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('ContactPropertyOwner: Creating conversation for property:', propertyId);
+      const conversation = await createConversationAsync({
+        otherUserId: ownerId,
+        propertyId,
+        propertyRequestId,
+        subject: `Inquiry about: ${propertyTitle}`
+      });
+      
+      setConversationId(conversation.id);
+      setShowChat(true);
+      
+      toast({
+        title: "Conversation started",
+        description: "You can now chat with the property owner.",
+      });
+    } catch (error) {
+      console.error('ContactPropertyOwner: Failed to start conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (showChat && conversationId) {
     return (
       <div className="sticky top-24">
-        <UnifiedChat
-          propertyId={propertyId}
-          propertyRequestId={propertyRequestId}
-          otherUserId={ownerId}
-          propertyTitle={propertyTitle}
-          onClose={() => setShowChat(false)}
-          className="h-[600px]"
-        />
+        <div className="h-[600px]">
+          <ChatWindow
+            conversationId={conversationId}
+            otherUserName={contactName}
+            onClose={() => {
+              setShowChat(false);
+              setConversationId(null);
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -73,12 +127,22 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
         </div>
 
         <Button
-          onClick={() => setShowChat(true)}
+          onClick={handleStartConversation}
+          disabled={isCreatingConversation}
           className="w-full flex items-center justify-center space-x-2 h-11 text-base font-medium"
           size="lg"
         >
-          <MessageCircle className="h-5 w-5" />
-          <span>Start Conversation</span>
+          {isCreatingConversation ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Starting conversation...
+            </>
+          ) : (
+            <>
+              <MessageCircle className="h-5 w-5" />
+              <span>Start Conversation</span>
+            </>
+          )}
         </Button>
         
         <p className="text-xs text-gray-500 text-center">

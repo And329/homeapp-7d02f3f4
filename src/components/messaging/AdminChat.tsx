@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,95 +9,82 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import ChatWindow from './ChatWindow';
 
+const ADMIN_EMAIL = '329@riseup.net';
+
 const AdminChat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [chatPartnerName, setChatPartnerName] = useState<string>('');
   const { user, profile } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
 
-  // Get admin users
-  const { data: adminUsers = [], isLoading: loadingAdmins } = useQuery({
-    queryKey: ['admin-users'],
+  // Get admin user by email
+  const { data: adminUser, isLoading: loadingAdmin } = useQuery({
+    queryKey: ['admin-user'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
-        .eq('role', 'admin');
+        .eq('email', ADMIN_EMAIL)
+        .single();
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('AdminChat: Error fetching admin user:', error);
+        return null;
+      }
+      return data;
     },
     enabled: !!user,
   });
 
-  // Check if user already has a conversation with any admin
+  // Check if user already has a conversation with admin
   const { data: existingConversation } = useQuery({
-    queryKey: ['existing-admin-conversation', user?.id],
+    queryKey: ['existing-admin-conversation', user?.id, adminUser?.id],
     queryFn: async () => {
-      if (!user || !adminUsers.length) return null;
+      if (!user || !adminUser) return null;
 
-      const adminIds = adminUsers.map(admin => admin.id);
-      
       const { data, error } = await supabase
         .from('conversations')
-        .select(`
-          id,
-          participant_1_id,
-          participant_2_id,
-          subject,
-          profiles!conversations_participant_1_id_fkey(full_name, email),
-          profiles_participant_2:profiles!conversations_participant_2_id_fkey(full_name, email)
-        `)
+        .select('id, subject')
         .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
-        .or(`participant_1_id.in.(${adminIds.join(',')}),participant_2_id.in.(${adminIds.join(',')})`)
+        .or(`participant_1_id.eq.${adminUser.id},participant_2_id.eq.${adminUser.id}`)
         .order('last_message_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching existing conversation:', error);
+        console.error('AdminChat: Error fetching existing conversation:', error);
         return null;
       }
 
       return data;
     },
-    enabled: !!user && adminUsers.length > 0,
+    enabled: !!user && !!adminUser,
   });
 
-  const availableAdmin = profile?.role === 'admin' 
-    ? adminUsers.find(admin => admin.id !== user?.id)
-    : adminUsers[0];
-
   const handleStartChat = async () => {
-    if (!availableAdmin || !user) return;
+    if (!adminUser || !user) return;
 
     try {
-      console.log('Creating conversation with admin:', availableAdmin);
+      console.log('AdminChat: Creating conversation with admin:', adminUser);
       
       const conversation = await createConversationAsync({
-        otherUserId: availableAdmin.id,
+        otherUserId: adminUser.id,
         subject: 'Admin Support Chat'
       });
       
-      console.log('Created conversation:', conversation);
+      console.log('AdminChat: Created conversation:', conversation);
       setConversationId(conversation.id);
-      setChatPartnerName(availableAdmin.full_name || availableAdmin.email || 'Admin');
+      setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin');
     } catch (error) {
-      console.error('Failed to start admin chat:', error);
+      console.error('AdminChat: Failed to start admin chat:', error);
     }
   };
 
   const handleUseExistingConversation = () => {
-    if (!existingConversation || !user) return;
+    if (!existingConversation || !adminUser) return;
 
     setConversationId(existingConversation.id);
-    
-    // Get the other participant's name
-    const otherParticipant = existingConversation.participant_1_id === user.id 
-      ? existingConversation.profiles_participant_2
-      : existingConversation.profiles;
-    
-    setChatPartnerName(otherParticipant?.full_name || otherParticipant?.email || 'Admin');
+    setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin');
   };
 
   if (!user) {
@@ -115,7 +103,7 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  if (loadingAdmins) {
+  if (loadingAdmin) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
@@ -126,7 +114,7 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  if (!availableAdmin) {
+  if (!adminUser) {
     return (
       <Card>
         <CardHeader>
@@ -136,10 +124,7 @@ const AdminChat: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600">No admin users are currently available.</p>
-          <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded mt-4">
-            <p>Found {adminUsers.length} admin users total</p>
-          </div>
+          <p className="text-gray-600">Admin user not found. Please contact support.</p>
         </CardContent>
       </Card>
     );
@@ -205,7 +190,7 @@ const AdminChat: React.FC = () => {
           ) : (
             <>
               <MessageCircle className="h-5 w-5 mr-2" />
-              Start New Chat with {availableAdmin.full_name || availableAdmin.email}
+              Start New Chat with {adminUser.full_name || adminUser.email}
             </>
           )}
         </Button>
