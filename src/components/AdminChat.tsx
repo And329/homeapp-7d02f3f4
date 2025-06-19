@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import UnifiedChat from './UnifiedChat';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,8 +12,22 @@ const AdminChat: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const { user } = useAuth();
 
-  // Admin user ID - you should replace this with the actual admin user ID
-  const ADMIN_USER_ID = 'dc68b306-bb81-43ba-9793-e6b4643ed2b3';
+  // Get admin users from the database
+  const { data: adminUsers = [], isLoading: loadingAdmins } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('role', 'admin');
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Use the first admin user found, or null if none exist
+  const adminUser = adminUsers.length > 0 ? adminUsers[0] : null;
 
   if (!user) {
     return (
@@ -34,11 +50,47 @@ const AdminChat: React.FC = () => {
     );
   }
 
+  if (loadingAdmins) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Chat with Admin</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!adminUser) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Chat with Admin</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-4">
+            No admin users are currently available. Please try again later or contact us through other means.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (showChat) {
     return (
       <div className="max-w-4xl mx-auto">
         <UnifiedChat
-          otherUserId={ADMIN_USER_ID}
+          otherUserId={adminUser.id}
           propertyTitle="General Support"
           onClose={() => setShowChat(false)}
           className="h-[600px]"
@@ -69,7 +121,7 @@ const AdminChat: React.FC = () => {
           size="lg"
         >
           <MessageCircle className="h-5 w-5" />
-          <span>Start Chat with Admin</span>
+          <span>Start Chat with {adminUser.full_name || 'Admin'}</span>
         </Button>
         
         <p className="text-xs text-gray-500 text-center">
