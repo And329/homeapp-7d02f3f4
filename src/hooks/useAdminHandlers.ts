@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -164,7 +163,8 @@ export const useAdminHandlers = (
     console.log('handleConversationSelect called with:', conversation);
     setSelectedConversation(conversation.id);
     // Set the other participant as the selected user (not the current admin)
-    setSelectedChatUserId(conversation.participant_1_id);
+    const otherParticipantId = conversation.participant_1_id;
+    setSelectedChatUserId(otherParticipantId);
   };
 
   return {

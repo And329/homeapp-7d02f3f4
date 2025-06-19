@@ -126,6 +126,10 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
     mutationFn: async ({ requestId, message, userId }: { requestId: string; message: string; userId: string }) => {
       console.log('sendReplyMutation called with:', { requestId, message, userId });
       
+      if (!profile?.id) {
+        throw new Error('User not authenticated');
+      }
+      
       const propertyRequest = propertyRequests.find(req => req.id === requestId);
       const chatSubject = `Property Request: ${propertyRequest?.title || 'Property'}`;
       
@@ -135,7 +139,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         .from('conversations')
         .select('id')
         .eq('property_request_id', requestId)
-        .or(`and(participant_1_id.eq.${userId},participant_2_id.eq.${profile!.id}),and(participant_1_id.eq.${profile!.id},participant_2_id.eq.${userId})`)
+        .or(`and(participant_1_id.eq.${userId},participant_2_id.eq.${profile.id}),and(participant_1_id.eq.${profile.id},participant_2_id.eq.${userId})`)
         .limit(1);
 
       if (existingConversations && existingConversations.length > 0) {
@@ -144,7 +148,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         const { data: newConversation, error: conversationError } = await supabase
           .from('conversations')
           .insert([{
-            participant_1_id: profile!.id,
+            participant_1_id: profile.id,
             participant_2_id: userId,
             property_request_id: requestId,
             subject: chatSubject
@@ -163,7 +167,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         .from('messages')
         .insert([{
           conversation_id: conversationId,
-          sender_id: profile!.id,
+          sender_id: profile.id,
           content: message
         }]);
 
@@ -199,6 +203,18 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
       
       if (!profile?.id) {
         throw new Error('User not authenticated');
+      }
+
+      // First verify that the admin can send messages to this conversation
+      const { data: conversation, error: conversationError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+
+      if (conversationError || !conversation) {
+        console.error('Conversation not found:', conversationError);
+        throw new Error('Conversation not found');
       }
 
       const { error } = await supabase
