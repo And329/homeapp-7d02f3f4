@@ -11,22 +11,14 @@ import ChatWindow from './ChatWindow';
 
 const ADMIN_EMAIL = '329@riseup.net';
 
-// Hardcoded admin user details
-const ADMIN_USER = {
-  id: 'admin-static-id', // This will be replaced with actual ID when found
-  email: ADMIN_EMAIL,
-  full_name: 'Admin Support',
-  role: 'admin'
-};
-
 const AdminChat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [chatPartnerName, setChatPartnerName] = useState<string>('');
   const { user, profile } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
 
-  // Get admin user by email but with fallback
-  const { data: adminUser, isLoading: loadingAdmin } = useQuery({
+  // Get admin user by email
+  const { data: adminUser, isLoading: loadingAdmin, error: adminError } = useQuery({
     queryKey: ['admin-user'],
     queryFn: async () => {
       console.log('AdminChat: Fetching admin user with email:', ADMIN_EMAIL);
@@ -39,14 +31,12 @@ const AdminChat: React.FC = () => {
 
       if (error) {
         console.error('AdminChat: Error fetching admin user:', error);
-        // Return hardcoded admin user as fallback
-        return ADMIN_USER;
+        throw error;
       }
 
       if (!data) {
-        console.log('AdminChat: No admin user found in database, using hardcoded admin');
-        // Return hardcoded admin user as fallback
-        return ADMIN_USER;
+        console.log('AdminChat: No admin user found in database');
+        throw new Error('Admin user not found. Please contact support.');
       }
 
       console.log('AdminChat: Found admin user:', data);
@@ -135,6 +125,27 @@ const AdminChat: React.FC = () => {
         <CardContent className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-3">Loading admin chat...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (adminError || !adminUser) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Chat with Admin</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 font-medium mb-2">Administrator Not Available</p>
+            <p className="text-red-700 text-sm">
+              Admin user ({ADMIN_EMAIL}) not found. Please make sure the administrator account exists in the system.
+            </p>
+          </div>
         </CardContent>
       </Card>
     );

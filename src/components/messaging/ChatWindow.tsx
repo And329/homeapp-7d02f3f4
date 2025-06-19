@@ -21,33 +21,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const { user, profile } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
 
-  const scrollToBottom = (behavior: 'smooth' | 'instant' = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   // Handle initial scroll and new messages
   useEffect(() => {
     if (!messagesLoading && messages.length > 0) {
-      if (!hasScrolledToBottom) {
-        // Initial scroll - use instant to avoid animation to footer
-        setTimeout(() => {
-          scrollToBottom('instant');
-          setHasScrolledToBottom(true);
-        }, 50);
-      } else {
-        // New messages - use smooth scroll
-        scrollToBottom('smooth');
-      }
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     }
-  }, [messages, messagesLoading, hasScrolledToBottom]);
+  }, [messages, messagesLoading]);
 
-  // Reset scroll state when conversation changes
+  // Reset scroll when conversation changes
   useEffect(() => {
-    setHasScrolledToBottom(false);
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = 0;
+    }
   }, [conversationId]);
 
   const handleSendMessage = () => {
@@ -104,7 +102,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"
+        >
           {messagesLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
