@@ -4,33 +4,33 @@ import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
 
 export const getProperties = async (): Promise<Property[]> => {
-  console.log('Fetching properties from Supabase...');
+  console.log('API: Fetching properties from Supabase...');
   
   const { data, error } = await supabase
     .from('properties')
     .select('*, owner_id');
 
   if (error) {
-    console.error('Error fetching properties:', error);
+    console.error('API: Error fetching properties:', error);
     return [];
   }
 
-  console.log('Raw properties data:', data);
+  console.log('API: Raw properties data:', data);
 
   if (!data || data.length === 0) {
-    console.log('No properties found in database');
+    console.log('API: No properties found in database');
     return [];
   }
 
   // Transform database data to match our Property interface
   const transformedProperties: Property[] = data.map(transformDatabaseProperty);
 
-  console.log('Transformed properties:', transformedProperties);
+  console.log('API: Transformed properties:', transformedProperties);
   return transformedProperties;
 };
 
 export const getPropertyById = async (id: string): Promise<Property | undefined> => {
-  console.log('Fetching property by ID:', id);
+  console.log('API: Fetching property by ID:', id);
   
   const { data, error } = await supabase
     .from('properties')
@@ -39,21 +39,21 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching property:', error);
+    console.error('API: Error fetching property:', error);
     return undefined;
   }
 
   if (!data) {
-    console.log('No property found with ID:', id);
+    console.log('API: No property found with ID:', id);
     return undefined;
   }
 
-  console.log('Found property:', data);
+  console.log('API: Found property:', data);
   return transformDatabaseProperty(data);
 };
 
 export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Property[]> => {
-  console.log('Fetching properties by type:', type);
+  console.log('API: Fetching properties by type:', type);
   
   const { data, error } = await supabase
     .from('properties')
@@ -61,7 +61,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
     .eq('type', type);
 
   if (error) {
-    console.error('Error fetching properties by type:', error);
+    console.error('API: Error fetching properties by type:', error);
     return [];
   }
 
@@ -73,7 +73,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
 };
 
 export const getHotDeals = async (): Promise<Property[]> => {
-  console.log('Fetching hot deals...');
+  console.log('API: Fetching hot deals...');
   
   const { data, error } = await supabase
     .from('properties')
@@ -82,14 +82,14 @@ export const getHotDeals = async (): Promise<Property[]> => {
     .limit(3);
 
   if (error) {
-    console.error('Error fetching hot deals:', error);
+    console.error('API: Error fetching hot deals:', error);
     // Fallback: get first 3 properties
     const properties = await getProperties();
     return properties.slice(0, 3).map(property => ({ ...property, isHotDeal: true }));
   }
 
   if (!data || data.length === 0) {
-    console.log('No hot deals found, getting first 3 properties as fallback');
+    console.log('API: No hot deals found, getting first 3 properties as fallback');
     const properties = await getProperties();
     return properties.slice(0, 3).map(property => ({ ...property, isHotDeal: true }));
   }
@@ -97,8 +97,44 @@ export const getHotDeals = async (): Promise<Property[]> => {
   return data.map(transformDatabaseProperty);
 };
 
+export const createProperty = async (propertyData: any): Promise<Property> => {
+  console.log('API: Creating property with data:', propertyData);
+  
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    console.error('API: Error getting user for property creation:', userError);
+    throw new Error('User must be authenticated to create property');
+  }
+  
+  console.log('API: Current user for property creation:', user);
+  
+  // Ensure owner_id is set to current user
+  const propertyWithOwner = {
+    ...propertyData,
+    owner_id: user.id
+  };
+  
+  console.log('API: Property data with owner_id:', propertyWithOwner);
+  
+  const { data, error } = await supabase
+    .from('properties')
+    .insert([propertyWithOwner])
+    .select('*, owner_id')
+    .single();
+
+  if (error) {
+    console.error('API: Error creating property:', error);
+    throw error;
+  }
+
+  console.log('API: Property created successfully:', data);
+  return transformDatabaseProperty(data);
+};
+
 export const deleteProperty = async (id: number): Promise<void> => {
-  console.log('Deleting property with ID:', id);
+  console.log('API: Deleting property with ID:', id);
   
   const { error } = await supabase
     .from('properties')
@@ -106,9 +142,9 @@ export const deleteProperty = async (id: number): Promise<void> => {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting property:', error);
+    console.error('API: Error deleting property:', error);
     throw error;
   }
 
-  console.log('Property deleted successfully');
+  console.log('API: Property deleted successfully');
 };

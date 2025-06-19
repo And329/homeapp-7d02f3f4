@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -31,7 +32,7 @@ const PropertyDetails = () => {
   console.log('PropertyDetails: Loading state:', isLoading);
   console.log('PropertyDetails: Error state:', error);
 
-  // Get property owner profile for contact information
+  // Get property owner profile for contact information with additional debugging
   const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
     queryKey: ['property-owner', property?.owner_id],
     queryFn: async () => {
@@ -41,6 +42,14 @@ const PropertyDetails = () => {
       }
       
       console.log('PropertyDetails: Fetching owner profile for ID:', property.owner_id);
+      
+      // First, let's check if this owner exists in auth.users (we can't query it directly, but we can check profiles)
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      console.log('PropertyDetails: All profiles in database:', allProfiles);
+      if (profilesError) console.error('PropertyDetails: Error fetching all profiles:', profilesError);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -63,6 +72,39 @@ const PropertyDetails = () => {
       return data;
     },
     enabled: !!property?.owner_id,
+  });
+
+  // Additional debug query to check property-user relationship
+  const { data: debugData } = useQuery({
+    queryKey: ['debug-property-owner', property?.id, property?.owner_id],
+    queryFn: async () => {
+      if (!property?.id || !property?.owner_id) return null;
+      
+      console.log('PropertyDetails: Debug - Checking property-owner relationship');
+      
+      // Get property details directly from database
+      const { data: dbProperty, error: propError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', property.id)
+        .single();
+      
+      console.log('PropertyDetails: Database property data:', dbProperty);
+      if (propError) console.error('PropertyDetails: Error fetching property from DB:', propError);
+      
+      // Check all properties and their owners
+      const { data: allProperties, error: allPropsError } = await supabase
+        .from('properties')
+        .select('id, title, owner_id')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      console.log('PropertyDetails: Recent properties in database:', allProperties);
+      if (allPropsError) console.error('PropertyDetails: Error fetching all properties:', allPropsError);
+      
+      return { dbProperty, allProperties };
+    },
+    enabled: !!property?.id && !!property?.owner_id,
   });
 
   if (isLoading) {
@@ -165,6 +207,20 @@ const PropertyDetails = () => {
       
       {/* Image Gallery */}
       <section className="container mx-auto px-4 py-8">
+        {/* Debug information - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
+            <h3 className="font-semibold text-yellow-800">Debug Information:</h3>
+            <p><strong>Property ID:</strong> {property.id}</p>
+            <p><strong>Property Owner ID:</strong> {property.owner_id || 'Not set'}</p>
+            <p><strong>Current User ID:</strong> {user?.id || 'Not logged in'}</p>
+            <p><strong>Owner Profile Loaded:</strong> {ownerProfile ? 'Yes' : 'No'}</p>
+            {ownerProfile && (
+              <p><strong>Owner Email:</strong> {ownerProfile.email || 'Not available'}</p>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           <div className="lg:col-span-3">
             <img
