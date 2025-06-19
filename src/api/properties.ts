@@ -73,9 +73,28 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
 };
 
 export const getHotDeals = async (): Promise<Property[]> => {
-  // Get all properties and return first 3 as hot deals
-  const properties = await getProperties();
-  return properties.slice(0, 3);
+  console.log('Fetching hot deals...');
+  
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*, owner_id')
+    .eq('is_hot_deal', true)
+    .limit(3);
+
+  if (error) {
+    console.error('Error fetching hot deals:', error);
+    // Fallback: get first 3 properties
+    const properties = await getProperties();
+    return properties.slice(0, 3).map(property => ({ ...property, isHotDeal: true }));
+  }
+
+  if (!data || data.length === 0) {
+    console.log('No hot deals found, getting first 3 properties as fallback');
+    const properties = await getProperties();
+    return properties.slice(0, 3).map(property => ({ ...property, isHotDeal: true }));
+  }
+
+  return data.map(transformDatabaseProperty);
 };
 
 export const deleteProperty = async (id: number): Promise<void> => {

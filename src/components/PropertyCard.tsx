@@ -7,22 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import { useToast } from '@/hooks/use-toast';
-
-interface Property {
-  id: string | number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  area: number;
-  image: string;
-  type: 'rent' | 'sale';
-  isHotDeal: boolean;
-  description?: string;
-  amenities?: string[];
-  owner_id?: string;
-}
+import { Property } from '@/types/property';
 
 interface PropertyCardProps {
   property: Property;
@@ -94,7 +79,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group">
       <div className="relative" onClick={onClick}>
         <img
-          src={property.image}
+          src={property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg'}
           alt={property.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
