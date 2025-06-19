@@ -61,6 +61,13 @@ const FavoritesList = () => {
               
               const firstImage = imagesArray.length > 0 ? imagesArray[0] : '/placeholder.svg';
               
+              // Handle amenities conversion from Json[] to string[]
+              const amenitiesArray = Array.isArray(favorite.properties.amenities) 
+                ? favorite.properties.amenities
+                    .filter(item => typeof item === 'string')
+                    .map(item => item as string)
+                : [];
+              
               const property = {
                 id: favorite.properties.id,
                 title: favorite.properties.title,
@@ -74,7 +81,7 @@ const FavoritesList = () => {
                 type: favorite.properties.type as 'rent' | 'sale',
                 isHotDeal: false,
                 description: favorite.properties.description || '',
-                amenities: Array.isArray(favorite.properties.amenities) ? favorite.properties.amenities : [],
+                amenities: amenitiesArray,
                 coordinates: { 
                   lat: favorite.properties.latitude || 0, 
                   lng: favorite.properties.longitude || 0 
