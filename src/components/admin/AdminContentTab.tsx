@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Newspaper } from 'lucide-react';
+import { FileText, Newspaper, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AdminContentTabProps {
@@ -52,6 +52,12 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
                 <div key={post.id} className="bg-white p-4 rounded-lg shadow border">
                   <h4 className="font-medium text-gray-900">{post.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{post.excerpt || 'No excerpt'}</p>
+                  {post.pdf_attachment && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <File className="h-4 w-4 text-red-600" />
+                      <span className="text-xs text-gray-500">PDF attachment included</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between mt-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       post.status === 'published' 

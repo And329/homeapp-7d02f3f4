@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import PropertyPDFUpload from './PropertyPDFUpload';
 
 interface BlogPostFormProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
     status: 'draft',
     tags: '',
     meta_description: '',
+    pdf_attachment: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -57,6 +59,7 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
         status: formData.status,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         meta_description: formData.meta_description || null,
+        pdf_attachment: formData.pdf_attachment || null,
         published_at: formData.status === 'published' ? new Date().toISOString() : null,
         author_id: user.id,
       };
@@ -88,6 +91,10 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePDFChange = (pdfUrl: string | null) => {
+    setFormData(prev => ({ ...prev, pdf_attachment: pdfUrl || '' }));
   };
 
   return (
@@ -172,6 +179,13 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({ onClose, onSuccess }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Write your blog post content here..."
                 required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <PropertyPDFUpload
+                onPDFChange={handlePDFChange}
+                currentPDF={formData.pdf_attachment}
               />
             </div>
 
