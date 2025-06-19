@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +9,8 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   const queryClient = useQueryClient();
 
   const sendReplyMutation = useMutation({
-    mutationFn: async ({ requestId, message }: { requestId: string; message: string }) => {
-      console.log('Admin: Sending reply to request:', requestId, message);
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      console.log('Admin: Creating conversation for request:', requestId);
       
       const request = propertyRequests.find(r => r.id === requestId);
       if (!request?.user_id) {
@@ -45,30 +44,13 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         existingConversation = newConversation;
       }
 
-      // Send the message
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: existingConversation.id,
-          sender_id: profile.id,
-          content: message
-        });
-
-      if (messageError) throw messageError;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Reply sent",
-        description: "Your reply has been sent to the user.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+      return existingConversation.id;
     },
     onError: (error) => {
-      console.error('Failed to send reply:', error);
+      console.error('Failed to create conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to send reply. Please try again.",
+        description: "Failed to create conversation. Please try again.",
         variant: "destructive",
       });
     },

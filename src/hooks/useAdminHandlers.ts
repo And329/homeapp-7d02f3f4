@@ -93,14 +93,17 @@ export const useAdminHandlers = (
     }
     
     try {
+      // First create/get the conversation
       const conversationId = await sendReplyMutation.mutateAsync({ requestId });
       
+      // Then send the message
       if (conversationId && state.replyMessage.trim()) {
         await sendChatMessageMutation.mutateAsync({
           conversationId,
           message: state.replyMessage.trim()
         });
         
+        // Clear the form
         state.setReplyingToRequest(null);
         state.setReplyMessage('');
         

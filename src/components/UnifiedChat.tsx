@@ -1,495 +1,291 @@
-
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useConversations, useMessages } from '@/hooks/useConversations';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Send, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Send, Shield, X, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface UnifiedChatProps {
-  className?: string;
+  otherUserId: string;
+  propertyTitle?: string;
   propertyId?: string;
   propertyRequestId?: string;
-  otherUserId?: string;
-  propertyTitle?: string;
   onClose?: () => void;
+  className?: string;
 }
 
-const UnifiedChat: React.FC<UnifiedChatProps> = ({ 
-  className,
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+  conversation_id: string;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
+const UnifiedChat: React.FC<UnifiedChatProps> = ({
+  otherUserId,
+  propertyTitle = 'Property Chat',
   propertyId,
   propertyRequestId,
-  otherUserId,
-  propertyTitle,
-  onClose
+  onClose,
+  className = '',
 }) => {
   const { user } = useAuth();
-  const { conversations, conversationsLoading, createConversationAsync } = useConversations();
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(selectedConversationId);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Determine if this is a specific property conversation (hide sidebar)
-  const isPropertySpecificChat = !!(otherUserId && propertyTitle);
-
-  // If specific conversation parameters are provided, create or find the conversation
-  React.useEffect(() => {
-    if (otherUserId && propertyTitle && user) {
-      const initializeConversation = async () => {
-        try {
-          console.log('UnifiedChat: Initializing conversation with:', { otherUserId, propertyTitle });
-          const conversation = await createConversationAsync({
-            otherUserId,
-            propertyId,
-            propertyRequestId,
-            subject: propertyTitle
-          });
-          console.log('UnifiedChat: Conversation initialized:', conversation);
-          setSelectedConversationId(conversation.id);
-        } catch (error) {
-          console.error('Failed to initialize conversation:', error);
-        }
-      };
-      
-      initializeConversation();
-    }
-  }, [otherUserId, propertyId, propertyRequestId, propertyTitle, user, createConversationAsync]);
-
-  // Get ALL participant IDs from conversations to fetch their profiles in one query
-  const allParticipantIds = React.useMemo(() => {
-    const ids = new Set<string>();
-    
-    conversations.forEach(conv => {
-      ids.add(conv.participant_1_id);
-      ids.add(conv.participant_2_id);
-    });
-    
-    // Add specific other user if provided
-    if (otherUserId) {
-      ids.add(otherUserId);
-    }
-    
-    // Remove current user
-    if (user?.id) {
-      ids.delete(user.id);
-    }
-    
-    return Array.from(ids);
-  }, [conversations, otherUserId, user?.id]);
-
-  // Get all participant profiles in one query
-  const { data: allParticipantProfiles = [] } = useQuery({
-    queryKey: ['all-participant-profiles', allParticipantIds],
+  // Fetch other user's profile
+  const { data: otherUserProfile } = useQuery({
+    queryKey: ['user-profile', otherUserId],
     queryFn: async () => {
-      if (allParticipantIds.length === 0) return [];
-
-      console.log('UnifiedChat: Fetching profiles for participants:', allParticipantIds);
-      
+      console.log('UnifiedChat: Fetching profile for user:', otherUserId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, role, full_name, profile_picture, email')
-        .in('id', allParticipantIds);
+        .select('id, full_name, email')
+        .eq('id', otherUserId)
+        .single();
 
       if (error) {
-        console.error('UnifiedChat: Error fetching participant profiles:', error);
-        throw error;
+        console.error('UnifiedChat: Error fetching user profile:', error);
+        return null;
       }
       
-      console.log('UnifiedChat: Fetched participant profiles:', data);
-      return data || [];
+      console.log('UnifiedChat: Found user profile:', data);
+      return data as Profile;
     },
-    enabled: allParticipantIds.length > 0,
+    enabled: !!otherUserId,
   });
 
-  // Get property details for conversations
-  const { data: properties = [] } = useQuery({
-    queryKey: ['chat-properties'],
+  // Fetch current user's profile
+  const { data: currentUserProfile } = useQuery({
+    queryKey: ['current-user-profile', user?.id],
     queryFn: async () => {
-      const propertyIds = conversations
-        .filter(conv => conv.property_id)
-        .map(conv => conv.property_id);
+      if (!user) return null;
       
-      if (propertyIds.length === 0) return [];
+      console.log('UnifiedChat: Fetching current user profile:', user.id);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('UnifiedChat: Error fetching current user profile:', error);
+        return null;
+      }
+      
+      console.log('UnifiedChat: Current user profile:', data);
+      return data as Profile;
+    },
+    enabled: !!user,
+  });
+
+  const { data: conversation, isLoading: loadingConversation } = useQuery({
+    queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId],
+    queryFn: async () => {
+      if (!user) return null;
+
+      let query = supabase
+        .from('conversations')
+        .select('*')
+        .eq('participant_1_id', user.id)
+        .eq('participant_2_id', otherUserId);
+
+      if (propertyId) {
+        query = query.eq('property_id', propertyId);
+      }
+
+      if (propertyRequestId) {
+        query = query.eq('property_request_id', propertyRequestId);
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) {
+        console.error('Error fetching conversation:', error);
+        return null;
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data) {
+        setConversationId(data.id);
+      }
+    },
+    enabled: !!user && !!otherUserId,
+  });
+
+  const { data: messages = [], isLoading: loadingMessages } = useQuery({
+    queryKey: ['messages', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return [];
 
       const { data, error } = await supabase
-        .from('properties')
-        .select('id, title')
-        .in('id', propertyIds);
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return [];
+      }
+
+      return data as Message[];
     },
-    enabled: conversations.length > 0 && !isPropertySpecificChat,
+    enabled: !!conversationId,
   });
 
-  // Get property request details for conversations
-  const { data: propertyRequests = [] } = useQuery({
-    queryKey: ['chat-property-requests'],
-    queryFn: async () => {
-      const requestIds = conversations
-        .filter(conv => conv.property_request_id)
-        .map(conv => conv.property_request_id);
-      
-      if (requestIds.length === 0) return [];
+  const sendMessageMutation = useMutation(
+    async () => {
+      if (!user || !conversationId) {
+        throw new Error('User or conversation ID is missing');
+      }
 
-      const { data, error } = await supabase
-        .from('property_requests')
-        .select('id, title')
-        .in('id', requestIds);
+      const { error } = await supabase.from('messages').insert([
+        {
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content: newMessage,
+        },
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        throw error;
+      }
     },
-    enabled: conversations.length > 0 && !isPropertySpecificChat,
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+        queryClient.invalidateQueries({ queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId] });
+        setNewMessage('');
+        scrollToBottom();
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Error sending message',
+          description: error.message || 'Failed to send message. Please try again.',
+          variant: 'destructive',
+        });
+      },
+    }
+  );
+
+  const getUserDisplayName = (userId: string) => {
+    if (userId === user?.id) {
+      return currentUserProfile?.full_name || currentUserProfile?.email || 'You';
+    } else {
+      return otherUserProfile?.full_name || otherUserProfile?.email || 'User';
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedConversationId) return;
-    
-    sendMessage({ content: newMessage });
-    setNewMessage('');
-  };
-
-  const getConversationTitle = (conversation: any) => {
-    if (conversation.property_id) {
-      const property = properties.find(p => p.id === conversation.property_id);
-      return property ? `Property: ${property.title}` : conversation.subject;
+    if (newMessage.trim()) {
+      sendMessageMutation.mutate();
     }
-    
-    if (conversation.property_request_id) {
-      const request = propertyRequests.find(r => r.id === conversation.property_request_id);
-      return request ? `Request: ${request.title}` : conversation.subject;
-    }
-    
-    return conversation.subject;
   };
 
-  const getParticipantProfile = (participantId: string) => {
-    return allParticipantProfiles.find(p => p.id === participantId);
-  };
-
-  const isParticipantAdmin = (participantId: string) => {
-    const profile = getParticipantProfile(participantId);
-    return profile?.role === 'admin';
-  };
-
-  const getParticipantName = (participantId: string) => {
-    const profile = getParticipantProfile(participantId);
-    return profile?.full_name || profile?.email || 'User';
-  };
-
-  const getOtherParticipantId = (conversation: any) => {
-    return conversation.participant_1_id === user?.id 
-      ? conversation.participant_2_id 
-      : conversation.participant_1_id;
-  };
-
-  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
-  const otherParticipantId = selectedConversation 
-    ? getOtherParticipantId(selectedConversation)
-    : otherUserId;
-  
-  const otherProfile = otherParticipantId ? getParticipantProfile(otherParticipantId) : null;
-  const isAdminChat = otherParticipantId && isParticipantAdmin(otherParticipantId);
-  const otherParticipantName = otherParticipantId ? getParticipantName(otherParticipantId) : 'Unknown';
-
-  if (!user) {
-    return (
-      <Card className={cn("h-full", className)}>
-        <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-500">Please log in to view your messages.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (conversationsLoading) {
-    return (
-      <Card className={cn("h-full", className)}>
-        <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading conversations...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
-    <Card className={cn("h-full flex shadow-lg", className)}>
-      {/* Conversations Sidebar - Hidden for property-specific chats */}
-      {!isPropertySpecificChat && (
-        <div className="w-full sm:w-1/3 border-r bg-gray-50">
-          <CardHeader className="flex flex-row items-center justify-between bg-white border-b p-3 sm:p-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <span className="hidden sm:inline">Messages</span>
-              <span className="sm:hidden">Chat</span>
+    <Card className={`flex flex-col ${className}`}>
+      <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base sm:text-lg font-semibold truncate">
+              Chat with {getUserDisplayName(otherUserId)}
             </CardTitle>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 sm:h-8 sm:w-8 p-0">
-                <X className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
+            {propertyTitle && (
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
+                Re: {propertyTitle}
+              </p>
             )}
-          </CardHeader>
-          <ScrollArea className="h-[calc(100%-60px)] sm:h-[calc(100%-80px)]">
-            {conversations.length === 0 ? (
-              <div className="p-4 sm:p-6 text-center">
-                <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 sm:mb-3 text-gray-400" />
-                <p className="text-gray-500 text-xs sm:text-sm">No conversations yet</p>
-                <p className="text-gray-400 text-xs mt-1">Start by contacting a property owner</p>
-              </div>
-            ) : (
-              conversations.map((conversation) => {
-                const otherParticipantId = getOtherParticipantId(conversation);
-                const isAdmin = isParticipantAdmin(otherParticipantId);
-                const profile = getParticipantProfile(otherParticipantId);
-                const participantName = getParticipantName(otherParticipantId);
-                
-                return (
-                  <div
-                    key={conversation.id}
-                    onClick={() => setSelectedConversationId(conversation.id)}
-                    className={cn(
-                      "p-3 sm:p-4 border-b cursor-pointer hover:bg-white transition-colors relative",
-                      selectedConversationId === conversation.id && "bg-white border-l-4 border-l-primary shadow-sm"
-                    )}
-                  >
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <div className="relative">
-                        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          {profile?.profile_picture ? (
-                            <img 
-                              src={profile.profile_picture} 
-                              alt={participantName} 
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-                          )}
-                        </div>
-                        {isAdmin && (
-                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 sm:p-1">
-                            <Shield className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 sm:gap-2 mb-1">
-                          <div className="font-medium text-xs sm:text-sm truncate">
-                            {participantName}
-                          </div>
-                          {isAdmin && (
-                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 px-1 py-0">
-                              Admin
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-600 truncate mb-1">
-                          {getConversationTitle(conversation)}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {new Date(conversation.last_message_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </ScrollArea>
+          </div>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="flex-shrink-0 ml-2 h-6 w-6 sm:h-8 sm:w-8 p-0"
+            >
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
+            </Button>
+          )}
         </div>
-      )}
+      </CardHeader>
 
-      {/* Chat Area - Full width for property-specific chats */}
-      <div className={cn("flex-1 flex flex-col bg-white", isPropertySpecificChat && "w-full")}>
-        {selectedConversationId ? (
-          <>
-            {/* Chat Header */}
-            <CardHeader className="border-b bg-gray-50 p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="relative">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                      {otherProfile?.profile_picture ? (
-                        <img 
-                          src={otherProfile.profile_picture} 
-                          alt={otherParticipantName} 
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-                      )}
-                    </div>
-                    {isAdminChat && (
-                      <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 sm:p-1">
-                        <Shield className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <CardTitle className="text-sm sm:text-lg truncate">
-                        {otherParticipantName}
-                      </CardTitle>
-                      {isAdminChat && (
-                        <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                          <Shield className="h-2 w-2 sm:h-3 sm:w-3 mr-1" />
-                          <span className="hidden sm:inline">Trusted Admin</span>
-                          <span className="sm:hidden">Admin</span>
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm text-gray-600 truncate">{propertyTitle || selectedConversation?.subject}</p>
-                  </div>
+      <CardContent className="flex-1 flex flex-col min-h-0 p-2 sm:p-6 pt-0">
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto mb-3 sm:mb-4 space-y-2 sm:space-y-3 min-h-0">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${
+                message.sender_id === user?.id ? 'justify-end' : 'justify-start'
+              }`}
+            >
+              <div
+                className={`max-w-[85%] sm:max-w-xs lg:max-w-sm px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                  message.sender_id === user?.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                }`}
+              >
+                <div className="font-medium text-[10px] sm:text-xs mb-1 opacity-75">
+                  {getUserDisplayName(message.sender_id)}
                 </div>
-                {isPropertySpecificChat && onClose && (
-                  <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 sm:h-8 sm:w-8 p-0">
-                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-3 sm:p-4">
-              {messagesLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-6 sm:py-8">
-                  <MessageCircle className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
-                  <p className="text-gray-500 mb-2 text-sm sm:text-base">No messages yet</p>
-                  <p className="text-gray-400 text-xs sm:text-sm">Start the conversation by sending a message below</p>
-                </div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4">
-                  {messages.map((message) => {
-                    const isFromCurrentUser = message.sender_id === user.id;
-                    const isFromAdmin = !isFromCurrentUser && isAdminChat;
-                    
-                    return (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          "flex",
-                          isFromCurrentUser ? "justify-end" : "justify-start"
-                        )}
-                      >
-                        <div className={cn(
-                          "flex items-end gap-1 sm:gap-2 max-w-[85%] sm:max-w-[75%]",
-                          isFromCurrentUser ? "flex-row-reverse" : "flex-row"
-                        )}>
-                          {!isFromCurrentUser && (
-                            <div className="relative">
-                              <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                {otherProfile?.profile_picture ? (
-                                  <img 
-                                    src={otherProfile.profile_picture} 
-                                    alt="Profile" 
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <User className="h-2 w-2 sm:h-3 sm:w-3 text-gray-500" />
-                                )}
-                              </div>
-                              {isFromAdmin && (
-                                <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
-                                  <Shield className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          <div
-                            className={cn(
-                              "px-3 py-2 sm:px-4 sm:py-2 rounded-2xl shadow-sm",
-                              isFromCurrentUser
-                                ? "bg-primary text-white"
-                                : isFromAdmin
-                                ? "bg-green-50 text-green-900 border border-green-200"
-                                : "bg-gray-100 text-gray-900"
-                            )}
-                          >
-                            <p className="text-xs sm:text-sm whitespace-pre-wrap">{message.content}</p>
-                            <p className={cn(
-                              "text-xs mt-1",
-                              isFromCurrentUser ? "text-white/70" : "text-gray-500"
-                            )}>
-                              {new Date(message.created_at).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
+                <div className="leading-relaxed break-words">{message.content}</div>
+                <div className="text-[9px] sm:text-[10px] mt-1 opacity-60">
+                  {new Date(message.created_at).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
                   })}
                 </div>
-              )}
-            </ScrollArea>
-
-            {/* Message Input */}
-            <div className="p-3 sm:p-4 border-t bg-gray-50">
-              <div className="flex gap-2 sm:gap-3">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={isAdminChat ? "Message trusted admin..." : "Type your message..."}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                  className="flex-1 text-sm sm:text-base"
-                />
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || isSendingMessage}
-                  size="sm"
-                  className="px-3 sm:px-4"
-                >
-                  {isSendingMessage ? (
-                    <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-                  )}
-                </Button>
               </div>
             </div>
-          </>
-        ) : (
-          <CardContent className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <MessageCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
-              <p className="text-gray-500 mb-2 text-sm sm:text-base">
-                {isPropertySpecificChat ? "Starting conversation..." : "Select a conversation"}
-              </p>
-              <p className="text-gray-400 text-xs sm:text-sm">
-                {isPropertySpecificChat 
-                  ? "Setting up your chat about this property" 
-                  : "Choose a conversation from the sidebar to start chatting"
-                }
-              </p>
-            </div>
-          </CardContent>
-        )}
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Message input */}
+        <div className="flex-shrink-0 flex gap-1 sm:gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your message..."
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            disabled={sendMessageMutation.isPending}
+            className="text-xs sm:text-sm h-8 sm:h-10"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            size="sm"
+            className="h-8 sm:h-10 px-2 sm:px-4 text-xs sm:text-sm"
+          >
+            <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+        </div>
+      </CardContent>
     </Card>
   );
 };
