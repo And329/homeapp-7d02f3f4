@@ -318,6 +318,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          owner_id: string | null
           price: number | null
           title: string | null
           type: string | null
@@ -334,6 +335,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          owner_id?: string | null
           price?: number | null
           title?: string | null
           type?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          owner_id?: string | null
           price?: number | null
           title?: string | null
           type?: string | null

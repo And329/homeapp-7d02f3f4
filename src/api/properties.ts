@@ -8,7 +8,7 @@ export const getProperties = async (): Promise<Property[]> => {
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*');
+    .select('*, owner_id');
 
   if (error) {
     console.error('Error fetching properties:', error);
@@ -34,7 +34,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*')
+    .select('*, owner_id')
     .eq('id', parseInt(id))
     .maybeSingle();
 
@@ -57,7 +57,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*')
+    .select('*, owner_id')
     .eq('type', type);
 
   if (error) {
