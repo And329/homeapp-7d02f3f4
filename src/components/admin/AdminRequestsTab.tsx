@@ -60,6 +60,12 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     onSendReply(requestId);
   };
 
+  const handleApproveRequest = (request: PropertyRequest) => {
+    console.log('AdminRequestsTab: Approving request:', request.id);
+    console.log('AdminRequestsTab: Original requester user_id:', request.user_id);
+    onApproveRequest(request);
+  };
+
   return (
     <>
       {requestsLoading ? (
@@ -87,6 +93,11 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                   <p className="text-sm text-gray-500">
                     Contact: {request.contact_name} ({request.contact_email})
                   </p>
+                  {request.user_id && (
+                    <p className="text-xs text-gray-400">
+                      User ID: {request.user_id}
+                    </p>
+                  )}
                 </div>
               </div>
               
@@ -100,12 +111,12 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
               {request.status === 'pending' && (
                 <div className="flex items-center gap-2 pt-4 border-t">
                   <Button
-                    onClick={() => onApproveRequest(request)}
+                    onClick={() => handleApproveRequest(request)}
                     className="text-green-600 hover:text-green-800"
                     variant="outline"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve & Edit
+                    Approve
                   </Button>
                   <Button
                     onClick={() => onRejectRequest(request.id)}

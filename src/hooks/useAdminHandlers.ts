@@ -1,206 +1,100 @@
-import { useState } from 'react';
+
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
 
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: 'rent' | 'sale';
-  is_hot_deal: boolean;
-  description: string;
-  created_at: string;
-  latitude: number | null;
-  longitude: number | null;
-  amenities: string[] | null;
-  images: string[] | null;
-}
-
-interface Conversation {
-  id: string;
-  participant_1_id: string;
-  participant_2_id: string;
-  subject: string;
-  created_at: string;
-  last_message_at: string;
-  property_id?: number | null;
-  property_request_id?: string | null;
-}
-
 export const useAdminHandlers = (
-  mutations: any,
-  propertyRequests: PropertyRequest[]
+  queryClient: any,
+  sendReplyMutation: any,
+  setReplyingToRequest: (id: string | null) => void,
+  setReplyMessage: (message: string) => void
 ) => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
-  const [isNewsFormOpen, setIsNewsFormOpen] = useState(false);
-  const [isApprovalFormOpen, setIsApprovalFormOpen] = useState(false);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [approvingRequest, setApprovingRequest] = useState<PropertyRequest | null>(null);
-  const [showMap, setShowMap] = useState(false);
-  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats'>('properties');
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [replyingToRequest, setReplyingToRequest] = useState<string | null>(null);
-  const [replyMessage, setReplyMessage] = useState('');
   const { toast } = useToast();
 
-  const handleEdit = (property: Property) => {
-    setEditingProperty(property);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this property?')) {
-      if (mutations?.deleteMutation) {
-        mutations.deleteMutation.mutate(id);
-      }
-    }
-  };
-
-  const handleApproveRequest = (request: PropertyRequest) => {
-    setApprovingRequest(request);
-    setIsApprovalFormOpen(true);
-  };
-
-  const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
-    console.log('handleApprovalSubmit called with:', { requestId, updatedData });
+  const handleApproveRequest = async (request: PropertyRequest) => {
+    console.log('useAdminHandlers: Approving request:', request.id);
+    console.log('useAdminHandlers: Original requester user_id:', request.user_id);
     
-    if (!mutations?.approveRequestWithDetailsMutation) {
-      console.error('approveRequestWithDetailsMutation is not available');
+    try {
+      // Use the database function to approve the request
+      // This function will create the property with the correct owner_id
+      const { data, error } = await supabase.rpc('approve_property_request', {
+        request_id: request.id
+      });
+
+      if (error) {
+        console.error('useAdminHandlers: Error approving request:', error);
+        throw error;
+      }
+
+      console.log('useAdminHandlers: Request approved successfully, created property ID:', data);
+
+      toast({
+        title: "Request approved",
+        description: "The property request has been approved and the property has been created.",
+      });
+
+      // Refresh the requests list
+      queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    } catch (error) {
+      console.error('useAdminHandlers: Failed to approve request:', error);
       toast({
         title: "Error",
-        description: "Approval function is not available. Please refresh the page.",
+        description: "Failed to approve request. Please try again.",
         variant: "destructive",
       });
-      return;
     }
+  };
 
+  const handleRejectRequest = async (requestId: string) => {
+    console.log('useAdminHandlers: Rejecting request:', requestId);
+    
     try {
-      await mutations.approveRequestWithDetailsMutation.mutateAsync({ requestId, updatedData });
-      setIsApprovalFormOpen(false);
-      setApprovingRequest(null);
+      const { error } = await supabase
+        .from('property_requests')
+        .update({ status: 'rejected' })
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('useAdminHandlers: Error rejecting request:', error);
+        throw error;
+      }
+
+      console.log('useAdminHandlers: Request rejected successfully');
+
+      toast({
+        title: "Request rejected",
+        description: "The property request has been rejected.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['property-requests'] });
     } catch (error) {
-      console.error('Approval submission error:', error);
+      console.error('useAdminHandlers: Failed to reject request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendReply = async (requestId: string) => {
+    console.log('useAdminHandlers: Sending reply for request:', requestId);
+    
+    try {
+      await sendReplyMutation.mutateAsync({ requestId });
+      setReplyingToRequest(null);
+      setReplyMessage('');
+    } catch (error) {
+      console.error('useAdminHandlers: Failed to send reply:', error);
       // Error handling is done in the mutation itself
     }
   };
 
-  const handleRejectRequest = (requestId: string) => {
-    if (window.confirm('Are you sure you want to reject this property request?')) {
-      if (mutations?.rejectRequestMutation) {
-        mutations.rejectRequestMutation.mutate(requestId);
-      }
-    }
-  };
-
-  const handleSendReply = (requestId: string) => {
-    console.log('handleSendReply called with:', requestId);
-    console.log('Reply message:', replyMessage);
-    
-    if (!replyMessage.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a reply message.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const request = propertyRequests.find(req => req.id === requestId);
-    if (!request?.user_id) {
-      toast({
-        title: "Error",
-        description: "Cannot find user for this request.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (mutations?.sendReplyMutation) {
-      mutations.sendReplyMutation.mutate({ 
-        requestId, 
-        message: replyMessage.trim(),
-        userId: request.user_id
-      });
-      setReplyingToRequest(null);
-      setReplyMessage('');
-    }
-  };
-
-  const handleSendChatMessage = () => {
-    console.log('handleSendChatMessage called', { selectedConversation, newMessage });
-    
-    if (!selectedConversation || !newMessage.trim()) {
-      toast({
-        title: "Error",
-        description: "Please select a conversation and enter a message.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (mutations?.sendChatMessageMutation) {
-      mutations.sendChatMessageMutation.mutate({ 
-        conversationId: selectedConversation, 
-        message: newMessage.trim() 
-      });
-      setNewMessage('');
-    } else {
-      toast({
-        title: "Error",
-        description: "Chat message function is not available.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleConversationSelect = (conversation: Conversation) => {
-    console.log('handleConversationSelect called with:', conversation);
-    setSelectedConversation(conversation.id);
-    // Set the other participant as the selected user (not the current admin)
-    const otherParticipantId = conversation.participant_1_id;
-    setSelectedChatUserId(otherParticipantId);
-  };
-
   return {
-    // State
-    isFormOpen,
-    setIsFormOpen,
-    isBlogFormOpen,
-    setIsBlogFormOpen,
-    isNewsFormOpen,
-    setIsNewsFormOpen,
-    isApprovalFormOpen,
-    setIsApprovalFormOpen,
-    editingProperty,
-    setEditingProperty,
-    approvingRequest,
-    setApprovingRequest,
-    showMap,
-    setShowMap,
-    activeTab,
-    setActiveTab,
-    selectedConversation,
-    selectedChatUserId,
-    newMessage,
-    setNewMessage,
-    replyingToRequest,
-    setReplyingToRequest,
-    replyMessage,
-    setReplyMessage,
-    // Handlers
-    handleEdit,
-    handleDelete,
     handleApproveRequest,
-    handleApprovalSubmit,
     handleRejectRequest,
     handleSendReply,
-    handleSendChatMessage,
-    handleConversationSelect,
   };
 };
