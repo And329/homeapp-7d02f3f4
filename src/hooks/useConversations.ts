@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Conversation {
   id: string;
-  property_id: number | null;
+  property_id: string | null; // Changed from number | null to string | null
   property_request_id: string | null;
   participant_1_id: string;
   participant_2_id: string;
@@ -101,7 +101,7 @@ export const useConversations = () => {
       subject 
     }: {
       otherUserId: string;
-      propertyId?: number;
+      propertyId?: string; // Changed from number to string
       propertyRequestId?: string;
       subject: string;
     }) => {
@@ -145,13 +145,13 @@ export const useConversations = () => {
       console.log('useConversations: Creating new conversation');
       const { data, error } = await supabase
         .from('conversations')
-        .insert([{
+        .insert({
           participant_1_id: user.id,
           participant_2_id: otherUserId,
           property_id: propertyId || null,
           property_request_id: propertyRequestId || null,
           subject
-        }])
+        })
         .select()
         .single();
 

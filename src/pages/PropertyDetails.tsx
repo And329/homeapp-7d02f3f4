@@ -136,7 +136,7 @@ const PropertyDetails = () => {
   const coords = getCoordinates();
 
   const mapProperties = coords ? [{
-    id: parseInt(property.id),
+    id: property.id, // Changed from parseInt(property.id) to property.id (string)
     title: property.title,
     location: property.location,
     price: property.price,
@@ -271,7 +271,7 @@ const PropertyDetails = () => {
               {coords ? (
                 <PropertyMap
                   properties={mapProperties}
-                  selectedPropertyId={parseInt(property.id)}
+                  selectedPropertyId={property.id} // Changed from parseInt(property.id) to property.id (string)
                   height="400px"
                 />
               ) : (
