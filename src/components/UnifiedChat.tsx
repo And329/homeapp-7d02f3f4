@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 interface UnifiedChatProps {
-  otherUserId: string;
+  otherUserId?: string;
   propertyTitle?: string;
   propertyId?: string;
   propertyRequestId?: string;
@@ -50,6 +51,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const { data: otherUserProfile } = useQuery({
     queryKey: ['user-profile', otherUserId],
     queryFn: async () => {
+      if (!otherUserId) return null;
       console.log('UnifiedChat: Fetching profile for user:', otherUserId);
       const { data, error } = await supabase
         .from('profiles')
@@ -95,7 +97,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const { data: conversation, isLoading: loadingConversation } = useQuery({
     queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user || !otherUserId) return null;
 
       let query = supabase
         .from('conversations')
@@ -120,13 +122,15 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
       return data;
     },
-    onSuccess: (data) => {
-      if (data) {
-        setConversationId(data.id);
-      }
-    },
     enabled: !!user && !!otherUserId,
   });
+
+  // Update conversationId when conversation data changes
+  useEffect(() => {
+    if (conversation) {
+      setConversationId(conversation.id);
+    }
+  }, [conversation]);
 
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ['messages', conversationId],
@@ -149,8 +153,8 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     enabled: !!conversationId,
   });
 
-  const sendMessageMutation = useMutation(
-    async () => {
+  const sendMessageMutation = useMutation({
+    mutationFn: async () => {
       if (!user || !conversationId) {
         throw new Error('User or conversation ID is missing');
       }
@@ -167,22 +171,20 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
         throw error;
       }
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-        queryClient.invalidateQueries({ queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId] });
-        setNewMessage('');
-        scrollToBottom();
-      },
-      onError: (error: any) => {
-        toast({
-          title: 'Error sending message',
-          description: error.message || 'Failed to send message. Please try again.',
-          variant: 'destructive',
-        });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId] });
+      setNewMessage('');
+      scrollToBottom();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error sending message',
+        description: error.message || 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const getUserDisplayName = (userId: string) => {
     if (userId === user?.id) {
@@ -205,6 +207,25 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Show message if no otherUserId is provided
+  if (!otherUserId) {
+    return (
+      <Card className={`flex flex-col ${className}`}>
+        <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
+          <CardTitle className="text-base sm:text-lg font-semibold">
+            Messages
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center text-gray-500">
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Select a conversation to start messaging</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`flex flex-col ${className}`}>
