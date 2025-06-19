@@ -1,89 +1,63 @@
 
 import { Property } from '@/types/property';
 
-export const transformDatabaseProperty = (property: any): Property => {
-  console.log('Processing property:', property);
-
-  // Parse location coordinates if it's a JSON string
-  let coordinates = { lat: 25.0772, lng: 55.1395 }; // Default Dubai coordinates
+export const transformDatabaseProperty = (dbProperty: any): Property => {
+  // Handle coordinates - they might be stored as JSON string or object
+  let coordinates = { lat: 0, lng: 0 };
   
-  // First, check if we have separate latitude/longitude fields in the database
-  if (property.latitude && property.longitude) {
-    coordinates = { lat: property.latitude, lng: property.longitude };
-    console.log('Using database lat/lng fields:', coordinates);
+  if (dbProperty.latitude && dbProperty.longitude) {
+    coordinates = {
+      lat: dbProperty.latitude,
+      lng: dbProperty.longitude
+    };
   }
-  // Then check if location is a JSON object with coordinates
-  else if (property.location && typeof property.location === 'object' && property.location !== null && property.location.lat && property.location.lng) {
-    coordinates = { lat: property.location.lat, lng: property.location.lng };
-    console.log('Using location object coordinates:', coordinates);
-  }
-  // Finally, try to parse location as JSON string
-  else if (property.location && typeof property.location === 'string') {
-    const locationStr = property.location.trim();
-    if (locationStr !== '') {
+
+  // Handle images - they might be stored as JSON string or array
+  let images: string[] = [];
+  if (dbProperty.images) {
+    if (typeof dbProperty.images === 'string') {
       try {
-        const locationData = JSON.parse(locationStr);
-        if (locationData && locationData.lat && locationData.lng) {
-          coordinates = { lat: locationData.lat, lng: locationData.lng };
-          console.log('Parsed coordinates from location JSON:', coordinates);
-        }
-      } catch (e) {
-        console.log('Could not parse location as JSON for property', property.id);
+        images = JSON.parse(dbProperty.images);
+      } catch {
+        images = [dbProperty.images];
       }
+    } else if (Array.isArray(dbProperty.images)) {
+      images = dbProperty.images;
     }
   }
 
-  // Handle images array - ensure it's always a string array
-  let images = [
-    'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=800&h=600&fit=crop'
-  ];
-  
-  if (property.images && Array.isArray(property.images)) {
-    // Filter out non-string values and ensure we have valid URLs
-    const validImages = property.images.filter((img): img is string => 
-      typeof img === 'string' && img.length > 0
-    );
-    if (validImages.length > 0) {
-      images = validImages;
-    }
-  }
-
-  // Parse amenities if it's an object
-  let amenities = ['Swimming Pool', 'Gym', 'Parking', '24/7 Security'];
-  if (property.amenities && typeof property.amenities === 'object') {
-    if (Array.isArray(property.amenities)) {
-      amenities = property.amenities.filter((amenity): amenity is string => 
-        typeof amenity === 'string'
-      );
-    } else {
-      amenities = Object.keys(property.amenities).filter(key => property.amenities[key]);
+  // Handle amenities - they might be stored as JSON string or array
+  let amenities: string[] = [];
+  if (dbProperty.amenities) {
+    if (typeof dbProperty.amenities === 'string') {
+      try {
+        amenities = JSON.parse(dbProperty.amenities);
+      } catch {
+        amenities = [dbProperty.amenities];
+      }
+    } else if (Array.isArray(dbProperty.amenities)) {
+      amenities = dbProperty.amenities;
     }
   }
 
   return {
-    id: property.id.toString(),
-    title: property.title || 'Untitled Property',
-    price: property.price || 0,
-    location: (property.location && typeof property.location === 'string' && !property.location.startsWith('{'))
-      ? property.location 
-      : `${coordinates.lat}, ${coordinates.lng}`,
-    bedrooms: property.bedrooms || 0,
-    bathrooms: property.bathrooms || 0,
-    area: 1000, // Default area since it's not in the database
-    image: images[0],
-    images: images,
-    type: property.type === 'rent' ? 'rent' : 'sale' as 'rent' | 'sale',
-    isHotDeal: property.is_hot_deal || false,
-    description: property.description || 'No description available',
-    amenities: amenities,
-    coordinates: coordinates,
-    propertyType: 'Apartment',
-    yearBuilt: 2020,
-    parking: 1
+    id: dbProperty.id?.toString() || '',
+    title: dbProperty.title || '',
+    price: dbProperty.price || 0,
+    location: dbProperty.location || '',
+    bedrooms: dbProperty.bedrooms || 0,
+    bathrooms: dbProperty.bathrooms || 0,
+    area: dbProperty.area || 0,
+    image: images[0] || '/placeholder.svg',
+    images: images.length > 0 ? images : ['/placeholder.svg'],
+    type: dbProperty.type as 'rent' | 'sale',
+    isHotDeal: dbProperty.is_hot_deal || false,
+    description: dbProperty.description || '',
+    amenities,
+    coordinates,
+    propertyType: dbProperty.property_type || 'Apartment',
+    yearBuilt: dbProperty.year_built,
+    parking: dbProperty.parking,
+    owner_id: dbProperty.owner_id
   };
 };
-
-// Export the alias for backward compatibility
-export const transformProperty = transformDatabaseProperty;

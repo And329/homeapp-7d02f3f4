@@ -20,4 +20,5 @@ export interface Property {
   propertyType: string;
   yearBuilt?: number;
   parking?: number;
+  owner_id?: string;
 }
