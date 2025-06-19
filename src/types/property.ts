@@ -21,4 +21,6 @@ export interface Property {
   yearBuilt?: number;
   parking?: number;
   owner_id?: string;
+  is_approved?: boolean;
+  created_at?: string;
 }

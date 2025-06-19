@@ -3,29 +3,13 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { transformDatabaseProperty } from '@/utils/propertyTransform';
+import { Property } from '@/types/property';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PropertyFilters from '@/components/PropertyFilters';
 import PropertyGrid from '@/components/PropertyGrid';
 import PropertyStats from '@/components/PropertyStats';
-
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: 'rent' | 'sale';
-  is_hot_deal: boolean;
-  description: string;
-  created_at: string;
-  latitude: number | null;
-  longitude: number | null;
-  amenities: string[] | null;
-  images: string[] | null;
-  owner_id: string | null;
-}
 
 const Properties = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,10 +24,11 @@ const Properties = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Property[];
+      return (data || []).map(transformDatabaseProperty);
     },
   });
 
@@ -62,26 +47,23 @@ const Properties = () => {
   });
 
   const transformProperty = (property: Property) => ({
-    id: property.id.toString(),
+    id: property.id,
     title: property.title || 'Untitled Property',
     price: property.price || 0,
     location: property.location || 'Location not specified',
     bedrooms: property.bedrooms || 0,
     bathrooms: property.bathrooms || 0,
-    area: 1000, // Default area since it's not in the database
-    image: Array.isArray(property.images) && property.images.length > 0 
+    area: property.area || 1000,
+    image: property.images && property.images.length > 0 
       ? property.images[0] 
       : '/placeholder.svg',
-    images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
+    images: property.images || ['/placeholder.svg'],
     type: property.type || 'rent',
-    isHotDeal: property.is_hot_deal || false,
+    isHotDeal: property.isHotDeal || false,
     description: property.description || '',
-    amenities: Array.isArray(property.amenities) ? property.amenities : [],
-    coordinates: {
-      lat: property.latitude || 0,
-      lng: property.longitude || 0
-    },
-    propertyType: 'Apartment',
+    amenities: property.amenities || [],
+    coordinates: property.coordinates || { lat: 0, lng: 0 },
+    propertyType: property.propertyType || 'Apartment',
     owner_id: property.owner_id
   });
 

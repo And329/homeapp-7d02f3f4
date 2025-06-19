@@ -169,7 +169,7 @@ export type Database = {
           last_message_at: string
           participant_1_id: string
           participant_2_id: string
-          property_id: number | null
+          property_id: string | null
           property_request_id: string | null
           subject: string
         }
@@ -179,7 +179,7 @@ export type Database = {
           last_message_at?: string
           participant_1_id: string
           participant_2_id: string
-          property_id?: number | null
+          property_id?: string | null
           property_request_id?: string | null
           subject: string
         }
@@ -189,7 +189,7 @@ export type Database = {
           last_message_at?: string
           participant_1_id?: string
           participant_2_id?: string
-          property_id?: number | null
+          property_id?: string | null
           property_request_id?: string | null
           subject?: string
         }
@@ -331,7 +331,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
-          id: number
+          id: string
           images: Json | null
           is_approved: boolean
           is_hot_deal: boolean | null
@@ -350,7 +350,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          id?: number
+          id?: string
           images?: Json | null
           is_approved?: boolean
           is_hot_deal?: boolean | null
@@ -369,7 +369,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          id?: number
+          id?: string
           images?: Json | null
           is_approved?: boolean
           is_hot_deal?: boolean | null

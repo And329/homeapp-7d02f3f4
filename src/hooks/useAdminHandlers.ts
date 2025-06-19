@@ -1,23 +1,8 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
-
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: 'rent' | 'sale';
-  is_hot_deal: boolean;
-  description: string;
-  created_at: string;
-  latitude: number | null;
-  longitude: number | null;
-  amenities: string[] | null;
-  images: string[] | null;
-}
+import { Property } from '@/types/property';
 
 export const useAdminHandlers = (
   queryClient: any,
@@ -33,7 +18,6 @@ export const useAdminHandlers = (
     console.log('useAdminHandlers: Original requester user_id:', request.user_id);
     
     try {
-      // Use the database function to approve the request
       const { data, error } = await supabase.rpc('approve_property_request', {
         request_id: request.id
       });
@@ -53,7 +37,7 @@ export const useAdminHandlers = (
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
-    } catch (error) {
+    } catch (error: any) {
       console.error('useAdminHandlers: Failed to approve request:', error);
       toast({
         title: "Error",
@@ -85,7 +69,7 @@ export const useAdminHandlers = (
       });
 
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
-    } catch (error) {
+    } catch (error: any) {
       console.error('useAdminHandlers: Failed to reject request:', error);
       toast({
         title: "Error",
@@ -109,17 +93,14 @@ export const useAdminHandlers = (
     }
     
     try {
-      // First create the conversation
       const conversationId = await sendReplyMutation.mutateAsync({ requestId });
       
-      // Then send the actual message with the reply content
       if (conversationId && state.replyMessage.trim()) {
         await sendChatMessageMutation.mutateAsync({
           conversationId,
           message: state.replyMessage.trim()
         });
         
-        // Clear the reply form after successful send
         state.setReplyingToRequest(null);
         state.setReplyMessage('');
         
@@ -128,7 +109,7 @@ export const useAdminHandlers = (
           description: "Your reply has been sent successfully.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('useAdminHandlers: Failed to send reply:', error);
       toast({
         title: "Error",
@@ -143,7 +124,7 @@ export const useAdminHandlers = (
     state.setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       await deleteMutation.mutateAsync(id);
     }
@@ -151,7 +132,6 @@ export const useAdminHandlers = (
 
   const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
     console.log('Handling approval submit:', { requestId, updatedData });
-    // Implementation for approval submit if needed
   };
 
   const handleSendChatMessage = async () => {

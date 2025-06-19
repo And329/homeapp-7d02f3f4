@@ -58,6 +58,8 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     propertyType: dbProperty.property_type || 'Apartment',
     yearBuilt: dbProperty.year_built,
     parking: dbProperty.parking,
-    owner_id: dbProperty.owner_id
+    owner_id: dbProperty.owner_id,
+    is_approved: dbProperty.is_approved,
+    created_at: dbProperty.created_at
   };
 };

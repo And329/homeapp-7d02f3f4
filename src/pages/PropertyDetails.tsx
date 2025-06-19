@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -29,10 +30,7 @@ const PropertyDetails = () => {
   });
 
   console.log('PropertyDetails: Property data:', property);
-  console.log('PropertyDetails: Loading state:', isLoading);
-  console.log('PropertyDetails: Error state:', error);
 
-  // Get property owner profile for contact information
   const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
     queryKey: ['property-owner', property?.owner_id],
     queryFn: async () => {
@@ -58,31 +56,6 @@ const PropertyDetails = () => {
       return data;
     },
     enabled: !!property?.owner_id,
-  });
-
-  // Debug: Let's also check what's in the database for this specific property
-  const { data: rawPropertyData } = useQuery({
-    queryKey: ['raw-property-debug', id],
-    queryFn: async () => {
-      if (!id) return null;
-      
-      console.log('PropertyDetails: Fetching raw property data for debugging...');
-      
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', parseInt(id))
-        .single();
-      
-      if (error) {
-        console.error('PropertyDetails: Error fetching raw property:', error);
-        return null;
-      }
-      
-      console.log('PropertyDetails: Raw property data from database:', data);
-      return data;
-    },
-    enabled: !!id,
   });
 
   if (isLoading) {
@@ -133,13 +106,9 @@ const PropertyDetails = () => {
     return `AED ${price.toLocaleString()}`;
   };
 
-  // Parse coordinates from property data
   const getCoordinates = () => {
     console.log('PropertyDetails: Parsing coordinates for property:', property);
-    console.log('PropertyDetails: Property coordinates:', property.coordinates);
-    console.log('PropertyDetails: Property location:', property.location);
     
-    // Check if coordinates exist as an object with lat/lng
     if (property.coordinates?.lat && property.coordinates?.lng) {
       console.log('PropertyDetails: Using coordinates object:', property.coordinates);
       return {
@@ -148,9 +117,7 @@ const PropertyDetails = () => {
       };
     }
     
-    // Try to parse from location string if it contains coordinates
     if (property.location && typeof property.location === 'string') {
-      // Check if location is a coordinate string like "25.2048, 55.2708"
       const coordMatch = property.location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
       if (coordMatch) {
         const lat = parseFloat(coordMatch[1]);
@@ -168,7 +135,6 @@ const PropertyDetails = () => {
 
   const coords = getCoordinates();
 
-  // Prepare property data for the map
   const mapProperties = coords ? [{
     id: parseInt(property.id),
     title: property.title,
@@ -183,34 +149,7 @@ const PropertyDetails = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Image Gallery */}
       <section className="container mx-auto px-4 py-8">
-        {/* Enhanced Debug information */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-            <h3 className="font-semibold text-yellow-800">Debug Information:</h3>
-            <p><strong>Property ID:</strong> {property.id}</p>
-            <p><strong>Property Owner ID:</strong> {property.owner_id || 'NULL - This is the problem!'}</p>
-            <p><strong>Current User ID:</strong> {user?.id || 'Not logged in'}</p>
-            <p><strong>Current User Email:</strong> {user?.email || 'Not logged in'}</p>
-            <p><strong>Owner Profile Loaded:</strong> {ownerProfile ? 'Yes' : 'No'}</p>
-            {ownerProfile && (
-              <div>
-                <p><strong>Owner Email:</strong> {ownerProfile.email || 'Not available'}</p>
-                <p><strong>Owner Name:</strong> {ownerProfile.full_name || 'Not available'}</p>
-              </div>
-            )}
-            {rawPropertyData && (
-              <div className="mt-2">
-                <p><strong>Raw Database Data:</strong></p>
-                <pre className="text-xs bg-gray-100 p-2 rounded">
-                  {JSON.stringify(rawPropertyData, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           <div className="lg:col-span-3">
             <img
@@ -356,7 +295,7 @@ const PropertyDetails = () => {
                 </div>
               ) : (
                 <ContactPropertyOwner
-                  propertyId={parseInt(property.id)}
+                  propertyId={property.id}
                   ownerId={property.owner_id}
                   propertyTitle={property.title}
                   contactName={ownerProfile?.full_name || 'Property Owner'}
@@ -391,7 +330,7 @@ const PropertyDetails = () => {
                       onClick={async () => {
                         try {
                           console.log('Attempting to fix owner_id for property:', property.id);
-                          await updatePropertyOwner(parseInt(property.id), user.id);
+                          await updatePropertyOwner(property.id, user.id);
                           window.location.reload();
                         } catch (error) {
                           console.error('Failed to fix owner_id:', error);

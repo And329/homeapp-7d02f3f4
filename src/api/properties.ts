@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -8,23 +9,19 @@ export const getProperties = async (): Promise<Property[]> => {
   const { data, error } = await supabase
     .from('properties')
     .select('*, owner_id')
-    .eq('is_approved', true); // Only show approved properties to public
+    .eq('is_approved', true);
 
   if (error) {
     console.error('API: Error fetching properties:', error);
     return [];
   }
 
-  console.log('API: Raw properties data:', data);
-
   if (!data || data.length === 0) {
     console.log('API: No properties found in database');
     return [];
   }
 
-  // Transform database data to match our Property interface
   const transformedProperties: Property[] = data.map(transformDatabaseProperty);
-
   console.log('API: Transformed properties:', transformedProperties);
   return transformedProperties;
 };
@@ -35,7 +32,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   const { data, error } = await supabase
     .from('properties')
     .select('*, owner_id')
-    .eq('id', parseInt(id))
+    .eq('id', id)
     .maybeSingle();
 
   if (error) {
@@ -59,7 +56,7 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
     .from('properties')
     .select('*, owner_id')
     .eq('type', type)
-    .eq('is_approved', true); // Only show approved properties
+    .eq('is_approved', true);
 
   if (error) {
     console.error('API: Error fetching properties by type:', error);
@@ -80,12 +77,11 @@ export const getHotDeals = async (): Promise<Property[]> => {
     .from('properties')
     .select('*, owner_id')
     .eq('is_hot_deal', true)
-    .eq('is_approved', true) // Only show approved hot deals
+    .eq('is_approved', true)
     .limit(3);
 
   if (error) {
     console.error('API: Error fetching hot deals:', error);
-    // Fallback: get first 3 approved properties
     const properties = await getProperties();
     return properties.slice(0, 3).map(property => ({ ...property, isHotDeal: true }));
   }
@@ -102,7 +98,6 @@ export const getHotDeals = async (): Promise<Property[]> => {
 export const createProperty = async (propertyData: any): Promise<Property> => {
   console.log('API: Creating property with data:', propertyData);
   
-  // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {
@@ -110,10 +105,6 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     throw new Error('User must be authenticated to create property');
   }
   
-  console.log('API: Current user for property creation:', user);
-  console.log('API: User ID to be set as owner_id:', user.id);
-  
-  // Create property with owner_id and approval status
   const propertyWithOwner = {
     title: propertyData.title,
     description: propertyData.description,
@@ -128,7 +119,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     images: propertyData.images,
     is_hot_deal: propertyData.is_hot_deal || false,
     owner_id: user.id,
-    is_approved: false, // New properties need approval
+    is_approved: false,
     created_by: user.id
   };
   
@@ -146,13 +137,10 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   }
 
   console.log('API: Property created successfully:', data);
-  console.log('API: Property owner_id:', data.owner_id);
-  console.log('API: Property approval status:', data.is_approved);
-
   return transformDatabaseProperty(data);
 };
 
-export const updatePropertyOwner = async (propertyId: number, ownerId: string): Promise<void> => {
+export const updatePropertyOwner = async (propertyId: string, ownerId: string): Promise<void> => {
   console.log('API: Updating property owner:', { propertyId, ownerId });
   
   const { error } = await supabase
@@ -168,7 +156,7 @@ export const updatePropertyOwner = async (propertyId: number, ownerId: string): 
   console.log('API: Property owner updated successfully');
 };
 
-export const deleteProperty = async (id: number): Promise<void> => {
+export const deleteProperty = async (id: string): Promise<void> => {
   console.log('API: Deleting property with ID:', id);
   
   const { error } = await supabase
@@ -184,7 +172,6 @@ export const deleteProperty = async (id: number): Promise<void> => {
   console.log('API: Property deleted successfully');
 };
 
-// New function to get all properties for admin (including unapproved)
 export const getAllPropertiesForAdmin = async (): Promise<Property[]> => {
   console.log('API: Fetching ALL properties for admin...');
   
@@ -208,8 +195,7 @@ export const getAllPropertiesForAdmin = async (): Promise<Property[]> => {
   return transformedProperties;
 };
 
-// Function to approve a property
-export const approveProperty = async (propertyId: number): Promise<void> => {
+export const approveProperty = async (propertyId: string): Promise<void> => {
   console.log('API: Approving property:', propertyId);
   
   const { error } = await supabase

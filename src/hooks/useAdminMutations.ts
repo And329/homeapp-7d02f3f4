@@ -10,7 +10,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       console.log('Delete mutation called for property ID:', id);
       await deleteProperty(id);
     },
@@ -36,7 +36,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
     mutationFn: async ({ requestId, updatedData }: { requestId: string, updatedData: any }) => {
       console.log('Approving request with details:', { requestId, updatedData });
       
-      // First insert the property
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
         .insert([{
@@ -64,7 +63,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw propertyError;
       }
 
-      // Then update the request status
       const { error: requestError } = await supabase
         .from('property_requests')
         .update({ 
@@ -133,7 +131,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('User not authenticated');
       }
       
-      // Find the property request to get the user_id
       const propertyRequest = propertyRequests.find(req => req.id === requestId);
       if (!propertyRequest || !propertyRequest.user_id) {
         throw new Error('Property request not found or missing user ID');
@@ -148,7 +145,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         requestId 
       });
       
-      // Check if conversation already exists
       let conversationId;
       const { data: existingConversations } = await supabase
         .from('conversations')
@@ -207,7 +203,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('User not authenticated');
       }
 
-      // First verify that the admin can send messages to this conversation
       const { data: conversation, error: conversationError } = await supabase
         .from('conversations')
         .select('*')

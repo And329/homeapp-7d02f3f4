@@ -2,23 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
-
-interface Property {
-  id: number;
-  title: string;
-  price: number;
-  location: string;
-  bedrooms: number;
-  bathrooms: number;
-  type: 'rent' | 'sale';
-  is_hot_deal: boolean;
-  description: string;
-  created_at: string;
-  latitude: number | null;
-  longitude: number | null;
-  amenities: string[] | null;
-  images: string[] | null;
-}
+import { Property } from '@/types/property';
+import { transformDatabaseProperty } from '@/utils/propertyTransform';
 
 export const useAdminQueries = (selectedConversation: string | null, selectedChatUserId: string | null) => {
   const propertiesQuery = useQuery({
@@ -30,7 +15,7 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Property[];
+      return data.map(transformDatabaseProperty) as Property[];
     },
   });
 
