@@ -28,21 +28,18 @@ export const useAdminUser = () => {
         throw error;
       }
 
-      if (!data) {
-        console.log('useAdminUser: No admin user found in database');
-        throw new Error('Admin user not found. Please contact support.');
-      }
-
-      console.log('useAdminUser: Found admin user:', data);
+      console.log('useAdminUser: Admin user query result:', data);
       return data;
     },
     enabled: !!user && !isCurrentUserAdmin,
+    retry: 1, // Only retry once to avoid infinite loading
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   return {
     adminUser,
     loadingAdmin,
-    adminError,
+    adminError: adminError || (!adminUser && !loadingAdmin ? new Error('Admin user not found') : null),
     isCurrentUserAdmin,
     ADMIN_EMAIL
   };

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useConversations } from '@/hooks/useConversations';
 import { useAdminUser } from '@/hooks/useAdminUser';
 import { useAdminConversation } from '@/hooks/useAdminConversation';
+import { useAuth } from '@/contexts/AuthContext';
 import ChatWindow from './ChatWindow';
 import AdminChatSignInPrompt from './AdminChatSignInPrompt';
 import AdminChatAdminView from './AdminChatAdminView';
@@ -13,6 +14,7 @@ import AdminChatInterface from './AdminChatInterface';
 const AdminChat: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [chatPartnerName, setChatPartnerName] = useState<string>('');
+  const { user } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
   
   const { 
@@ -56,7 +58,7 @@ const AdminChat: React.FC = () => {
   };
 
   // If user is not signed in
-  if (!adminUser && !loadingAdmin && !isCurrentUserAdmin) {
+  if (!user) {
     return <AdminChatSignInPrompt />;
   }
 
