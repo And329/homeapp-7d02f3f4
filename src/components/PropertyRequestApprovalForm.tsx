@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,7 +53,9 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         images: formData.images,
       };
 
+      console.log('Submitting approval with data:', updatedData);
       await onApprove(request.id, updatedData);
+      onClose();
     } catch (error) {
       console.error('Approval error:', error);
       toast({

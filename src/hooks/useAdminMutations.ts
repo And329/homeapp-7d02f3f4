@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,39 +33,64 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
 
   const approveRequestWithDetailsMutation = useMutation({
     mutationFn: async ({ requestId, updatedData }: { requestId: string, updatedData: any }) => {
+      console.log('Approving request with details:', { requestId, updatedData });
+      
+      // First insert the property
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
-        .insert([updatedData])
+        .insert([{
+          title: updatedData.title,
+          description: updatedData.description,
+          price: updatedData.price,
+          location: updatedData.location,
+          latitude: updatedData.latitude,
+          longitude: updatedData.longitude,
+          bedrooms: updatedData.bedrooms,
+          bathrooms: updatedData.bathrooms,
+          type: updatedData.type,
+          amenities: updatedData.amenities,
+          images: updatedData.images,
+          is_hot_deal: false
+        }])
         .select()
         .single();
 
-      if (propertyError) throw propertyError;
+      if (propertyError) {
+        console.error('Property creation error:', propertyError);
+        throw propertyError;
+      }
 
+      // Then update the request status
       const { error: requestError } = await supabase
         .from('property_requests')
         .update({ 
           status: 'approved', 
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          approved_by: profile?.id,
           approved_at: new Date().toISOString()
         })
         .eq('id', requestId);
 
-      if (requestError) throw requestError;
+      if (requestError) {
+        console.error('Request update error:', requestError);
+        throw requestError;
+      }
 
       return propertyData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
       toast({
         title: "Request Approved",
         description: "The property request has been approved and added to listings.",
       });
     },
     onError: (error) => {
+      console.error('Approval mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to approve request. Please try again.",
+        description: `Failed to approve request: ${error.message}`,
         variant: "destructive",
       });
     },
