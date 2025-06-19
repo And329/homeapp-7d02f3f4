@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MessageCircle, Clock, CheckCircle, XCircle, Send, Plus, Eye } from 'lucide-react';
+import { MessageCircle, Clock, CheckCircle, XCircle, Send, Plus, Eye, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -193,6 +192,34 @@ const UserProfile = () => {
     },
   });
 
+  // Delete property request mutation
+  const deletePropertyRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from('property_requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('user_id', user!.id); // Ensure user can only delete their own requests
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
+      toast({
+        title: "Listing deleted",
+        description: "Your property listing has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete listing. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Auto-scroll to bottom when messages change or when a chat is selected
   useEffect(() => {
     const scrollToBottom = () => {
@@ -232,6 +259,12 @@ const UserProfile = () => {
   const handleCreateChat = () => {
     if (!newChatSubject.trim()) return;
     createChatMutation.mutate(newChatSubject.trim());
+  };
+
+  const handleDeleteListing = (requestId: string) => {
+    if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      deletePropertyRequestMutation.mutate(requestId);
+    }
   };
 
   if (!user) {
@@ -306,8 +339,17 @@ const UserProfile = () => {
                       return (
                         <div key={request.id} className="relative">
                           <PropertyCard property={transformedProperty} />
-                          <div className="absolute top-4 right-4 z-10">
+                          <div className="absolute top-4 right-4 z-10 flex gap-2">
                             {getStatusBadge(request.status)}
+                            <Button
+                              onClick={() => handleDeleteListing(request.id)}
+                              variant="outline"
+                              size="sm"
+                              className="bg-white/90 hover:bg-red-50 hover:border-red-200"
+                              disabled={deletePropertyRequestMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
                           </div>
                           
                           {request.status === 'rejected' && replies.length > 0 && (

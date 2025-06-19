@@ -59,8 +59,59 @@ const UserChat: React.FC<UserChatProps> = ({
   const [chatId, setChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Create chat mutation
+  const createChatMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Creating user chat with:', {
+        propertyId,
+        propertyRequestId,
+        ownerId,
+        propertyTitle
+      });
+
+      const { data: newChat, error } = await supabase
+        .from('user_chats')
+        .insert([{
+          property_id: propertyId || null,
+          property_request_id: propertyRequestId || null,
+          requester_id: user.id,
+          owner_id: ownerId,
+          subject: `Inquiry about: ${propertyTitle}`,
+          status: 'active'
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Chat creation error:', error);
+        throw error;
+      }
+
+      console.log('Chat created successfully:', newChat);
+      setChatId(newChat.id);
+      return newChat as UserChatData;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['user-chat'] });
+      toast({
+        title: "Chat created",
+        description: "You can now start messaging with the property owner.",
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to create chat:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get or create chat
-  const { data: chat } = useQuery({
+  const { data: chat, isLoading: chatLoading } = useQuery({
     queryKey: ['user-chat', propertyId, propertyRequestId, ownerId],
     queryFn: async () => {
       if (!user) return null;
@@ -78,30 +129,21 @@ const UserChat: React.FC<UserChatProps> = ({
         query = query.eq('property_request_id', propertyRequestId);
       }
 
-      const { data: existingChat } = await query.single();
+      const { data: existingChat, error } = await query.maybeSingle();
+
+      if (error) {
+        console.error('Error fetching chat:', error);
+        throw error;
+      }
 
       if (existingChat) {
+        console.log('Found existing chat:', existingChat);
         setChatId(existingChat.id);
         return existingChat as UserChatData;
       }
 
-      // Create new chat
-      const { data: newChat, error } = await supabase
-        .from('user_chats')
-        .insert([{
-          property_id: propertyId || null,
-          property_request_id: propertyRequestId || null,
-          requester_id: user.id,
-          owner_id: ownerId,
-          subject: `Inquiry about: ${propertyTitle}`,
-          status: 'active'
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      setChatId(newChat.id);
-      return newChat as UserChatData;
+      console.log('No existing chat found, will need to create one');
+      return null;
     },
     enabled: !!user && !!ownerId,
   });
@@ -183,8 +225,22 @@ const UserChat: React.FC<UserChatProps> = ({
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
+
+    if (!chatId) {
+      // Create chat first, then send message
+      createChatMutation.mutate();
+      return;
+    }
+
     sendMessageMutation.mutate(newMessage.trim());
   };
+
+  // Auto-send message after chat creation
+  useEffect(() => {
+    if (chatId && newMessage.trim() && createChatMutation.isSuccess) {
+      sendMessageMutation.mutate(newMessage.trim());
+    }
+  }, [chatId, createChatMutation.isSuccess]);
 
   if (!user) {
     return (
@@ -192,6 +248,17 @@ const UserChat: React.FC<UserChatProps> = ({
         <CardContent className="p-6 text-center">
           <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p className="text-gray-600">Please log in to start a conversation</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (chatLoading) {
+    return (
+      <Card className="w-full max-w-2xl">
+        <CardContent className="p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading chat...</p>
         </CardContent>
       </Card>
     );
@@ -228,10 +295,15 @@ const UserChat: React.FC<UserChatProps> = ({
       
       <CardContent>
         <div className="h-80 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-gray-50">
-          {messages.length === 0 ? (
+          {!chatId ? (
             <div className="text-center text-gray-500 py-8">
               <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>Start the conversation by sending a message</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No messages yet. Send the first message!</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -274,7 +346,7 @@ const UserChat: React.FC<UserChatProps> = ({
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending || createChatMutation.isPending}
           >
             <Send className="h-4 w-4" />
           </Button>
