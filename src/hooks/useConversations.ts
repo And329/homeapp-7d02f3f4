@@ -56,7 +56,12 @@ export const useConversations = () => {
       });
       participantIds.delete(user.id); // Remove current user
 
-      if (participantIds.size === 0) return conversationsData;
+      if (participantIds.size === 0) {
+        return conversationsData.map(conv => ({
+          ...conv,
+          other_participant: null
+        })) as Conversation[];
+      }
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -71,7 +76,7 @@ export const useConversations = () => {
         ...conv,
         other_participant: profilesMap.get(
           conv.participant_1_id === user.id ? conv.participant_2_id : conv.participant_1_id
-        )
+        ) || null
       })) as Conversation[];
     },
     enabled: !!user,

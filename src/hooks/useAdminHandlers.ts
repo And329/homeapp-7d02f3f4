@@ -20,14 +20,13 @@ interface Property {
   images: string[] | null;
 }
 
-interface Chat {
+interface Conversation {
   id: string;
-  user_id: string;
-  admin_id: string | null;
+  participant_1_id: string;
+  participant_2_id: string;
   subject: string;
-  status: string;
   created_at: string;
-  updated_at: string;
+  last_message_at: string;
 }
 
 export const useAdminHandlers = (
@@ -42,7 +41,7 @@ export const useAdminHandlers = (
   const [approvingRequest, setApprovingRequest] = useState<PropertyRequest | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats'>('properties');
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [replyingToRequest, setReplyingToRequest] = useState<string | null>(null);
@@ -133,16 +132,17 @@ export const useAdminHandlers = (
   };
 
   const handleSendChatMessage = () => {
-    if (!selectedChat || !newMessage.trim()) return;
+    if (!selectedConversation || !newMessage.trim()) return;
     if (mutations?.sendChatMessageMutation) {
-      mutations.sendChatMessageMutation.mutate({ chatId: selectedChat, message: newMessage.trim() });
+      mutations.sendChatMessageMutation.mutate({ conversationId: selectedConversation, message: newMessage.trim() });
       setNewMessage('');
     }
   };
 
-  const handleChatSelect = (chat: Chat) => {
-    setSelectedChat(chat.id);
-    setSelectedChatUserId(chat.user_id);
+  const handleConversationSelect = (conversation: Conversation) => {
+    setSelectedConversation(conversation.id);
+    // Determine the other participant ID
+    setSelectedChatUserId(conversation.participant_1_id);
   };
 
   return {
@@ -163,7 +163,7 @@ export const useAdminHandlers = (
     setShowMap,
     activeTab,
     setActiveTab,
-    selectedChat,
+    selectedConversation,
     selectedChatUserId,
     newMessage,
     setNewMessage,
@@ -179,6 +179,6 @@ export const useAdminHandlers = (
     handleRejectRequest,
     handleSendReply,
     handleSendChatMessage,
-    handleChatSelect,
+    handleConversationSelect,
   };
 };

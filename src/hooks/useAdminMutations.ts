@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -128,41 +129,42 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
       const propertyRequest = propertyRequests.find(req => req.id === requestId);
       const chatSubject = `Property Request: ${propertyRequest?.title || 'Property'}`;
       
-      let chatId;
-      const { data: existingChats } = await supabase
-        .from('admin_chats')
+      // Check if conversation already exists
+      let conversationId;
+      const { data: existingConversations } = await supabase
+        .from('conversations')
         .select('id')
-        .eq('user_id', userId)
-        .eq('subject', chatSubject)
+        .eq('property_request_id', requestId)
+        .or(`and(participant_1_id.eq.${userId},participant_2_id.eq.${profile!.id}),and(participant_1_id.eq.${profile!.id},participant_2_id.eq.${userId})`)
         .limit(1);
 
-      if (existingChats && existingChats.length > 0) {
-        chatId = existingChats[0].id;
+      if (existingConversations && existingConversations.length > 0) {
+        conversationId = existingConversations[0].id;
       } else {
-        const { data: newChat, error: chatError } = await supabase
-          .from('admin_chats')
+        const { data: newConversation, error: conversationError } = await supabase
+          .from('conversations')
           .insert([{
-            user_id: userId,
-            subject: chatSubject,
-            admin_id: profile!.id,
-            status: 'open'
+            participant_1_id: profile!.id,
+            participant_2_id: userId,
+            property_request_id: requestId,
+            subject: chatSubject
           }])
           .select()
           .single();
 
-        if (chatError) {
-          console.error('Chat creation error:', chatError);
-          throw chatError;
+        if (conversationError) {
+          console.error('Conversation creation error:', conversationError);
+          throw conversationError;
         }
-        chatId = newChat.id;
+        conversationId = newConversation.id;
       }
 
       const { error: messageError } = await supabase
-        .from('chat_messages')
+        .from('messages')
         .insert([{
-          chat_id: chatId,
+          conversation_id: conversationId,
           sender_id: profile!.id,
-          message
+          content: message
         }]);
 
       if (messageError) {
@@ -170,35 +172,14 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw messageError;
       }
 
-      await supabase
-        .from('admin_chats')
-        .update({ 
-          updated_at: new Date().toISOString(),
-          admin_id: profile!.id
-        })
-        .eq('id', chatId);
-
-      const { error: replyError } = await supabase
-        .from('property_request_replies')
-        .insert([{
-          request_id: requestId,
-          admin_id: profile!.id,
-          message
-        }]);
-
-      if (replyError) {
-        console.error('Reply creation error:', replyError);
-        throw replyError;
-      }
-
-      return chatId;
+      return conversationId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-chats'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       toast({
         title: "Reply sent",
-        description: "Your reply has been sent to the user and a chat has been created.",
+        description: "Your reply has been sent to the user and a conversation has been created.",
       });
     },
     onError: (error) => {
@@ -212,28 +193,20 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   });
 
   const sendChatMessageMutation = useMutation({
-    mutationFn: async ({ chatId, message }: { chatId: string; message: string }) => {
+    mutationFn: async ({ conversationId, message }: { conversationId: string; message: string }) => {
       const { error } = await supabase
-        .from('chat_messages')
+        .from('messages')
         .insert([{
-          chat_id: chatId,
+          conversation_id: conversationId,
           sender_id: profile!.id,
-          message
+          content: message
         }]);
 
       if (error) throw error;
-
-      await supabase
-        .from('admin_chats')
-        .update({ 
-          updated_at: new Date().toISOString(),
-          admin_id: profile!.id
-        })
-        .eq('id', chatId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-chats'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: () => {
       toast({

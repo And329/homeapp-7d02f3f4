@@ -110,7 +110,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
           )}
           <CardTitle>
             {selectedConv ? 
-              `Chat with ${selectedConv.other_participant?.full_name || 'User'}` : 
+              `Chat with ${selectedConv.other_participant?.full_name || 'Unknown User'}` : 
               'Messages'
             }
           </CardTitle>
