@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MapProperty {
-  id: string;
+  id: number; // PropertyMap expects number IDs
   title: string;
   location: string;
   price: number;
@@ -144,9 +144,9 @@ const PropertyDetails = () => {
 
   const coords = getCoordinates();
 
-  // Create map properties with string IDs to match PropertyMap interface
+  // Create map properties with number IDs to match PropertyMap interface
   const mapProperties: MapProperty[] = coords ? [{
-    id: property.id,
+    id: parseInt(property.id) || 0, // Convert string ID to number for PropertyMap
     title: property.title,
     location: property.location,
     price: property.price,
@@ -160,8 +160,6 @@ const PropertyDetails = () => {
       <Navbar />
       
       <section className="container mx-auto px-4 py-8">
-        
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           <div className="lg:col-span-3">
             <img
@@ -282,8 +280,8 @@ const PropertyDetails = () => {
               <h2 className="text-xl font-semibold mb-4">Location</h2>
               {coords ? (
                 <PropertyMap
-                  properties={mapProperties as any}
-                  selectedPropertyId={property.id}
+                  properties={mapProperties}
+                  selectedPropertyId={parseInt(property.id) || 0}
                   height="400px"
                 />
               ) : (

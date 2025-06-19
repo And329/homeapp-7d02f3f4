@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,9 +38,10 @@ const AdminDashboard = () => {
     selectedUserRequests,
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
-  // Transform properties to match AdminPropertiesTab expectations
-  const properties = rawProperties.map(property => ({
+  // Transform properties to match AdminPropertiesTab expectations (with number IDs)
+  const transformedProperties = rawProperties.map(property => ({
     ...property,
+    id: parseInt(property.id) || 0, // Convert string ID to number
     is_hot_deal: property.isHotDeal || false,
     latitude: property.coordinates?.lat || null,
     longitude: property.coordinates?.lng || null,
@@ -60,11 +60,11 @@ const AdminDashboard = () => {
     state
   );
 
-  // Updated handlers to work with transformed properties and string IDs
+  // Updated handlers to work with transformed properties and convert between ID types
   const handleEdit = (property: any) => {
     // Convert back to Property type for editing
     const propertyForEdit: Property = {
-      id: property.id,
+      id: String(property.id), // Convert number ID back to string
       title: property.title,
       price: property.price,
       location: property.location,
@@ -92,6 +92,7 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id: any) => {
+    // Convert number ID to string for the API call
     await handlers.handleDelete(String(id));
   };
 
@@ -125,14 +126,14 @@ const AdminDashboard = () => {
         <AdminTabNavigation
           activeTab={state.activeTab}
           setActiveTab={state.setActiveTab}
-          propertiesCount={properties.length}
+          propertiesCount={transformedProperties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
           openChatsCount={conversations.length}
         />
 
         {state.activeTab === 'properties' && (
           <AdminPropertiesTab
-            properties={properties}
+            properties={transformedProperties}
             propertiesLoading={propertiesLoading}
             showMap={state.showMap}
             setShowMap={state.setShowMap}
