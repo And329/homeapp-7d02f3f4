@@ -388,6 +388,7 @@ export type Database = {
           amenities: Json | null
           approved_at: string | null
           approved_by: string | null
+          area: number | null
           bathrooms: number | null
           bedrooms: number | null
           contact_email: string
@@ -413,6 +414,7 @@ export type Database = {
           amenities?: Json | null
           approved_at?: string | null
           approved_by?: string | null
+          area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           contact_email: string
@@ -438,6 +440,7 @@ export type Database = {
           amenities?: Json | null
           approved_at?: string | null
           approved_by?: string | null
+          area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           contact_email?: string

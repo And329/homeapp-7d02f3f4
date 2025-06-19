@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigation, Map } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,22 @@ interface PropertyLocationPickerProps {
   longitude?: number;
   onLocationChange: (location: string, lat?: number, lng?: number) => void;
 }
+
+// UAE boundary coordinates
+const UAE_BOUNDS = {
+  north: 26.0841,
+  south: 22.6333,
+  east: 56.3968,
+  west: 51.5795
+};
+
+// Check if coordinates are within UAE
+const isWithinUAE = (lat: number, lng: number): boolean => {
+  return lat >= UAE_BOUNDS.south && 
+         lat <= UAE_BOUNDS.north && 
+         lng >= UAE_BOUNDS.west && 
+         lng <= UAE_BOUNDS.east;
+};
 
 // Enhanced mock geocoding with more UAE locations
 const mockGeocode = async (address: string): Promise<{ lat: number; lng: number } | null> => {
@@ -92,6 +109,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   const [showMap, setShowMap] = useState(false);
   const [tempLat, setTempLat] = useState(latitude?.toString() || '');
   const [tempLng, setTempLng] = useState(longitude?.toString() || '');
+  const [coordinateError, setCoordinateError] = useState('');
   const [mapToken, setMapToken] = useState<string | null>(null);
   
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -138,6 +156,14 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     // Add click handler
     map.current.on('click', (e) => {
       const { lat, lng } = e.lngLat;
+      
+      // Check if coordinates are within UAE
+      if (!isWithinUAE(lat, lng)) {
+        setCoordinateError('Location must be within UAE boundaries');
+        return;
+      }
+      
+      setCoordinateError('');
       setTempLat(lat.toFixed(6));
       setTempLng(lng.toFixed(6));
       onLocationChange(location, lat, lng);
@@ -193,9 +219,8 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       if (coords) {
         setTempLat(coords.lat.toString());
         setTempLng(coords.lng.toString());
+        setCoordinateError('');
         onLocationChange(location, coords.lat, coords.lng);
-      } else {
-        alert('Location not found. Try entering coordinates manually or use the map picker.');
       }
     } catch (error) {
       console.error('Geocoding error:', error);
@@ -212,6 +237,14 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        
+        // Check if current location is within UAE
+        if (!isWithinUAE(lat, lng)) {
+          setCoordinateError('Current location is not within UAE boundaries');
+          return;
+        }
+        
+        setCoordinateError('');
         setTempLat(lat.toString());
         setTempLng(lng.toString());
         onLocationChange(location, lat, lng);
@@ -223,13 +256,24 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     );
   };
 
+  const validateAndSetCoordinates = (lat: number, lng: number) => {
+    if (!isWithinUAE(lat, lng)) {
+      setCoordinateError('Coordinates must be within UAE boundaries');
+      return false;
+    }
+    
+    setCoordinateError('');
+    onLocationChange(location, lat, lng);
+    return true;
+  };
+
   const handleLatChange = (value: string) => {
     setTempLat(value);
     const lat = parseFloat(value);
     const lng = parseFloat(tempLng);
     
     if (!isNaN(lat) && !isNaN(lng)) {
-      onLocationChange(location, lat, lng);
+      validateAndSetCoordinates(lat, lng);
     }
   };
 
@@ -239,7 +283,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     const lng = parseFloat(value);
     
     if (!isNaN(lat) && !isNaN(lng)) {
-      onLocationChange(location, lat, lng);
+      validateAndSetCoordinates(lat, lng);
     }
   };
 
@@ -257,13 +301,16 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
           placeholder="Enter property location..."
           required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Enter a location name (not validated) - use map or coordinates for precise location
+        </p>
       </div>
 
       {/* Coordinate Input Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Latitude
+            Latitude *
           </label>
           <Input
             type="number"
@@ -276,7 +323,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Longitude
+            Longitude *
           </label>
           <Input
             type="number"
@@ -288,6 +335,13 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
           />
         </div>
       </div>
+
+      {/* Error Display */}
+      {coordinateError && (
+        <p className="text-xs text-red-600 bg-red-50 p-2 rounded">
+          {coordinateError}
+        </p>
+      )}
 
       {/* Map Toggle and Current Location */}
       <div className="flex gap-2">
@@ -318,20 +372,20 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
         <div className="border rounded-lg overflow-hidden">
           <div ref={mapContainer} className="h-64 w-full" />
           <div className="p-2 bg-gray-50 text-xs text-gray-600">
-            Click on the map to set the property location
+            Click on the map to set the property location (must be within UAE)
           </div>
         </div>
       )}
       
       {/* Status Display */}
-      {latitude && longitude && (
+      {latitude && longitude && !coordinateError && (
         <p className="text-xs text-green-600">
-          ✓ Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+          ✓ Valid UAE coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
         </p>
       )}
       
       <p className="text-xs text-gray-500">
-        Enter an address and it will auto-geocode, or enter coordinates manually, use the map picker, or use your current location
+        Coordinates must be within UAE boundaries to be valid
       </p>
     </div>
   );
