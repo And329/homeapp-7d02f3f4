@@ -16,17 +16,32 @@ const PropertyDetails = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const { user } = useAuth();
 
+  console.log('PropertyDetails: Component mounted with ID:', id);
+  console.log('PropertyDetails: Current user:', user);
+
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
-    queryFn: () => getPropertyById(id || ''),
+    queryFn: () => {
+      console.log('PropertyDetails: Fetching property with ID:', id);
+      return getPropertyById(id || '');
+    },
     enabled: !!id,
   });
+
+  console.log('PropertyDetails: Property data:', property);
+  console.log('PropertyDetails: Loading state:', isLoading);
+  console.log('PropertyDetails: Error state:', error);
 
   // Get property owner profile for contact information
   const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
     queryKey: ['property-owner', property?.owner_id],
     queryFn: async () => {
-      if (!property?.owner_id) return null;
+      if (!property?.owner_id) {
+        console.log('PropertyDetails: No owner_id found for property');
+        return null;
+      }
+      
+      console.log('PropertyDetails: Fetching owner profile for ID:', property.owner_id);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -35,9 +50,11 @@ const PropertyDetails = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching owner profile:', error);
+        console.error('PropertyDetails: Error fetching owner profile:', error);
         return null;
       }
+      
+      console.log('PropertyDetails: Owner profile data:', data);
       return data;
     },
     enabled: !!property?.owner_id,
@@ -58,7 +75,29 @@ const PropertyDetails = () => {
     );
   }
 
-  if (error || !property) {
+  if (error) {
+    console.error('PropertyDetails: Error loading property:', error);
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <p className="text-red-600">Error loading property: {error.message}</p>
+            <button 
+              onClick={() => window.location.href = '/properties'}
+              className="mt-4 bg-primary text-white px-4 py-2 rounded"
+            >
+              Back to Properties
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!property) {
+    console.log('PropertyDetails: No property found, redirecting to properties page');
     return <Navigate to="/properties" replace />;
   }
 
@@ -285,6 +324,7 @@ const PropertyDetails = () => {
                 <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                   <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
                   <p className="text-gray-600">Owner information not available.</p>
+                  <p className="text-sm text-gray-500 mt-2">Owner ID: {property.owner_id}</p>
                 </div>
               )
             ) : !user ? (
@@ -303,6 +343,7 @@ const PropertyDetails = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                 <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
                 <p className="text-gray-600">No owner information available for this property.</p>
+                <p className="text-sm text-gray-500 mt-2">Property owner ID: {property.owner_id || 'Not set'}</p>
               </div>
             )}
           </div>

@@ -40,13 +40,20 @@ export const useConversations = () => {
     queryFn: async () => {
       if (!user) return [];
 
+      console.log('useConversations: Fetching conversations for user:', user.id);
+
       const { data: conversationsData, error } = await supabase
         .from('conversations')
         .select('*')
         .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('useConversations: Error fetching conversations:', error);
+        throw error;
+      }
+
+      console.log('useConversations: Fetched conversations:', conversationsData);
 
       // Get participant profiles
       const participantIds = new Set<string>();
@@ -68,7 +75,10 @@ export const useConversations = () => {
         .select('id, full_name, email, profile_picture')
         .in('id', Array.from(participantIds));
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('useConversations: Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
       const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
@@ -97,6 +107,20 @@ export const useConversations = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
+      console.log('useConversations: Creating conversation with:', {
+        currentUserId: user.id,
+        otherUserId,
+        propertyId,
+        propertyRequestId,
+        subject
+      });
+
+      // Prevent users from creating conversations with themselves
+      if (user.id === otherUserId) {
+        console.error('useConversations: Cannot create conversation with self');
+        throw new Error('Cannot create conversation with yourself');
+      }
+
       // Check if conversation already exists
       let query = supabase
         .from('conversations')
@@ -113,10 +137,12 @@ export const useConversations = () => {
       const { data: existing } = await query.maybeSingle();
 
       if (existing) {
+        console.log('useConversations: Found existing conversation:', existing);
         return existing;
       }
 
       // Create new conversation
+      console.log('useConversations: Creating new conversation');
       const { data, error } = await supabase
         .from('conversations')
         .insert([{
@@ -129,17 +155,22 @@ export const useConversations = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useConversations: Error creating conversation:', error);
+        throw error;
+      }
+
+      console.log('useConversations: Created new conversation:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: (error) => {
-      console.error('Failed to create conversation:', error);
+      console.error('useConversations: Failed to create conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to start conversation. Please try again.",
+        description: error.message || "Failed to start conversation. Please try again.",
         variant: "destructive",
       });
     },
@@ -165,13 +196,20 @@ export const useMessages = (conversationId: string | null) => {
     queryFn: async () => {
       if (!conversationId) return [];
 
+      console.log('useMessages: Fetching messages for conversation:', conversationId);
+
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('useMessages: Error fetching messages:', error);
+        throw error;
+      }
+
+      console.log('useMessages: Fetched messages:', data);
       return data as Message[];
     },
     enabled: !!conversationId,
@@ -182,6 +220,8 @@ export const useMessages = (conversationId: string | null) => {
     mutationFn: async ({ content }: { content: string }) => {
       if (!conversationId || !user) throw new Error('Invalid conversation or user');
 
+      console.log('useMessages: Sending message:', { conversationId, content });
+
       const { error } = await supabase
         .from('messages')
         .insert([{
@@ -190,14 +230,19 @@ export const useMessages = (conversationId: string | null) => {
           content
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('useMessages: Error sending message:', error);
+        throw error;
+      }
+
+      console.log('useMessages: Message sent successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: (error) => {
-      console.error('Failed to send message:', error);
+      console.error('useMessages: Failed to send message:', error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",

@@ -27,6 +27,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const handleContactOwner = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    console.log('PropertyCard: Contact owner clicked for property:', property.id);
+    console.log('PropertyCard: Current user:', user);
+    console.log('PropertyCard: Property owner_id:', property.owner_id);
+    
     if (!user) {
       toast({
         title: "Please log in",
@@ -55,6 +59,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     }
 
     try {
+      console.log('PropertyCard: Creating conversation...');
       await createConversationAsync({
         otherUserId: property.owner_id,
         propertyId: typeof property.id === 'number' ? property.id : parseInt(property.id),
@@ -66,7 +71,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         description: "You can now chat with the property owner.",
       });
     } catch (error) {
-      console.error('Failed to start conversation:', error);
+      console.error('PropertyCard: Failed to start conversation:', error);
       toast({
         title: "Error",
         description: "Failed to start conversation. Please try again.",
