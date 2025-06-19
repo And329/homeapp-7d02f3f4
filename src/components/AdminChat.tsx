@@ -21,7 +21,7 @@ const AdminChat: React.FC = () => {
       console.log('AdminChat: Checking current user profile for:', user.id);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, role')
+        .select('id, full_name, role, email')
         .eq('id', user.id)
         .single();
 
@@ -36,11 +36,25 @@ const AdminChat: React.FC = () => {
     enabled: !!user,
   });
 
-  // Get admin users from the database
-  const { data: adminUsers = [], isLoading: loadingAdmins } = useQuery({
+  // Get admin users from the database - with better error handling
+  const { data: adminUsers = [], isLoading: loadingAdmins, error: adminError } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
       console.log('AdminChat: Fetching admin users...');
+      
+      // First, let's check all users to see their roles
+      const { data: allUsers, error: allUsersError } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, email');
+      
+      if (allUsersError) {
+        console.error('AdminChat: Error fetching all users:', allUsersError);
+      } else {
+        console.log('AdminChat: All users in database:', allUsers);
+        console.log('AdminChat: Users with admin role:', allUsers?.filter(u => u.role === 'admin'));
+      }
+
+      // Now fetch admin users specifically
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, role, email')
@@ -66,6 +80,7 @@ const AdminChat: React.FC = () => {
   console.log('AdminChat: Current user is admin:', currentUserProfile?.role === 'admin');
   console.log('AdminChat: Available admins:', availableAdmins);
   console.log('AdminChat: Selected admin user:', adminUser);
+  console.log('AdminChat: Admin query error:', adminError);
 
   if (!user) {
     return (
@@ -129,6 +144,9 @@ const AdminChat: React.FC = () => {
               <p>Your role: {currentUserProfile?.role || 'unknown'}</p>
               <p>Your user ID: {user?.id}</p>
               <p>Available admins for chat: {availableAdmins.length}</p>
+              {adminError && (
+                <p className="text-red-600">Error: {adminError.message}</p>
+              )}
               {adminUsers.length > 0 && (
                 <div className="mt-2">
                   <p className="font-medium">Admin users in database:</p>

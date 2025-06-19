@@ -94,16 +94,22 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     enabled: !!user,
   });
 
+  // Find or create conversation
   const { data: conversation, isLoading: loadingConversation } = useQuery({
     queryKey: ['conversation', user?.id, otherUserId, propertyId, propertyRequestId],
     queryFn: async () => {
-      if (!user || !otherUserId) return null;
+      if (!user || !otherUserId) {
+        console.log('UnifiedChat: Missing user or otherUserId:', { user: user?.id, otherUserId });
+        return null;
+      }
 
+      console.log('UnifiedChat: Looking for conversation between:', user.id, 'and', otherUserId);
+
+      // Look for existing conversation between these two users
       let query = supabase
         .from('conversations')
         .select('*')
-        .eq('participant_1_id', user.id)
-        .eq('participant_2_id', otherUserId);
+        .or(`and(participant_1_id.eq.${user.id},participant_2_id.eq.${otherUserId}),and(participant_1_id.eq.${otherUserId},participant_2_id.eq.${user.id})`);
 
       if (propertyId) {
         query = query.eq('property_id', propertyId);
@@ -113,14 +119,39 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
         query = query.eq('property_request_id', propertyRequestId);
       }
 
-      const { data, error } = await query.maybeSingle();
+      const { data: existingConversation, error: findError } = await query.maybeSingle();
 
-      if (error) {
-        console.error('Error fetching conversation:', error);
+      if (findError) {
+        console.error('UnifiedChat: Error finding conversation:', findError);
         return null;
       }
 
-      return data;
+      if (existingConversation) {
+        console.log('UnifiedChat: Found existing conversation:', existingConversation);
+        return existingConversation;
+      }
+
+      // Create new conversation if none exists
+      console.log('UnifiedChat: Creating new conversation');
+      const { data: newConversation, error: createError } = await supabase
+        .from('conversations')
+        .insert({
+          participant_1_id: user.id,
+          participant_2_id: otherUserId,
+          property_id: propertyId || null,
+          property_request_id: propertyRequestId || null,
+          subject: propertyTitle || 'General Chat',
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('UnifiedChat: Error creating conversation:', createError);
+        return null;
+      }
+
+      console.log('UnifiedChat: Created new conversation:', newConversation);
+      return newConversation;
     },
     enabled: !!user && !!otherUserId,
   });
@@ -128,6 +159,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   // Update conversationId when conversation data changes
   useEffect(() => {
     if (conversation) {
+      console.log('UnifiedChat: Setting conversation ID:', conversation.id);
       setConversationId(conversation.id);
     }
   }, [conversation]);
@@ -137,6 +169,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     queryFn: async () => {
       if (!conversationId) return [];
 
+      console.log('UnifiedChat: Fetching messages for conversation:', conversationId);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -144,10 +177,11 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('UnifiedChat: Error fetching messages:', error);
         return [];
       }
 
+      console.log('UnifiedChat: Fetched messages:', data);
       return data as Message[];
     },
     enabled: !!conversationId,
@@ -156,8 +190,15 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
       if (!user || !conversationId) {
+        console.error('UnifiedChat: Missing user or conversation ID:', { 
+          user: user?.id, 
+          conversationId,
+          newMessage: newMessage.substring(0, 50) 
+        });
         throw new Error('User or conversation ID is missing');
       }
+
+      console.log('UnifiedChat: Sending message:', { conversationId, message: newMessage.substring(0, 50) });
 
       const { error } = await supabase.from('messages').insert([
         {
@@ -168,8 +209,11 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       ]);
 
       if (error) {
+        console.error('UnifiedChat: Error sending message:', error);
         throw error;
       }
+      
+      console.log('UnifiedChat: Message sent successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
@@ -178,6 +222,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       scrollToBottom();
     },
     onError: (error: any) => {
+      console.error('UnifiedChat: Send message mutation error:', error);
       toast({
         title: 'Error sending message',
         description: error.message || 'Failed to send message. Please try again.',
@@ -222,6 +267,22 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Select a conversation to start messaging</p>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show loading state
+  if (loadingConversation) {
+    return (
+      <Card className={`flex flex-col ${className}`}>
+        <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
+          <CardTitle className="text-base sm:text-lg font-semibold">
+            Loading Chat...
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex items-center justify-center p-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </CardContent>
       </Card>
     );
@@ -294,12 +355,12 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            disabled={sendMessageMutation.isPending}
+            disabled={sendMessageMutation.isPending || !conversationId}
             className="text-xs sm:text-sm h-8 sm:h-10"
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending || !conversationId}
             size="sm"
             className="h-8 sm:h-10 px-2 sm:px-4 text-xs sm:text-sm"
           >
