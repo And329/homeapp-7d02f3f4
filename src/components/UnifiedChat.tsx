@@ -35,6 +35,9 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(selectedConversationId);
 
+  // Determine if this is a specific property conversation (hide sidebar)
+  const isPropertySpecificChat = !!(otherUserId && propertyTitle);
+
   // If specific conversation parameters are provided, create or find the conversation
   React.useEffect(() => {
     if (otherUserId && propertyTitle && user) {
@@ -74,7 +77,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: conversations.length > 0,
+    enabled: conversations.length > 0 && !isPropertySpecificChat,
   });
 
   // Get property request details for conversations
@@ -95,13 +98,25 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: conversations.length > 0,
+    enabled: conversations.length > 0 && !isPropertySpecificChat,
   });
 
   // Get participant profiles to check for admin status
   const { data: participantProfiles = [] } = useQuery({
     queryKey: ['chat-participant-profiles'],
     queryFn: async () => {
+      if (isPropertySpecificChat && otherUserId) {
+        // For property-specific chats, only fetch the other user's profile
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, role, full_name, profile_picture')
+          .eq('id', otherUserId)
+          .single();
+
+        if (error) throw error;
+        return data ? [data] : [];
+      }
+
       const participantIds = conversations
         .map(conv => conv.other_participant?.id)
         .filter(Boolean);
@@ -116,7 +131,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: conversations.length > 0,
+    enabled: (conversations.length > 0 && !isPropertySpecificChat) || (isPropertySpecificChat && !!otherUserId),
   });
 
   const handleSendMessage = () => {
@@ -150,7 +165,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   };
 
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
-  const otherParticipant = selectedConversation?.other_participant;
+  const otherParticipant = selectedConversation?.other_participant || (isPropertySpecificChat && otherUserId ? { id: otherUserId } : null);
   const isAdminChat = otherParticipant && isParticipantAdmin(otherParticipant.id);
   const otherProfile = otherParticipant ? getParticipantProfile(otherParticipant.id) : null;
 
@@ -182,131 +197,140 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
 
   return (
     <Card className={cn("h-full flex shadow-lg", className)}>
-      {/* Conversations Sidebar */}
-      <div className="w-1/3 border-r bg-gray-50">
-        <CardHeader className="flex flex-row items-center justify-between bg-white border-b">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageCircle className="h-5 w-5 text-primary" />
-            Messages
-          </CardTitle>
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </CardHeader>
-        <ScrollArea className="h-[calc(100%-80px)]">
-          {conversations.length === 0 ? (
-            <div className="p-6 text-center">
-              <MessageCircle className="h-8 w-8 mx-auto mb-3 text-gray-400" />
-              <p className="text-gray-500 text-sm">No conversations yet</p>
-              <p className="text-gray-400 text-xs mt-1">Start by contacting a property owner</p>
-            </div>
-          ) : (
-            conversations.map((conversation) => {
-              const isAdmin = conversation.other_participant && isParticipantAdmin(conversation.other_participant.id);
-              const profile = conversation.other_participant ? getParticipantProfile(conversation.other_participant.id) : null;
-              
-              return (
-                <div
-                  key={conversation.id}
-                  onClick={() => setSelectedConversationId(conversation.id)}
-                  className={cn(
-                    "p-4 border-b cursor-pointer hover:bg-white transition-colors relative",
-                    selectedConversationId === conversation.id && "bg-white border-l-4 border-l-primary shadow-sm"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        {profile?.profile_picture ? (
-                          <img 
-                            src={profile.profile_picture} 
-                            alt={conversation.other_participant?.full_name || 'User'} 
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <User className="h-5 w-5 text-gray-500" />
-                        )}
-                      </div>
-                      {isAdmin && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
-                          <Shield className="h-3 w-3 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="font-medium text-sm truncate">
-                          {conversation.other_participant?.full_name || conversation.other_participant?.email || 'Unknown'}
+      {/* Conversations Sidebar - Hidden for property-specific chats */}
+      {!isPropertySpecificChat && (
+        <div className="w-1/3 border-r bg-gray-50">
+          <CardHeader className="flex flex-row items-center justify-between bg-white border-b">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              Messages
+            </CardTitle>
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </CardHeader>
+          <ScrollArea className="h-[calc(100%-80px)]">
+            {conversations.length === 0 ? (
+              <div className="p-6 text-center">
+                <MessageCircle className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+                <p className="text-gray-500 text-sm">No conversations yet</p>
+                <p className="text-gray-400 text-xs mt-1">Start by contacting a property owner</p>
+              </div>
+            ) : (
+              conversations.map((conversation) => {
+                const isAdmin = conversation.other_participant && isParticipantAdmin(conversation.other_participant.id);
+                const profile = conversation.other_participant ? getParticipantProfile(conversation.other_participant.id) : null;
+                
+                return (
+                  <div
+                    key={conversation.id}
+                    onClick={() => setSelectedConversationId(conversation.id)}
+                    className={cn(
+                      "p-4 border-b cursor-pointer hover:bg-white transition-colors relative",
+                      selectedConversationId === conversation.id && "bg-white border-l-4 border-l-primary shadow-sm"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                          {profile?.profile_picture ? (
+                            <img 
+                              src={profile.profile_picture} 
+                              alt={conversation.other_participant?.full_name || 'User'} 
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-5 w-5 text-gray-500" />
+                          )}
                         </div>
                         {isAdmin && (
-                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                            Admin
-                          </Badge>
+                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
+                            <Shield className="h-3 w-3 text-white" />
+                          </div>
                         )}
                       </div>
-                      <div className="text-xs text-gray-600 truncate mb-1">
-                        {getConversationTitle(conversation)}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(conversation.last_message_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="font-medium text-sm truncate">
+                            {conversation.other_participant?.full_name || conversation.other_participant?.email || 'Unknown'}
+                          </div>
+                          {isAdmin && (
+                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                              Admin
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 truncate mb-1">
+                          {getConversationTitle(conversation)}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(conversation.last_message_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </ScrollArea>
-      </div>
+                );
+              })
+            )}
+          </ScrollArea>
+        </div>
+      )}
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      {/* Chat Area - Full width for property-specific chats */}
+      <div className={cn("flex-1 flex flex-col bg-white", isPropertySpecificChat && "w-full")}>
         {selectedConversationId ? (
           <>
             {/* Chat Header */}
             <CardHeader className="border-b bg-gray-50">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {otherProfile?.profile_picture ? (
-                      <img 
-                        src={otherProfile.profile_picture} 
-                        alt={otherParticipant?.full_name || 'User'} 
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-5 w-5 text-gray-500" />
-                    )}
-                  </div>
-                  {isAdminChat && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
-                      <Shield className="h-3 w-3 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                      {otherProfile?.profile_picture ? (
+                        <img 
+                          src={otherProfile.profile_picture} 
+                          alt={otherProfile?.full_name || 'User'} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-5 w-5 text-gray-500" />
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg">
-                      {otherParticipant?.full_name || otherParticipant?.email || 'Unknown'}
-                    </CardTitle>
                     {isAdminChat && (
-                      <Badge className="bg-green-100 text-green-700 border-green-200">
-                        <Shield className="h-3 w-3 mr-1" />
-                        Trusted Admin
-                      </Badge>
+                      <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
+                        <Shield className="h-3 w-3 text-white" />
+                      </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{selectedConversation?.subject}</p>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">
+                        {otherProfile?.full_name || otherProfile?.email || otherParticipant?.full_name || otherParticipant?.email || 'Unknown'}
+                      </CardTitle>
+                      {isAdminChat && (
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Trusted Admin
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{propertyTitle || selectedConversation?.subject}</p>
+                  </div>
                 </div>
+                {isPropertySpecificChat && onClose && (
+                  <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
             
@@ -419,8 +443,15 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
           <CardContent className="flex items-center justify-center h-full">
             <div className="text-center">
               <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 mb-2">Select a conversation</p>
-              <p className="text-gray-400 text-sm">Choose a conversation from the sidebar to start chatting</p>
+              <p className="text-gray-500 mb-2">
+                {isPropertySpecificChat ? "Starting conversation..." : "Select a conversation"}
+              </p>
+              <p className="text-gray-400 text-sm">
+                {isPropertySpecificChat 
+                  ? "Setting up your chat about this property" 
+                  : "Choose a conversation from the sidebar to start chatting"
+                }
+              </p>
             </div>
           </CardContent>
         )}
