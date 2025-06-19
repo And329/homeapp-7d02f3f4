@@ -31,8 +31,8 @@ const AdminDashboard = () => {
     blogLoading,
     newsArticles,
     newsLoading,
-    chats,
-    chatMessages,
+    conversations,
+    messages,
     selectedUserRequests,
   } = useAdminQueries(null, null); // Initialize with null first
 
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
     setShowMap,
     activeTab,
     setActiveTab,
-    selectedChat,
+    selectedConversation,
     selectedChatUserId,
     newMessage,
     setNewMessage,
@@ -72,11 +72,11 @@ const AdminDashboard = () => {
     handleRejectRequest,
     handleSendReply,
     handleSendChatMessage,
-    handleChatSelect,
+    handleConversationSelect,
   } = useAdminHandlers(mutations, propertyRequests);
 
   // Update queries with selected chat data
-  const queriesWithChat = useAdminQueries(selectedChat, selectedChatUserId);
+  const queriesWithChat = useAdminQueries(selectedConversation, selectedChatUserId);
 
   if (!profile || profile.role !== 'admin') {
     return (
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
           setActiveTab={setActiveTab}
           propertiesCount={properties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
-          openChatsCount={chats.filter(c => c.status === 'open').length}
+          openChatsCount={conversations.length}
         />
 
         {activeTab === 'properties' && (
@@ -155,19 +155,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'chats' && (
-          <AdminChatsTab
-            chats={chats}
-            chatMessages={queriesWithChat.chatMessages}
-            selectedChat={selectedChat}
-            selectedChatUserId={selectedChatUserId}
-            selectedUserRequests={queriesWithChat.selectedUserRequests}
-            newMessage={newMessage}
-            profileId={profile.id}
-            sendChatMessageMutation={mutations.sendChatMessageMutation}
-            setNewMessage={setNewMessage}
-            onChatSelect={handleChatSelect}
-            onSendChatMessage={handleSendChatMessage}
-          />
+          <AdminChatsTab />
         )}
       </div>
 

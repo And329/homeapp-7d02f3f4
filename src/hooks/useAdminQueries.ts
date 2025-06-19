@@ -20,25 +20,7 @@ interface Property {
   images: string[] | null;
 }
 
-interface Chat {
-  id: string;
-  user_id: string;
-  admin_id: string | null;
-  subject: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ChatMessage {
-  id: string;
-  chat_id: string;
-  sender_id: string;
-  message: string;
-  created_at: string;
-}
-
-export const useAdminQueries = (selectedChat: string | null, selectedChatUserId: string | null) => {
+export const useAdminQueries = (selectedConversation: string | null, selectedChatUserId: string | null) => {
   const propertiesQuery = useQuery({
     queryKey: ['admin-properties'],
     queryFn: async () => {
@@ -91,34 +73,34 @@ export const useAdminQueries = (selectedChat: string | null, selectedChatUserId:
     },
   });
 
-  const chatsQuery = useQuery({
-    queryKey: ['admin-chats'],
+  const conversationsQuery = useQuery({
+    queryKey: ['admin-conversations'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_chats')
+        .from('conversations')
         .select('*')
-        .order('updated_at', { ascending: false });
+        .order('last_message_at', { ascending: false });
 
       if (error) throw error;
-      return data as Chat[];
+      return data;
     },
   });
 
-  const chatMessagesQuery = useQuery({
-    queryKey: ['chat-messages', selectedChat],
+  const messagesQuery = useQuery({
+    queryKey: ['admin-messages', selectedConversation],
     queryFn: async () => {
-      if (!selectedChat) return [];
+      if (!selectedConversation) return [];
       
       const { data, error } = await supabase
-        .from('chat_messages')
+        .from('messages')
         .select('*')
-        .eq('chat_id', selectedChat)
+        .eq('conversation_id', selectedConversation)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as ChatMessage[];
+      return data;
     },
-    enabled: !!selectedChat,
+    enabled: !!selectedConversation,
   });
 
   const selectedUserRequestsQuery = useQuery({
@@ -147,8 +129,8 @@ export const useAdminQueries = (selectedChat: string | null, selectedChatUserId:
     blogLoading: blogPostsQuery.isLoading,
     newsArticles: newsArticlesQuery.data || [],
     newsLoading: newsArticlesQuery.isLoading,
-    chats: chatsQuery.data || [],
-    chatMessages: chatMessagesQuery.data || [],
+    conversations: conversationsQuery.data || [],
+    messages: messagesQuery.data || [],
     selectedUserRequests: selectedUserRequestsQuery.data || [],
   };
 };
