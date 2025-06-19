@@ -20,17 +20,17 @@ const PropertyGrid: React.FC<PropertyGridProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading properties...</p>
+      <div className="text-center py-6 sm:py-8">
+        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-3 sm:mt-4 text-gray-600 text-sm sm:text-base">Loading properties...</p>
       </div>
     );
   }
 
   if (properties.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No properties match your search criteria.</p>
+      <div className="text-center py-6 sm:py-8">
+        <p className="text-gray-500 text-sm sm:text-base">No properties match your search criteria.</p>
       </div>
     );
   }
@@ -38,8 +38,8 @@ const PropertyGrid: React.FC<PropertyGridProps> = ({
   return (
     <div className={
       viewMode === 'grid' 
-        ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-        : 'space-y-4'
+        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
+        : 'space-y-3 sm:space-y-4'
     }>
       {properties.map((property) => (
         <PropertyCard

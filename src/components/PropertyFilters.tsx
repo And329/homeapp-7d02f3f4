@@ -30,64 +30,70 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   resultsCount
 }) => {
   return (
-    <Card className="mb-8">
-      <CardContent className="p-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-4">
-          <div className="flex-1">
+    <Card className="mb-6 sm:mb-8">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-4">
+          <div className="w-full">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
               <Input
                 placeholder="Search by title or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9 sm:pl-10 text-sm sm:text-base"
               />
             </div>
           </div>
           
-          <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
-            <SelectTrigger className="w-full lg:w-40">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="rent">For Rent</SelectItem>
-              <SelectItem value="sale">For Sale</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-4">
+            <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
+              <SelectTrigger className="text-sm sm:text-base sm:w-40">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="rent">For Rent</SelectItem>
+                <SelectItem value="sale">For Sale</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={priceRange} onValueChange={(value: 'all' | 'low' | 'mid' | 'high') => setPriceRange(value)}>
-            <SelectTrigger className="w-full lg:w-40">
-              <SelectValue placeholder="Price Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Prices</SelectItem>
-              <SelectItem value="low">Under $100K</SelectItem>
-              <SelectItem value="mid">$100K - $500K</SelectItem>
-              <SelectItem value="high">$500K+</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={priceRange} onValueChange={(value: 'all' | 'low' | 'mid' | 'high') => setPriceRange(value)}>
+              <SelectTrigger className="text-sm sm:text-base sm:w-40">
+                <SelectValue placeholder="Price Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Prices</SelectItem>
+                <SelectItem value="low">Under $100K</SelectItem>
+                <SelectItem value="mid">$100K - $500K</SelectItem>
+                <SelectItem value="high">$500K+</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-1 sm:gap-2 col-span-2 sm:col-span-1 justify-center sm:justify-start">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="flex-1 sm:flex-none"
+              >
+                <Grid className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="ml-1 sm:hidden">Grid</span>
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="flex-1 sm:flex-none"
+              >
+                <List className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="ml-1 sm:hidden">List</span>
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             {resultsCount} properties found
           </p>
         </div>
