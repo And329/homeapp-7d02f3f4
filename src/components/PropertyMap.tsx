@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -202,7 +203,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         }
       });
 
-      // Add property labels with solid background
+      // Add property labels with enhanced cloud-like background
       map.current.addLayer({
         id: 'property-labels-bg',
         type: 'symbol',
@@ -224,12 +225,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
           ],
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 11,
-          'text-offset': [0, -3],
+          'text-size': 12,
+          'text-offset': [0, -3.5],
           'text-anchor': 'bottom',
           'text-allow-overlap': true,
           'text-ignore-placement': true,
-          'text-padding': 2
+          'text-padding': 3
         },
         paint: {
           'text-color': '#ffffff',
@@ -239,11 +240,49 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             '#1d4ed8',
             '#3b82f6'
           ],
-          'text-halo-width': 8,
-          'text-halo-blur': 2,
+          'text-halo-width': 12,
+          'text-halo-blur': 6,
           'text-opacity': 1
         }
       });
+
+      // Add additional background layer for better cloud effect
+      map.current.addLayer({
+        id: 'property-labels-shadow',
+        type: 'symbol',
+        source: 'properties',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'text-field': [
+            'format',
+            'AED ',
+            { 'font-scale': 0.85 },
+            ['case',
+              ['>=', ['get', 'price'], 1000000],
+              ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
+              ['>=', ['get', 'price'], 1000],
+              ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
+              ['number-format', ['get', 'price'], {}]
+            ],
+            { 'font-scale': 1.0 },
+            ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
+          ],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+          'text-offset': [0, -3.4],
+          'text-anchor': 'bottom',
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-padding': 3
+        },
+        paint: {
+          'text-color': 'rgba(0,0,0,0)',
+          'text-halo-color': 'rgba(255,255,255,0.8)',
+          'text-halo-width': 16,
+          'text-halo-blur': 10,
+          'text-opacity': 1
+        }
+      }, 'property-labels-bg');
 
       // Click handlers for clusters
       map.current.on('click', 'clusters', (e) => {

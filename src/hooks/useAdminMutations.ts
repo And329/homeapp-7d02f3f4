@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
+import { deleteProperty } from '@/api/properties';
 
 export const useAdminMutations = (profile: any, propertyRequests: PropertyRequest[]) => {
   const { toast } = useToast();
@@ -10,21 +11,19 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      console.log('Delete mutation called for property ID:', id);
+      await deleteProperty(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
       toast({
         title: "Property deleted",
         description: "The property has been deleted successfully.",
       });
     },
     onError: (error) => {
+      console.error('Delete mutation error:', error);
       toast({
         title: "Error",
         description: "Failed to delete property. Please try again.",

@@ -77,3 +77,19 @@ export const getHotDeals = async (): Promise<Property[]> => {
   const properties = await getProperties();
   return properties.slice(0, 3);
 };
+
+export const deleteProperty = async (id: number): Promise<void> => {
+  console.log('Deleting property with ID:', id);
+  
+  const { error } = await supabase
+    .from('properties')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting property:', error);
+    throw error;
+  }
+
+  console.log('Property deleted successfully');
+};

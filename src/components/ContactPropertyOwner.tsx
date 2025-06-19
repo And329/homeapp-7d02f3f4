@@ -29,6 +29,16 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
 }) => {
   const [showChat, setShowChat] = useState(false);
 
+  console.log('ContactPropertyOwner props:', {
+    propertyId,
+    propertyRequestId,
+    ownerId,
+    propertyTitle,
+    contactName,
+    contactEmail,
+    contactPhone
+  });
+
   if (showChat) {
     return (
       <UserChat
@@ -79,7 +89,10 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
 
         <div className="flex flex-col space-y-2">
           <Button
-            onClick={() => setShowChat(true)}
+            onClick={() => {
+              console.log('Starting chat with owner:', ownerId);
+              setShowChat(true);
+            }}
             className="w-full flex items-center justify-center space-x-2"
           >
             <MessageCircle className="h-4 w-4" />
