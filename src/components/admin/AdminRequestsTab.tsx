@@ -50,14 +50,24 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     }
   };
 
-  const handleSendReply = (requestId: string) => {
+  const handleSendReply = async (requestId: string) => {
     console.log('Sending reply for request:', requestId);
     console.log('Reply message:', replyMessage);
     if (!replyMessage.trim()) {
       console.log('Reply message is empty');
       return;
     }
-    onSendReply(requestId);
+    
+    try {
+      // First create the conversation
+      await sendReplyMutation.mutateAsync({ requestId });
+      
+      // Clear the reply form
+      setReplyingToRequest(null);
+      setReplyMessage('');
+    } catch (error) {
+      console.error('Failed to send reply:', error);
+    }
   };
 
   const handleApproveRequest = (request: PropertyRequest) => {

@@ -123,15 +123,27 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   });
 
   const sendReplyMutation = useMutation({
-    mutationFn: async ({ requestId, message, userId }: { requestId: string; message: string; userId: string }) => {
-      console.log('sendReplyMutation called with:', { requestId, message, userId });
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      console.log('sendReplyMutation called with:', { requestId, profileId: profile?.id });
       
       if (!profile?.id) {
         throw new Error('User not authenticated');
       }
       
+      // Find the property request to get the user_id
       const propertyRequest = propertyRequests.find(req => req.id === requestId);
-      const chatSubject = `Property Request: ${propertyRequest?.title || 'Property'}`;
+      if (!propertyRequest || !propertyRequest.user_id) {
+        throw new Error('Property request not found or missing user ID');
+      }
+      
+      const userId = propertyRequest.user_id;
+      const chatSubject = `Property Request: ${propertyRequest.title || 'Property'}`;
+      
+      console.log('Creating conversation with:', { 
+        participant_1_id: profile.id, 
+        participant_2_id: userId,
+        requestId 
+      });
       
       // Check if conversation already exists
       let conversationId;
@@ -161,19 +173,6 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
           throw conversationError;
         }
         conversationId = newConversation.id;
-      }
-
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert([{
-          conversation_id: conversationId,
-          sender_id: profile.id,
-          content: message
-        }]);
-
-      if (messageError) {
-        console.error('Message creation error:', messageError);
-        throw messageError;
       }
 
       return conversationId;
