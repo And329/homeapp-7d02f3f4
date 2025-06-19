@@ -21,6 +21,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const { user, profile } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [hasInitiallyScrolled, setHasInitiallyScrolled] = useState(false);
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
 
@@ -28,9 +29,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Only scroll to bottom after messages have loaded and not on initial mount
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!messagesLoading && messages.length > 0 && !hasInitiallyScrolled) {
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+        setHasInitiallyScrolled(true);
+      }, 100);
+    } else if (!messagesLoading && hasInitiallyScrolled) {
+      // For subsequent message updates, use smooth scroll
+      scrollToBottom();
+    }
+  }, [messages, messagesLoading, hasInitiallyScrolled]);
+
+  // Reset scroll state when conversation changes
+  useEffect(() => {
+    setHasInitiallyScrolled(false);
+  }, [conversationId]);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {

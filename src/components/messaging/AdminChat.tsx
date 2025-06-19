@@ -10,8 +10,8 @@ import { useConversations } from '@/hooks/useConversations';
 import ChatWindow from './ChatWindow';
 
 const AdminChat: React.FC = () => {
-  const [chatStarted, setChatStarted] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [chatPartnerName, setChatPartnerName] = useState<string>('');
   const { user, profile } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
 
@@ -30,6 +30,40 @@ const AdminChat: React.FC = () => {
     enabled: !!user,
   });
 
+  // Check if user already has a conversation with any admin
+  const { data: existingConversation } = useQuery({
+    queryKey: ['existing-admin-conversation', user?.id],
+    queryFn: async () => {
+      if (!user || !adminUsers.length) return null;
+
+      const adminIds = adminUsers.map(admin => admin.id);
+      
+      const { data, error } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          participant_1_id,
+          participant_2_id,
+          subject,
+          profiles!conversations_participant_1_id_fkey(full_name, email),
+          profiles_participant_2:profiles!conversations_participant_2_id_fkey(full_name, email)
+        `)
+        .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+        .or(`participant_1_id.in.(${adminIds.join(',')}),participant_2_id.in.(${adminIds.join(',')})`)
+        .order('last_message_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching existing conversation:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!user && adminUsers.length > 0,
+  });
+
   const availableAdmin = profile?.role === 'admin' 
     ? adminUsers.find(admin => admin.id !== user?.id)
     : adminUsers[0];
@@ -38,16 +72,32 @@ const AdminChat: React.FC = () => {
     if (!availableAdmin || !user) return;
 
     try {
+      console.log('Creating conversation with admin:', availableAdmin);
+      
       const conversation = await createConversationAsync({
         otherUserId: availableAdmin.id,
         subject: 'Admin Support Chat'
       });
       
+      console.log('Created conversation:', conversation);
       setConversationId(conversation.id);
-      setChatStarted(true);
+      setChatPartnerName(availableAdmin.full_name || availableAdmin.email || 'Admin');
     } catch (error) {
       console.error('Failed to start admin chat:', error);
     }
+  };
+
+  const handleUseExistingConversation = () => {
+    if (!existingConversation || !user) return;
+
+    setConversationId(existingConversation.id);
+    
+    // Get the other participant's name
+    const otherParticipant = existingConversation.participant_1_id === user.id 
+      ? existingConversation.profiles_participant_2
+      : existingConversation.profiles;
+    
+    setChatPartnerName(otherParticipant?.full_name || otherParticipant?.email || 'Admin');
   };
 
   if (!user) {
@@ -96,13 +146,16 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  if (chatStarted && conversationId) {
+  if (conversationId && chatPartnerName) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="h-[70vh] min-h-[500px] max-h-[800px]">
         <ChatWindow
           conversationId={conversationId}
-          otherUserName={availableAdmin.full_name || availableAdmin.email || 'Admin'}
-          onClose={() => setChatStarted(false)}
+          otherUserName={chatPartnerName}
+          onClose={() => {
+            setConversationId(null);
+            setChatPartnerName('');
+          }}
         />
       </div>
     );
@@ -123,6 +176,22 @@ const AdminChat: React.FC = () => {
           </p>
         </div>
 
+        {existingConversation && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-green-800 font-medium mb-2">Existing Conversation Found</p>
+            <p className="text-green-700 text-sm mb-3">
+              You already have a conversation with an admin. You can continue that conversation or start a new one.
+            </p>
+            <Button
+              onClick={handleUseExistingConversation}
+              variant="outline"
+              className="mr-2"
+            >
+              Continue Existing Chat
+            </Button>
+          </div>
+        )}
+
         <Button
           onClick={handleStartChat}
           disabled={isCreatingConversation}
@@ -137,7 +206,7 @@ const AdminChat: React.FC = () => {
           ) : (
             <>
               <MessageCircle className="h-5 w-5 mr-2" />
-              Start Chat with {availableAdmin.full_name || availableAdmin.email}
+              Start New Chat with {availableAdmin.full_name || availableAdmin.email}
             </>
           )}
         </Button>
