@@ -12,22 +12,60 @@ const AdminChat: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const { user } = useAuth();
 
+  // Get current user's profile to check if they are admin
+  const { data: currentUserProfile } = useQuery({
+    queryKey: ['current-user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      console.log('AdminChat: Checking current user profile for:', user.id);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('AdminChat: Error fetching current user profile:', error);
+        return null;
+      }
+      
+      console.log('AdminChat: Current user profile:', data);
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Get admin users from the database
   const { data: adminUsers = [], isLoading: loadingAdmins } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
+      console.log('AdminChat: Fetching admin users...');
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, role')
         .eq('role', 'admin');
 
-      if (error) throw error;
+      if (error) {
+        console.error('AdminChat: Error fetching admin users:', error);
+        throw error;
+      }
+      
+      console.log('AdminChat: Found admin users:', data);
       return data || [];
     },
   });
 
-  // Use the first admin user found, or null if none exist
-  const adminUser = adminUsers.length > 0 ? adminUsers[0] : null;
+  // If current user is admin, find other admins. Otherwise, use any admin.
+  const availableAdmins = currentUserProfile?.role === 'admin' 
+    ? adminUsers.filter(admin => admin.id !== user?.id)
+    : adminUsers;
+
+  const adminUser = availableAdmins.length > 0 ? availableAdmins[0] : null;
+
+  console.log('AdminChat: Current user is admin:', currentUserProfile?.role === 'admin');
+  console.log('AdminChat: Available admins:', availableAdmins);
+  console.log('AdminChat: Selected admin user:', adminUser);
 
   if (!user) {
     return (
@@ -78,9 +116,20 @@ const AdminChat: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600 mb-4">
-            No admin users are currently available. Please try again later or contact us through other means.
-          </p>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              {currentUserProfile?.role === 'admin' 
+                ? "You are an admin user. No other admin users are currently available for chat."
+                : "No admin users are currently available. Please try again later or contact us through other means."
+              }
+            </p>
+            <div className="text-sm text-gray-500">
+              <p>Debug info:</p>
+              <p>Total admin users found: {adminUsers.length}</p>
+              <p>Your role: {currentUserProfile?.role || 'unknown'}</p>
+              <p>Available admins for chat: {availableAdmins.length}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );

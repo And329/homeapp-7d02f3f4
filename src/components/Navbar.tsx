@@ -1,13 +1,20 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Search, PlusCircle, User, LogOut, Shield, MessageCircle } from 'lucide-react';
+import { Menu, X, Home, Search, PlusCircle, User, LogOut, Shield, MessageCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import MessageNotificationBadge from './MessageNotificationBadge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -118,40 +125,49 @@ const Navbar = () => {
                   <span className="lg:hidden">List</span>
                 </Link>
                 
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-2 text-gray-700 hover:text-primary transition-colors text-xs sm:text-sm"
-                  >
-                    <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden lg:inline">Admin</span>
-                  </Link>
-                )}
+                <MessageNotificationBadge onClick={() => navigate('/profile')} />
                 
-                <Link
-                  to="/profile"
-                  className="relative"
-                >
-                  <MessageNotificationBadge onClick={() => navigate('/profile')} />
-                </Link>
-                
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-2 text-gray-700 hover:text-primary transition-colors text-xs sm:text-sm max-w-24 sm:max-w-none"
-                >
-                  <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="truncate">{userProfile?.full_name || 'Profile'}</span>
-                </Link>
-                
-                <Button
-                  onClick={handleSignOut}
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-700 hover:text-red-600 text-xs sm:text-sm px-2 sm:px-3"
-                >
-                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-2 text-gray-700 hover:text-primary transition-colors text-xs sm:text-sm">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="max-w-20 sm:max-w-none truncate">
+                        {userProfile?.full_name || 'Profile'}
+                      </span>
+                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Messages</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center space-x-2 cursor-pointer">
+                          <Shield className="h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <div className="flex items-center space-x-2 sm:space-x-4">
@@ -235,17 +251,6 @@ const Navbar = () => {
                     <span>List Property</span>
                   </Link>
                   
-                  {isAdmin && (
-                    <Link
-                      to="/admin"
-                      className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors text-sm sm:text-base"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span>Admin</span>
-                    </Link>
-                  )}
-                  
                   <Link
                     to="/profile"
                     className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors text-sm sm:text-base"
@@ -264,6 +269,17 @@ const Navbar = () => {
                     <User className="h-4 w-4" />
                     <span>{userProfile?.full_name || 'My Profile'}</span>
                   </Link>
+                  
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors text-sm sm:text-base"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </Link>
+                  )}
                   
                   <button
                     onClick={() => {

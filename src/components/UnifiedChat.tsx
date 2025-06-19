@@ -43,12 +43,14 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     if (otherUserId && propertyTitle && user) {
       const initializeConversation = async () => {
         try {
+          console.log('UnifiedChat: Initializing conversation with:', { otherUserId, propertyTitle });
           const conversation = await createConversationAsync({
             otherUserId,
             propertyId,
             propertyRequestId,
             subject: propertyTitle
           });
+          console.log('UnifiedChat: Conversation initialized:', conversation);
           setSelectedConversationId(conversation.id);
         } catch (error) {
           console.error('Failed to initialize conversation:', error);
@@ -58,6 +60,52 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
       initializeConversation();
     }
   }, [otherUserId, propertyId, propertyRequestId, propertyTitle, user, createConversationAsync]);
+
+  // Get ALL participant IDs from conversations to fetch their profiles in one query
+  const allParticipantIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    
+    conversations.forEach(conv => {
+      ids.add(conv.participant_1_id);
+      ids.add(conv.participant_2_id);
+    });
+    
+    // Add specific other user if provided
+    if (otherUserId) {
+      ids.add(otherUserId);
+    }
+    
+    // Remove current user
+    if (user?.id) {
+      ids.delete(user.id);
+    }
+    
+    return Array.from(ids);
+  }, [conversations, otherUserId, user?.id]);
+
+  // Get all participant profiles in one query
+  const { data: allParticipantProfiles = [] } = useQuery({
+    queryKey: ['all-participant-profiles', allParticipantIds],
+    queryFn: async () => {
+      if (allParticipantIds.length === 0) return [];
+
+      console.log('UnifiedChat: Fetching profiles for participants:', allParticipantIds);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, role, full_name, profile_picture, email')
+        .in('id', allParticipantIds);
+
+      if (error) {
+        console.error('UnifiedChat: Error fetching participant profiles:', error);
+        throw error;
+      }
+      
+      console.log('UnifiedChat: Fetched participant profiles:', data);
+      return data || [];
+    },
+    enabled: allParticipantIds.length > 0,
+  });
 
   // Get property details for conversations
   const { data: properties = [] } = useQuery({
@@ -101,33 +149,6 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     enabled: conversations.length > 0 && !isPropertySpecificChat,
   });
 
-  // Get participant profiles to check for admin status and names
-  const { data: participantProfiles = [] } = useQuery({
-    queryKey: ['chat-participant-profiles'],
-    queryFn: async () => {
-      let participantIds: string[] = [];
-
-      if (isPropertySpecificChat && otherUserId) {
-        participantIds = [otherUserId];
-      } else {
-        participantIds = conversations
-          .map(conv => conv.other_participant?.id)
-          .filter(Boolean) as string[];
-      }
-      
-      if (participantIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, role, full_name, profile_picture')
-        .in('id', participantIds);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: (conversations.length > 0 && !isPropertySpecificChat) || (isPropertySpecificChat && !!otherUserId),
-  });
-
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversationId) return;
     
@@ -150,7 +171,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
   };
 
   const getParticipantProfile = (participantId: string) => {
-    return participantProfiles.find(p => p.id === participantId);
+    return allParticipantProfiles.find(p => p.id === participantId);
   };
 
   const isParticipantAdmin = (participantId: string) => {
@@ -158,16 +179,25 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
     return profile?.role === 'admin';
   };
 
-  const getParticipantName = (participantId: string, fallbackName?: string) => {
+  const getParticipantName = (participantId: string) => {
     const profile = getParticipantProfile(participantId);
-    return profile?.full_name || fallbackName || 'User';
+    return profile?.full_name || profile?.email || 'User';
+  };
+
+  const getOtherParticipantId = (conversation: any) => {
+    return conversation.participant_1_id === user?.id 
+      ? conversation.participant_2_id 
+      : conversation.participant_1_id;
   };
 
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
-  const otherParticipant = selectedConversation?.other_participant || (isPropertySpecificChat && otherUserId ? { id: otherUserId } : null);
-  const isAdminChat = otherParticipant && isParticipantAdmin(otherParticipant.id);
-  const otherProfile = otherParticipant ? getParticipantProfile(otherParticipant.id) : null;
-  const otherParticipantName = otherParticipant ? getParticipantName(otherParticipant.id, 'full_name' in otherParticipant ? otherParticipant.full_name : undefined) : 'Unknown';
+  const otherParticipantId = selectedConversation 
+    ? getOtherParticipantId(selectedConversation)
+    : otherUserId;
+  
+  const otherProfile = otherParticipantId ? getParticipantProfile(otherParticipantId) : null;
+  const isAdminChat = otherParticipantId && isParticipantAdmin(otherParticipantId);
+  const otherParticipantName = otherParticipantId ? getParticipantName(otherParticipantId) : 'Unknown';
 
   if (!user) {
     return (
@@ -221,9 +251,10 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
               </div>
             ) : (
               conversations.map((conversation) => {
-                const isAdmin = conversation.other_participant && isParticipantAdmin(conversation.other_participant.id);
-                const profile = conversation.other_participant ? getParticipantProfile(conversation.other_participant.id) : null;
-                const participantName = conversation.other_participant ? getParticipantName(conversation.other_participant.id, conversation.other_participant.full_name) : 'Unknown';
+                const otherParticipantId = getOtherParticipantId(conversation);
+                const isAdmin = isParticipantAdmin(otherParticipantId);
+                const profile = getParticipantProfile(otherParticipantId);
+                const participantName = getParticipantName(otherParticipantId);
                 
                 return (
                   <div
@@ -351,7 +382,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  {messages.map((message, index) => {
+                  {messages.map((message) => {
                     const isFromCurrentUser = message.sender_id === user.id;
                     const isFromAdmin = !isFromCurrentUser && isAdminChat;
                     
