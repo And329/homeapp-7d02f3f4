@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +20,24 @@ import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
 import { Property } from '@/types/property';
 
+// Define the AdminProperty interface to match AdminPropertiesTab expectations
+interface AdminProperty {
+  id: number;
+  title: string;
+  price: number;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  type: 'rent' | 'sale';
+  is_hot_deal: boolean;
+  description: string;
+  created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  amenities: string[] | null;
+  images: string[] | null;
+}
+
 const AdminDashboard = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -39,15 +58,21 @@ const AdminDashboard = () => {
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
   // Transform properties to match AdminPropertiesTab expectations (with number IDs)
-  const transformedProperties = rawProperties.map(property => ({
-    ...property,
+  const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
     id: parseInt(property.id) || 0, // Convert string ID to number
+    title: property.title || 'Untitled Property',
+    price: property.price || 0,
+    location: property.location || 'Unknown Location',
+    bedrooms: property.bedrooms || 0,
+    bathrooms: property.bathrooms || 0,
+    type: (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent' as 'rent' | 'sale',
     is_hot_deal: property.isHotDeal || false,
+    description: property.description || '',
+    created_at: property.created_at || new Date().toISOString(),
     latitude: property.coordinates?.lat || null,
     longitude: property.coordinates?.lng || null,
-    area: property.area || 1000,
-    image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
-    propertyType: property.propertyType || 'Apartment'
+    amenities: property.amenities || [],
+    images: property.images || []
   }));
 
   const mutations = useAdminMutations(profile, propertyRequests);
@@ -61,7 +86,7 @@ const AdminDashboard = () => {
   );
 
   // Updated handlers to work with transformed properties and convert between ID types
-  const handleEdit = (property: any) => {
+  const handleEdit = (property: AdminProperty) => {
     // Convert back to Property type for editing
     const propertyForEdit: Property = {
       id: String(property.id), // Convert number ID back to string
@@ -70,28 +95,28 @@ const AdminDashboard = () => {
       location: property.location,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
-      area: property.area,
-      image: property.image,
-      images: property.images,
+      area: 1000, // Default area
+      image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
+      images: property.images || ['/placeholder.svg'],
       type: property.type,
       isHotDeal: property.is_hot_deal,
       description: property.description,
-      amenities: property.amenities,
+      amenities: property.amenities || [],
       coordinates: {
         lat: property.latitude || 0,
         lng: property.longitude || 0
       },
-      propertyType: property.propertyType,
-      yearBuilt: property.yearBuilt,
-      parking: property.parking,
-      owner_id: property.owner_id,
-      is_approved: property.is_approved,
+      propertyType: 'Apartment',
+      yearBuilt: undefined,
+      parking: undefined,
+      owner_id: undefined,
+      is_approved: true,
       created_at: property.created_at
     };
     handlers.handleEdit(propertyForEdit);
   };
 
-  const handleDelete = async (id: any) => {
+  const handleDelete = async (id: number) => {
     // Convert number ID to string for the API call
     await handlers.handleDelete(String(id));
   };
