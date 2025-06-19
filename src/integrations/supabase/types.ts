@@ -329,9 +329,11 @@ export type Database = {
           bathrooms: number | null
           bedrooms: number | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: number
           images: Json | null
+          is_approved: boolean
           is_hot_deal: boolean | null
           latitude: number | null
           location: string | null
@@ -346,9 +348,11 @@ export type Database = {
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: number
           images?: Json | null
+          is_approved?: boolean
           is_hot_deal?: boolean | null
           latitude?: number | null
           location?: string | null
@@ -363,9 +367,11 @@ export type Database = {
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: number
           images?: Json | null
+          is_approved?: boolean
           is_hot_deal?: boolean | null
           latitude?: number | null
           location?: string | null
