@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, TrendingUp, Users, Award, Shield } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
@@ -9,10 +9,35 @@ import PropertyCard from '../components/PropertyCard';
 import { getHotDeals } from '../data/properties';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchLocation, setSearchLocation] = useState('');
+  const [searchPropertyType, setSearchPropertyType] = useState('');
+  const [searchListingType, setSearchListingType] = useState('');
+
   const { data: hotDeals = [], isLoading } = useQuery({
     queryKey: ['hotDeals'],
     queryFn: getHotDeals,
   });
+
+  const handleSearch = () => {
+    const searchParams = new URLSearchParams();
+    
+    if (searchLocation) {
+      searchParams.set('search', searchLocation);
+    }
+    if (searchPropertyType && searchPropertyType !== 'Property Type') {
+      searchParams.set('propertyType', searchPropertyType);
+    }
+    if (searchListingType && searchListingType !== 'For Rent / Sale') {
+      if (searchListingType === 'For Rent') {
+        searchParams.set('type', 'rent');
+      } else if (searchListingType === 'For Sale') {
+        searchParams.set('type', 'sale');
+      }
+    }
+
+    navigate(`/properties${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,25 +82,38 @@ const Index = () => {
                 <input
                   type="text"
                   placeholder="Location"
+                  value={searchLocation}
+                  onChange={(e) => setSearchLocation(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                  <option>Property Type</option>
-                  <option>Apartment</option>
-                  <option>Villa</option>
-                  <option>Townhouse</option>
+                <select 
+                  value={searchPropertyType}
+                  onChange={(e) => setSearchPropertyType(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Property Type</option>
+                  <option value="Apartment">Apartment</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Townhouse">Townhouse</option>
                 </select>
               </div>
               <div>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                  <option>For Rent / Sale</option>
-                  <option>For Rent</option>
-                  <option>For Sale</option>
+                <select 
+                  value={searchListingType}
+                  onChange={(e) => setSearchListingType(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">For Rent / Sale</option>
+                  <option value="For Rent">For Rent</option>
+                  <option value="For Sale">For Sale</option>
                 </select>
               </div>
-              <button className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+              <button 
+                onClick={handleSearch}
+                className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              >
                 <Search className="h-5 w-5 mr-2" />
                 Search
               </button>
