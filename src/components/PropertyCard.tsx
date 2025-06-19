@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { MapPin, Bed, Bath, Square, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, MessageCircle, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useToast } from '@/hooks/use-toast';
 import { Property } from '@/types/property';
 
@@ -22,6 +23,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 }) => {
   const { user } = useAuth();
   const { createConversationAsync } = useConversations();
+  const { isFavorite, toggleFavorite, isToggling } = useFavorites();
   const { toast } = useToast();
 
   const handleContactOwner = async (e: React.MouseEvent) => {
@@ -62,7 +64,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
       console.log('PropertyCard: Creating conversation...');
       await createConversationAsync({
         otherUserId: property.owner_id,
-        propertyId: property.id, // Keep as string, no conversion needed
+        propertyId: property.id,
         subject: `Inquiry about: ${property.title}`
       });
       
@@ -80,6 +82,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     }
   };
 
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(property.id);
+  };
+
+  const isPropertyFavorited = isFavorite(property.id);
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group">
       <div className="relative" onClick={onClick}>
@@ -96,6 +105,21 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         <Badge className="absolute top-2 right-2 bg-blue-500 text-white capitalize">
           For {property.type}
         </Badge>
+        
+        {/* Favorite Button */}
+        <Button
+          onClick={handleFavoriteClick}
+          variant="ghost"
+          size="sm"
+          className={`absolute bottom-2 right-2 h-8 w-8 p-0 rounded-full bg-white/90 hover:bg-white ${
+            isPropertyFavorited ? 'text-red-500' : 'text-gray-600'
+          }`}
+          disabled={isToggling}
+        >
+          <Heart 
+            className={`h-4 w-4 ${isPropertyFavorited ? 'fill-current' : ''}`} 
+          />
+        </Button>
       </div>
       
       <CardContent className="p-4">
@@ -123,7 +147,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         
         <div className="flex items-center justify-between">
           <p className="text-xl font-bold text-primary">
-            ${property.price.toLocaleString()}
+            AED {property.price.toLocaleString()}
             <span className="text-sm font-normal text-gray-600">
               {property.type === 'rent' ? '/month' : ''}
             </span>

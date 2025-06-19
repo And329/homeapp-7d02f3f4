@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -10,15 +10,34 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
 import PropertyCard from '@/components/PropertyCard';
 import UnifiedChat from '@/components/UnifiedChat';
+import FavoritesList from '@/components/FavoritesList';
 
 const UserProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const { data: userRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ['user-property-requests', user?.id],
@@ -176,25 +195,70 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-          <p className="text-gray-600">Manage your property listings and conversations</p>
+        {/* Profile Header */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={userProfile?.profile_picture} alt={userProfile?.full_name} />
+              <AvatarFallback className="bg-primary text-white text-xl">
+                {userProfile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {userProfile?.full_name || 'User'}
+              </h1>
+              <p className="text-gray-600 mb-2">{user.email}</p>
+              {userProfile?.role && (
+                <Badge variant="outline" className="capitalize">
+                  {userProfile.role}
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-4 text-sm text-gray-600">
+              <div className="text-center">
+                <div className="font-semibold text-lg text-gray-900">{userRequests.length}</div>
+                <div>Listings</div>
+              </div>
+              <div className="text-center">
+                <div className="font-semibold text-lg text-gray-900">
+                  {userRequests.filter(req => req.status === 'approved').length}
+                </div>
+                <div>Approved</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="listings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="listings">My Listings</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="listings" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4" />
+              <span>My Listings</span>
+            </TabsTrigger>
+            <TabsTrigger value="favorites" className="flex items-center space-x-2">
+              <Heart className="h-4 w-4" />
+              <span>Favorites</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center space-x-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>Messages</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="listings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Property Listings</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Settings className="h-5 w-5" />
+                  <span>Property Listings</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {requestsLoading ? (
@@ -204,7 +268,15 @@ const UserProfile = () => {
                   </div>
                 ) : userRequests.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">You haven't submitted any property listings yet.</p>
+                    <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 text-lg font-medium mb-2">No property listings yet</p>
+                    <p className="text-gray-400 mb-4">Start by creating your first property listing!</p>
+                    <Button 
+                      onClick={() => window.location.href = '/list-property'}
+                      className="bg-primary hover:bg-blue-700"
+                    >
+                      List a Property
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -229,7 +301,8 @@ const UserProfile = () => {
                           lat: request.latitude || 0,
                           lng: request.longitude || 0
                         },
-                        propertyType: request.property_type || 'Apartment'
+                        propertyType: request.property_type || 'Apartment',
+                        owner_id: request.user_id
                       };
                       
                       return (
@@ -260,8 +333,22 @@ const UserProfile = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="favorites" className="space-y-6">
+            <FavoritesList />
+          </TabsContent>
+
           <TabsContent value="messages" className="space-y-6">
-            <UnifiedChat className="h-[600px]" />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="h-5 w-5" />
+                  <span>Messages</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UnifiedChat className="h-[600px]" />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

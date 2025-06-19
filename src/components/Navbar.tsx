@@ -1,93 +1,160 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, Home, Search, PlusCircle, User, LogOut, Shield, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import MessageNotificationBadge from './MessageNotificationBadge';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error signing out",
+        description: error.message || "An error occurred while signing out.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/properties', label: 'Properties' },
-    { href: '/blog', label: 'Blog' },
-    { href: '/news', label: 'News' },
-    { href: '/contact', label: 'Contact' },
-  ];
+  const isAdmin = userProfile?.role === 'admin';
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary">
-            Dubai Properties
+          <Link to="/" className="flex items-center space-x-2">
+            <Home className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold text-gray-900">Homeapp.ae</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="text-gray-700 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-            
-            {user ? (
-              <div className="flex items-center space-x-4">
+            <Link
+              to="/"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              to="/properties"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
+              Properties
+            </Link>
+            <Link
+              to="/blog"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
+              Blog
+            </Link>
+            <Link
+              to="/news"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
+              News
+            </Link>
+            <Link
+              to="/contact"
+              className="text-gray-700 hover:text-primary transition-colors"
+            >
+              Contact
+            </Link>
+          </div>
+
+          {/* Desktop Auth Section */}
+          <div className="hidden md:flex items-center space-x-4">
+            {loading ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            ) : user ? (
+              <>
                 <Link
                   to="/list-property"
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  List Property
+                  <PlusCircle className="h-4 w-4" />
+                  <span>List Property</span>
                 </Link>
                 
-                <div className="relative group">
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>{profile?.full_name || user.email}</span>
-                  </Button>
-                  
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <Link
-                      to="/profile"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      My Profile
-                    </Link>
-                    
-                    {profile?.role === 'admin' && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </button>
-                  </div>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+                
+                <div className="relative">
+                  <Link
+                    to="/profile"
+                    className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <MessageNotificationBadge />
+                  </Link>
                 </div>
-              </div>
+                
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span>{userProfile?.full_name || 'Profile'}</span>
+                </Link>
+                
+                <Button
+                  onClick={handleSignOut}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-700 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link
@@ -97,10 +164,10 @@ const Navbar = () => {
                   Sign In
                 </Link>
                 <Link
-                  to="/list-property"
-                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                  to="/auth"
+                  className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  List Property
+                  Get Started
                 </Link>
               </div>
             )}
@@ -109,81 +176,115 @@ const Navbar = () => {
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-primary"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-700 hover:text-primary transition-colors"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="flex flex-col space-y-4">
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                to="/properties"
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Properties
+              </Link>
+              <Link
+                to="/blog"
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              <Link
+                to="/news"
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                News
+              </Link>
+              <Link
+                to="/contact"
+                className="text-gray-700 hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Contact
+              </Link>
               
-              {user ? (
+              {loading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              ) : user ? (
                 <>
                   <Link
-                    to="/profile"
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Profile
-                  </Link>
-                  <Link
                     to="/list-property"
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-2 text-primary font-medium"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    List Property
+                    <PlusCircle className="h-4 w-4" />
+                    <span>List Property</span>
                   </Link>
-                  {profile?.role === 'admin' && (
+                  
+                  {isAdmin && (
                     <Link
                       to="/admin"
-                      className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                      onClick={() => setIsOpen(false)}
+                      className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
                     >
-                      Admin Dashboard
+                      <Shield className="h-4 w-4" />
+                      <span>Admin</span>
                     </Link>
                   )}
+                  
+                  <Link
+                    to="/profile"
+                    className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>{userProfile?.full_name || 'My Profile'}</span>
+                  </Link>
+                  
                   <button
                     onClick={() => {
                       handleSignOut();
-                      setIsOpen(false);
+                      setIsMenuOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary transition-colors"
+                    className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors text-left"
                   >
-                    Sign Out
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
                   </button>
                 </>
               ) : (
-                <>
+                <div className="flex flex-col space-y-4">
                   <Link
                     to="/auth"
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    className="text-gray-700 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     Sign In
                   </Link>
                   <Link
-                    to="/list-property"
-                    className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-                    onClick={() => setIsOpen(false)}
+                    to="/auth"
+                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    List Property
+                    Get Started
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </div>

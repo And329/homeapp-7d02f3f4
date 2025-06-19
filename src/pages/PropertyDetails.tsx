@@ -9,6 +9,8 @@ import ContactPropertyOwner from '../components/ContactPropertyOwner';
 import { getPropertyById } from '../data/properties';
 import { updatePropertyOwner } from '../api/properties';
 import { useAuth } from '../contexts/AuthContext';
+import { useFavorites } from '../hooks/useFavorites';
+import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MapProperty {
@@ -25,6 +27,8 @@ const PropertyDetails = () => {
   const { id } = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite, isToggling } = useFavorites();
+  const { toast } = useToast();
 
   console.log('PropertyDetails: Component mounted with ID:', id);
   console.log('PropertyDetails: Current user:', user);
@@ -66,6 +70,56 @@ const PropertyDetails = () => {
     },
     enabled: !!property?.owner_id,
   });
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = property?.title || 'Property';
+    const text = `Check out this property: ${title}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url,
+        });
+        toast({
+          title: "Shared successfully",
+          description: "Property has been shared.",
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          // Fallback to clipboard
+          await navigator.clipboard.writeText(url);
+          toast({
+            title: "Link copied",
+            description: "Property link has been copied to clipboard.",
+          });
+        }
+      }
+    } else {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied",
+          description: "Property link has been copied to clipboard.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Could not share or copy link.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleFavoriteClick = () => {
+    if (property) {
+      toggleFavorite(property.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -143,8 +197,6 @@ const PropertyDetails = () => {
   };
 
   const coords = getCoordinates();
-
-  // Create map properties with number IDs to match PropertyMap interface
   const mapProperties: MapProperty[] = coords ? [{
     id: parseInt(property.id) || 0, // Convert string ID to number for PropertyMap
     title: property.title,
@@ -154,6 +206,8 @@ const PropertyDetails = () => {
     latitude: coords.lat,
     longitude: coords.lng,
   }] : [];
+
+  const isPropertyFavorited = isFavorite(property.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -195,10 +249,21 @@ const PropertyDetails = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                    <Heart className="h-5 w-5 text-gray-600" />
+                  <button 
+                    onClick={handleFavoriteClick}
+                    disabled={isToggling}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isPropertyFavorited 
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Heart className={`h-5 w-5 ${isPropertyFavorited ? 'fill-current' : ''}`} />
                   </button>
-                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                  <button 
+                    onClick={handleShare}
+                    className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
                     <Share2 className="h-5 w-5 text-gray-600" />
                   </button>
                 </div>
