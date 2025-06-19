@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Navigation, Map } from 'lucide-react';
+import { Navigation, Map } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import mapboxgl from 'mapbox-gl';
@@ -90,7 +89,6 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   longitude,
   onLocationChange,
 }) => {
-  const [isGeocoding, setIsGeocoding] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [tempLat, setTempLat] = useState(latitude?.toString() || '');
   const [tempLng, setTempLng] = useState(longitude?.toString() || '');
@@ -190,7 +188,6 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   const handleGeocode = async () => {
     if (!location.trim()) return;
 
-    setIsGeocoding(true);
     try {
       const coords = await mockGeocode(location);
       if (coords) {
@@ -202,27 +199,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       }
     } catch (error) {
       console.error('Geocoding error:', error);
-    } finally {
-      setIsGeocoding(false);
     }
-  };
-
-  const handleCoordinateChange = () => {
-    const lat = parseFloat(tempLat);
-    const lng = parseFloat(tempLng);
-    
-    if (isNaN(lat) || isNaN(lng)) {
-      alert('Please enter valid coordinates');
-      return;
-    }
-    
-    // Basic UAE coordinate validation
-    if (lat < 22 || lat > 27 || lng < 51 || lng > 57) {
-      alert('Coordinates should be within UAE bounds (Lat: 22-27, Lng: 51-57)');
-      return;
-    }
-    
-    onLocationChange(location, lat, lng);
   };
 
   const getCurrentLocation = () => {
@@ -246,39 +223,44 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
     );
   };
 
+  const handleLatChange = (value: string) => {
+    setTempLat(value);
+    const lat = parseFloat(value);
+    const lng = parseFloat(tempLng);
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+      onLocationChange(location, lat, lng);
+    }
+  };
+
+  const handleLngChange = (value: string) => {
+    setTempLng(value);
+    const lat = parseFloat(tempLat);
+    const lng = parseFloat(value);
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+      onLocationChange(location, lat, lng);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Location *
         </label>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            value={location}
-            onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder="Enter property location..."
-            className="flex-1"
-            required
-          />
-          <Button
-            type="button"
-            onClick={handleGeocode}
-            disabled={!location.trim() || isGeocoding}
-            variant="outline"
-            size="sm"
-          >
-            {isGeocoding ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-            ) : (
-              <MapPin className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        <Input
+          type="text"
+          value={location}
+          onChange={(e) => handleLocationChange(e.target.value)}
+          onBlur={handleGeocode}
+          placeholder="Enter property location..."
+          required
+        />
       </div>
 
       {/* Coordinate Input Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
             Latitude
@@ -287,7 +269,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
             type="number"
             step="any"
             value={tempLat}
-            onChange={(e) => setTempLat(e.target.value)}
+            onChange={(e) => handleLatChange(e.target.value)}
             placeholder="25.2048"
             className="text-sm"
           />
@@ -300,21 +282,10 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
             type="number"
             step="any"
             value={tempLng}
-            onChange={(e) => setTempLng(e.target.value)}
+            onChange={(e) => handleLngChange(e.target.value)}
             placeholder="55.2708"
             className="text-sm"
           />
-        </div>
-        <div className="flex items-end">
-          <Button
-            type="button"
-            onClick={handleCoordinateChange}
-            variant="outline"
-            size="sm"
-            className="w-full"
-          >
-            Set Coordinates
-          </Button>
         </div>
       </div>
 
@@ -360,7 +331,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       )}
       
       <p className="text-xs text-gray-500">
-        Enter an address and click the map pin, use the map picker, enter coordinates manually, or use your current location
+        Enter an address and it will auto-geocode, or enter coordinates manually, use the map picker, or use your current location
       </p>
     </div>
   );
