@@ -33,7 +33,8 @@ export const useFavorites = () => {
             images,
             description,
             amenities,
-            coordinates,
+            latitude,
+            longitude,
             owner_id
           )
         `)

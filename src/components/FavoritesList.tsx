@@ -70,7 +70,10 @@ const FavoritesList = () => {
                 isHotDeal: false,
                 description: favorite.properties.description || '',
                 amenities: Array.isArray(favorite.properties.amenities) ? favorite.properties.amenities : [],
-                coordinates: favorite.properties.coordinates || { lat: 0, lng: 0 },
+                coordinates: { 
+                  lat: favorite.properties.latitude || 0, 
+                  lng: favorite.properties.longitude || 0 
+                },
                 propertyType: 'Apartment',
                 owner_id: favorite.properties.owner_id
               };
