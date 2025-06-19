@@ -17,6 +17,9 @@ const AdminChat: React.FC = () => {
   const { user, profile } = useAuth();
   const { createConversationAsync, isCreatingConversation } = useConversations();
 
+  // Check if current user is admin
+  const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL || profile?.role === 'admin';
+
   // Get admin user by email
   const { data: adminUser, isLoading: loadingAdmin, error: adminError } = useQuery({
     queryKey: ['admin-user'],
@@ -42,7 +45,7 @@ const AdminChat: React.FC = () => {
       console.log('AdminChat: Found admin user:', data);
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && !isCurrentUserAdmin,
   });
 
   // Check if user already has a conversation with admin
@@ -70,7 +73,7 @@ const AdminChat: React.FC = () => {
       console.log('AdminChat: Existing conversation:', data);
       return data;
     },
-    enabled: !!user && !!adminUser,
+    enabled: !!user && !!adminUser && !isCurrentUserAdmin,
   });
 
   const handleStartChat = async () => {
@@ -114,6 +117,29 @@ const AdminChat: React.FC = () => {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600 mb-4">Please sign in to chat with admin support.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If current user is admin, show a different message
+  if (isCurrentUserAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Admin Chat</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-800 font-medium mb-2">You are an Administrator</p>
+            <p className="text-blue-700 text-sm">
+              As an admin, you can view and respond to user conversations through the admin dashboard. 
+              Users can contact you through this chat interface on other pages.
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
