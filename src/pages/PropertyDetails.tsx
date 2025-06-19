@@ -23,7 +23,7 @@ const PropertyDetails = () => {
   });
 
   // Get property owner profile for contact information
-  const { data: ownerProfile } = useQuery({
+  const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
     queryKey: ['property-owner', property?.owner_id],
     queryFn: async () => {
       if (!property?.owner_id) return null;
@@ -34,7 +34,10 @@ const PropertyDetails = () => {
         .eq('id', property.owner_id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching owner profile:', error);
+        return null;
+      }
       return data;
     },
     enabled: !!property?.owner_id,
@@ -260,15 +263,30 @@ const PropertyDetails = () => {
 
           {/* Contact Sidebar */}
           <div className="lg:col-span-1">
-            {user && property.owner_id && ownerProfile ? (
-              <ContactPropertyOwner
-                propertyId={parseInt(property.id)}
-                ownerId={property.owner_id}
-                propertyTitle={property.title}
-                contactName={ownerProfile.full_name || 'Property Owner'}
-                contactEmail={ownerProfile.email || ''}
-                ownerProfilePicture={ownerProfile.profile_picture}
-              />
+            {user && property.owner_id ? (
+              ownerLoading ? (
+                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+                  <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              ) : ownerProfile ? (
+                <ContactPropertyOwner
+                  propertyId={parseInt(property.id)}
+                  ownerId={property.owner_id}
+                  propertyTitle={property.title}
+                  contactName={ownerProfile.full_name || 'Property Owner'}
+                  contactEmail={ownerProfile.email || ''}
+                  ownerProfilePicture={ownerProfile.profile_picture}
+                />
+              ) : (
+                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+                  <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
+                  <p className="text-gray-600">Owner information not available.</p>
+                </div>
+              )
             ) : !user ? (
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                 <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
@@ -284,7 +302,7 @@ const PropertyDetails = () => {
             ) : (
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                 <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
-                <p className="text-gray-600">Loading owner information...</p>
+                <p className="text-gray-600">No owner information available for this property.</p>
               </div>
             )}
           </div>
