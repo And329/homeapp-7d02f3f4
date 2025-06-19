@@ -23,6 +23,22 @@ const AdminDashboard = () => {
   const queryClient = useQueryClient();
 
   const {
+    properties,
+    propertiesLoading,
+    propertyRequests,
+    requestsLoading,
+    blogPosts,
+    blogLoading,
+    newsArticles,
+    newsLoading,
+    chats,
+    chatMessages,
+    selectedUserRequests,
+  } = useAdminQueries(null, null); // Initialize with null first
+
+  const mutations = useAdminMutations(profile, propertyRequests);
+
+  const {
     // State management
     isFormOpen,
     setIsFormOpen,
@@ -57,26 +73,10 @@ const AdminDashboard = () => {
     handleSendReply,
     handleSendChatMessage,
     handleChatSelect,
-  } = useAdminHandlers(null, []); // We'll pass proper values below
+  } = useAdminHandlers(mutations, propertyRequests);
 
-  const {
-    properties,
-    propertiesLoading,
-    propertyRequests,
-    requestsLoading,
-    blogPosts,
-    blogLoading,
-    newsArticles,
-    newsLoading,
-    chats,
-    chatMessages,
-    selectedUserRequests,
-  } = useAdminQueries(selectedChat, selectedChatUserId);
-
-  const mutations = useAdminMutations(profile, propertyRequests);
-
-  // Re-initialize handlers with proper mutations and data
-  const handlersWithData = useAdminHandlers(mutations, propertyRequests);
+  // Update queries with selected chat data
+  const queriesWithChat = useAdminQueries(selectedChat, selectedChatUserId);
 
   if (!profile || profile.role !== 'admin') {
     return (
@@ -157,10 +157,10 @@ const AdminDashboard = () => {
         {activeTab === 'chats' && (
           <AdminChatsTab
             chats={chats}
-            chatMessages={chatMessages}
+            chatMessages={queriesWithChat.chatMessages}
             selectedChat={selectedChat}
             selectedChatUserId={selectedChatUserId}
-            selectedUserRequests={selectedUserRequests}
+            selectedUserRequests={queriesWithChat.selectedUserRequests}
             newMessage={newMessage}
             profileId={profile.id}
             sendChatMessageMutation={mutations.sendChatMessageMutation}

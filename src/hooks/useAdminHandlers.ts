@@ -56,7 +56,9 @@ export const useAdminHandlers = (
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
-      mutations.deleteMutation.mutate(id);
+      if (mutations?.deleteMutation) {
+        mutations.deleteMutation.mutate(id);
+      }
     }
   };
 
@@ -65,13 +67,34 @@ export const useAdminHandlers = (
     setIsApprovalFormOpen(true);
   };
 
-  const handleApprovalSubmit = (requestId: string, updatedData: any) => {
-    mutations.approveRequestWithDetailsMutation.mutate({ requestId, updatedData });
+  const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
+    console.log('handleApprovalSubmit called with:', { requestId, updatedData });
+    
+    if (!mutations?.approveRequestWithDetailsMutation) {
+      console.error('approveRequestWithDetailsMutation is not available');
+      toast({
+        title: "Error",
+        description: "Approval function is not available. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await mutations.approveRequestWithDetailsMutation.mutateAsync({ requestId, updatedData });
+      setIsApprovalFormOpen(false);
+      setApprovingRequest(null);
+    } catch (error) {
+      console.error('Approval submission error:', error);
+      // Error handling is done in the mutation itself
+    }
   };
 
   const handleRejectRequest = (requestId: string) => {
     if (window.confirm('Are you sure you want to reject this property request?')) {
-      mutations.rejectRequestMutation.mutate(requestId);
+      if (mutations?.rejectRequestMutation) {
+        mutations.rejectRequestMutation.mutate(requestId);
+      }
     }
   };
 
@@ -98,22 +121,23 @@ export const useAdminHandlers = (
       return;
     }
     
-    console.log('Calling sendReplyMutation with:', {
-      requestId,
-      message: replyMessage.trim(),
-      userId: request.user_id
-    });
-    
-    mutations.sendReplyMutation.mutate({ 
-      requestId, 
-      message: replyMessage.trim(),
-      userId: request.user_id
-    });
+    if (mutations?.sendReplyMutation) {
+      mutations.sendReplyMutation.mutate({ 
+        requestId, 
+        message: replyMessage.trim(),
+        userId: request.user_id
+      });
+      setReplyingToRequest(null);
+      setReplyMessage('');
+    }
   };
 
   const handleSendChatMessage = () => {
     if (!selectedChat || !newMessage.trim()) return;
-    mutations.sendChatMessageMutation.mutate({ chatId: selectedChat, message: newMessage.trim() });
+    if (mutations?.sendChatMessageMutation) {
+      mutations.sendChatMessageMutation.mutate({ chatId: selectedChat, message: newMessage.trim() });
+      setNewMessage('');
+    }
   };
 
   const handleChatSelect = (chat: Chat) => {
