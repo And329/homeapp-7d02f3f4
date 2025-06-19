@@ -1,19 +1,20 @@
 
 import React, { useState } from 'react';
-import { Calendar, User, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Calendar, User, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BlogPost } from '@/types/blog';
+import PDFViewer from './PDFViewer';
 
 interface ExpandableBlogCardProps {
   post: BlogPost;
 }
 
-const ExpandableBlogCard = ({ post }: ExpandableBlogCardProps) => {
+const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Draft';
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -21,86 +22,83 @@ const ExpandableBlogCard = ({ post }: ExpandableBlogCardProps) => {
     });
   };
 
-  const truncateContent = (content: string, maxLength: number = 200) => {
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
-  };
-
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      {post.featured_image && (
-        <img
-          src={post.featured_image}
-          alt={post.title}
-          className="w-full h-48 object-cover"
-        />
-      )}
-      
-      <CardContent className="p-6">
-        <div className="flex items-center text-sm text-gray-500 mb-3">
-          <Calendar className="h-4 w-4 mr-1" />
-          <span>{formatDate(post.published_at)}</span>
-          <User className="h-4 w-4 ml-4 mr-1" />
-          <span>Admin</span>
+    <Card className="h-fit transition-all duration-200 hover:shadow-lg">
+      <CardHeader className="pb-4">
+        {post.featured_image && (
+          <div className="w-full h-48 mb-4 rounded-lg overflow-hidden">
+            <img 
+              src={post.featured_image} 
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        
+        <CardTitle className="text-xl leading-tight">{post.title}</CardTitle>
+        
+        <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            <span>{formatDate(post.published_at || post.created_at)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <User className="h-4 w-4" />
+            <span>Admin</span>
+          </div>
         </div>
-        
-        <CardTitle className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-          {post.title}
-        </CardTitle>
-        
-        <div className="text-gray-600 mb-4">
-          {isExpanded ? (
-            <div className="prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-            </div>
-          ) : (
-            <p className="line-clamp-3">
-              {post.excerpt || truncateContent(post.content)}
-            </p>
-          )}
-        </div>
-        
+
         {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
-              >
+          <div className="flex flex-wrap gap-2 mt-3">
+            {post.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                <Tag className="h-3 w-3 mr-1" />
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
+      </CardHeader>
 
-        {post.pdf_attachment && (
-          <div className="mb-4">
-            <a
-              href={post.pdf_attachment}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="text-sm">View PDF Attachment</span>
-            </a>
+      <CardContent>
+        {post.excerpt && (
+          <p className="text-gray-600 mb-4 leading-relaxed">
+            {post.excerpt}
+          </p>
+        )}
+
+        {isExpanded && (
+          <div className="space-y-4">
+            <div className="prose prose-sm max-w-none">
+              <div 
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }}
+              />
+            </div>
+
+            {post.pdf_attachment && (
+              <PDFViewer 
+                pdfUrl={post.pdf_attachment} 
+                title={`${post.title} - Document`}
+              />
+            )}
           </div>
         )}
-        
+
         <Button
-          onClick={() => setIsExpanded(!isExpanded)}
           variant="ghost"
-          className="flex items-center gap-2 p-0 h-auto font-semibold text-primary hover:text-primary/80"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full mt-4 flex items-center justify-center gap-2"
         >
           {isExpanded ? (
             <>
-              Show Less
               <ChevronUp className="h-4 w-4" />
+              Show Less
             </>
           ) : (
             <>
-              Read More
               <ChevronDown className="h-4 w-4" />
+              Read More
             </>
           )}
         </Button>

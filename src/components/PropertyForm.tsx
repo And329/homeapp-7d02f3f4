@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
+import EmiratesSelector from '@/components/EmiratesSelector';
 import { createProperty } from '@/api/properties';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,6 +21,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     title: '',
     price: '',
     location: '',
+    emirate: '',
     latitude: null as number | null,
     longitude: null as number | null,
     bedrooms: '',
@@ -40,6 +42,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         title: property.title || '',
         price: property.price?.toString() || '',
         location: property.location || '',
+        emirate: property.emirate || '',
         latitude: property.latitude || null,
         longitude: property.longitude || null,
         bedrooms: property.bedrooms?.toString() || '',
@@ -58,6 +61,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         title: '',
         price: '',
         location: '',
+        emirate: '',
         latitude: null as number | null,
         longitude: null as number | null,
         bedrooms: '',
@@ -85,6 +89,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         title: formData.title,
         price: parseInt(formData.price),
         location: formData.location,
+        emirate: formData.emirate,
         latitude: formData.latitude,
         longitude: formData.longitude,
         bedrooms: parseInt(formData.bedrooms),
@@ -157,6 +162,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, images }));
   };
 
+  const handleEmirateChange = (emirate: string) => {
+    setFormData(prev => ({ ...prev, emirate }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -202,7 +211,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
               />
             </div>
 
-            <div className="md:col-span-2">
+            <EmiratesSelector
+              value={formData.emirate}
+              onChange={handleEmirateChange}
+              required
+            />
+
+            <div className="md:col-span-1">
               <PropertyLocationPicker
                 location={formData.location}
                 latitude={formData.latitude || undefined}

@@ -17,12 +17,14 @@ import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
+import EmiratesSelector from '@/components/EmiratesSelector';
 
 const propertyRequestSchema = z.object({
   title: z.string().min(1, 'Property title is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.string().min(1, 'Price is required'),
   location: z.string().min(1, 'Location is required'),
+  emirate: z.string().min(1, 'Emirate is required'),
   area: z.string().min(1, 'Area is required'),
   bedrooms: z.string().min(1, 'Number of bedrooms is required'),
   bathrooms: z.string().min(1, 'Number of bathrooms is required'),
@@ -42,6 +44,7 @@ const ListProperty = () => {
   const [propertyVideos, setPropertyVideos] = useState<string[]>([]);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [selectedEmirate, setSelectedEmirate] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -52,6 +55,7 @@ const ListProperty = () => {
       description: '',
       price: '',
       location: '',
+      emirate: '',
       area: '',
       bedrooms: '',
       bathrooms: '',
@@ -67,6 +71,11 @@ const ListProperty = () => {
     form.setValue('location', location);
     setLatitude(lat || null);
     setLongitude(lng || null);
+  };
+
+  const handleEmirateChange = (emirate: string) => {
+    setSelectedEmirate(emirate);
+    form.setValue('emirate', emirate);
   };
 
   const onSubmit = async (data: PropertyRequestForm) => {
@@ -90,6 +99,7 @@ const ListProperty = () => {
           description: data.description,
           price: parseInt(data.price),
           location: data.location,
+          emirate: data.emirate,
           latitude: latitude,
           longitude: longitude,
           area: parseInt(data.area),
@@ -118,6 +128,7 @@ const ListProperty = () => {
       setPropertyVideos([]);
       setLatitude(null);
       setLongitude(null);
+      setSelectedEmirate('');
     } catch (error) {
       console.error('Error submitting property request:', error);
       toast({
@@ -274,8 +285,16 @@ const ListProperty = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
+                    <EmiratesSelector
+                      value={selectedEmirate}
+                      onChange={handleEmirateChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
                     <PropertyLocationPicker
                       location={form.watch('location')}
                       latitude={latitude || undefined}
@@ -283,33 +302,33 @@ const ListProperty = () => {
                       onLocationChange={handleLocationChange}
                     />
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="propertyType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center">
-                          <Home className="h-4 w-4 mr-1" />
-                          Property Type *
-                        </FormLabel>
-                        <FormControl>
-                          <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
-                            <option value="Apartment">Apartment</option>
-                            <option value="Villa">Villa</option>
-                            <option value="Townhouse">Townhouse</option>
-                            <option value="Penthouse">Penthouse</option>
-                            <option value="Studio">Studio</option>
-                            <option value="Office">Office</option>
-                            <option value="Shop">Shop</option>
-                            <option value="Warehouse">Warehouse</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="propertyType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <Home className="h-4 w-4 mr-1" />
+                        Property Type *
+                      </FormLabel>
+                      <FormControl>
+                        <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
+                          <option value="Apartment">Apartment</option>
+                          <option value="Villa">Villa</option>
+                          <option value="Townhouse">Townhouse</option>
+                          <option value="Penthouse">Penthouse</option>
+                          <option value="Studio">Studio</option>
+                          <option value="Office">Office</option>
+                          <option value="Shop">Shop</option>
+                          <option value="Warehouse">Warehouse</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Amenities */}
                 <PropertyAmenities
