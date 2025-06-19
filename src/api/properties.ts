@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -109,6 +108,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   }
   
   console.log('API: Current user for property creation:', user);
+  console.log('API: User ID to be set as owner_id:', user.id);
   
   // Ensure owner_id is set to current user - this is critical!
   const propertyWithOwner = {
@@ -117,6 +117,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   };
   
   console.log('API: Property data with owner_id set:', propertyWithOwner);
+  console.log('API: Confirming owner_id is set to:', propertyWithOwner.owner_id);
   
   const { data, error } = await supabase
     .from('properties')
@@ -130,6 +131,13 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
   }
 
   console.log('API: Property created successfully with owner_id:', data);
+  console.log('API: Verifying created property owner_id:', data.owner_id);
+  
+  if (!data.owner_id) {
+    console.error('API: CRITICAL ERROR - Property was created but owner_id is still NULL!');
+    console.error('API: This should never happen. Property data:', data);
+  }
+
   return transformDatabaseProperty(data);
 };
 

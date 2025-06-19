@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
+import { createProperty } from '@/api/properties';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyFormProps {
   property?: any;
@@ -96,26 +98,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
 
-      let result;
       if (property) {
         console.log('PropertyForm: Updating existing property');
-        result = await supabase
+        const result = await supabase
           .from('properties')
           .update(dataToSubmit)
           .eq('id', property.id);
+
+        if (result.error) {
+          console.error('PropertyForm: Database error:', result.error);
+          throw result.error;
+        }
       } else {
-        console.log('PropertyForm: Creating new property');
-        result = await supabase
-          .from('properties')
-          .insert([dataToSubmit]);
+        console.log('PropertyForm: Creating new property using API');
+        // Use the createProperty API function which properly sets owner_id
+        await createProperty(dataToSubmit);
       }
 
-      if (result.error) {
-        console.error('PropertyForm: Database error:', result.error);
-        throw result.error;
-      }
-
-      console.log('PropertyForm: Success!', result);
+      console.log('PropertyForm: Success!');
 
       toast({
         title: property ? "Property updated" : "Property created",

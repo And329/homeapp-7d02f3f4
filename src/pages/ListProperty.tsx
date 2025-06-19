@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyVideoUpload from '@/components/PropertyVideoUpload';
+import { createProperty } from '@/api/properties';
 
 const propertyRequestSchema = z.object({
   title: z.string().min(1, 'Property title is required'),
@@ -71,6 +71,7 @@ const ListProperty = () => {
     setIsSubmitting(true);
 
     try {
+      // For property requests, continue using the existing logic
       const { error } = await supabase
         .from('property_requests')
         .insert({
