@@ -255,7 +255,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="font-medium text-sm truncate">
-                            {conversation.other_participant?.full_name || conversation.other_participant?.email || 'Unknown'}
+                            {conversation.other_participant?.full_name || 'Unknown'}
                           </div>
                           {isAdmin && (
                             <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
@@ -314,7 +314,7 @@ const UnifiedChat: React.FC<UnifiedChatProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">
-                        {otherProfile?.full_name || otherParticipant?.full_name || 'Unknown'}
+                        {otherProfile?.full_name || (otherParticipant && 'full_name' in otherParticipant ? otherParticipant.full_name : null) || 'Unknown'}
                       </CardTitle>
                       {isAdminChat && (
                         <Badge className="bg-green-100 text-green-700 border-green-200">
