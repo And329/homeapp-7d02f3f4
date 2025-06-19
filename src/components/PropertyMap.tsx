@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
@@ -150,11 +149,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           'circle-color': [
             'step',
             ['get', 'point_count'],
-            '#51bbd6',
+            '#3b82f6',
             100,
-            '#f1f075',
+            '#1d4ed8',
             750,
-            '#f28cb1'
+            '#1e3a8a'
           ],
           'circle-radius': [
             'step',
@@ -178,10 +177,13 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           'text-field': '{point_count_abbreviated}',
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
           'text-size': 12
+        },
+        paint: {
+          'text-color': '#ffffff'
         }
       });
 
-      // Add individual property markers
+      // Add individual property markers - always blue
       map.current.addLayer({
         id: 'unclustered-point',
         type: 'circle',
@@ -191,18 +193,18 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           'circle-color': [
             'case',
             ['get', 'isSelected'],
-            '#dc2626',
-            '#1e40af'
+            '#1d4ed8', // Darker blue for selected
+            '#3b82f6'  // Blue for all markers
           ],
-          'circle-radius': 8,
-          'circle-stroke-width': 2,
+          'circle-radius': 10,
+          'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff'
         }
       });
 
-      // Add property labels with enhanced background
+      // Add property labels with solid background
       map.current.addLayer({
-        id: 'property-labels',
+        id: 'property-labels-bg',
         type: 'symbol',
         source: 'properties',
         filter: ['!', ['has', 'point_count']],
@@ -210,7 +212,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           'text-field': [
             'format',
             'AED ',
-            { 'font-scale': 0.9 },
+            { 'font-scale': 0.85 },
             ['case',
               ['>=', ['get', 'price'], 1000000],
               ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
@@ -218,26 +220,27 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
               ['number-format', ['get', 'price'], {}]
             ],
-            { 'font-scale': 1.1 },
+            { 'font-scale': 1.0 },
             ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
           ],
           'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
           'text-size': 11,
-          'text-offset': [0, -2.2],
+          'text-offset': [0, -3],
           'text-anchor': 'bottom',
-          'text-allow-overlap': false,
-          'text-ignore-placement': false
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-padding': 2
         },
         paint: {
           'text-color': '#ffffff',
           'text-halo-color': [
             'case',
             ['get', 'isSelected'],
-            '#dc2626',
-            '#1e40af'
+            '#1d4ed8',
+            '#3b82f6'
           ],
-          'text-halo-width': 3,
-          'text-halo-blur': 1,
+          'text-halo-width': 8,
+          'text-halo-blur': 2,
           'text-opacity': 1
         }
       });
@@ -297,7 +300,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
             <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
             <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
-            <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0 0 8px 0;">
+            <p style="font-size: 14px; font-weight: 700; color: #3b82f6; margin: 0 0 8px 0;">
               AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
             </p>
             <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
@@ -306,7 +309,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
             <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
             <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
-            <p style="font-size: 14px; font-weight: 700; color: #1e40af; margin: 0;">
+            <p style="font-size: 14px; font-weight: 700; color: #3b82f6; margin: 0;">
               AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
             </p>
           </div>

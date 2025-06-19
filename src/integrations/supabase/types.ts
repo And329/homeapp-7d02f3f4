@@ -281,6 +281,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          profile_picture: string | null
           role: string | null
           updated_at: string | null
         }
@@ -289,6 +290,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          profile_picture?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -297,6 +299,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          profile_picture?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -486,6 +489,89 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      user_chat_messages: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "user_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_chats: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          property_id: number | null
+          property_request_id: string | null
+          requester_id: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          property_id?: number | null
+          property_request_id?: string | null
+          requester_id: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          property_id?: number | null
+          property_request_id?: string | null
+          requester_id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_chats_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_chats_property_request_id_fkey"
+            columns: ["property_request_id"]
+            isOneToOne: false
+            referencedRelation: "property_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
