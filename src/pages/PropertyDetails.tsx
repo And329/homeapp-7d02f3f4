@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, MessageCircle } from 'lucide-react';
@@ -51,7 +50,13 @@ const PropertyDetails = () => {
 
       if (error) {
         console.error('PropertyDetails: Error fetching owner profile:', error);
-        return null;
+        // Return a minimal profile object even if the query fails
+        return {
+          id: property.owner_id,
+          full_name: null,
+          email: null,
+          profile_picture: null
+        };
       }
       
       console.log('PropertyDetails: Owner profile data:', data);
@@ -303,29 +308,20 @@ const PropertyDetails = () => {
           {/* Contact Sidebar */}
           <div className="lg:col-span-1">
             {user && property.owner_id ? (
-              ownerLoading ? (
+              property.owner_id === user.id ? (
                 <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                  <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
+                  <h3 className="text-xl font-semibold mb-4">Your Property</h3>
+                  <p className="text-gray-600">This is your own property listing.</p>
                 </div>
-              ) : ownerProfile ? (
+              ) : (
                 <ContactPropertyOwner
                   propertyId={parseInt(property.id)}
                   ownerId={property.owner_id}
                   propertyTitle={property.title}
-                  contactName={ownerProfile.full_name || 'Property Owner'}
-                  contactEmail={ownerProfile.email || ''}
-                  ownerProfilePicture={ownerProfile.profile_picture}
+                  contactName={ownerProfile?.full_name || 'Property Owner'}
+                  contactEmail={ownerProfile?.email || ''}
+                  ownerProfilePicture={ownerProfile?.profile_picture}
                 />
-              ) : (
-                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                  <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
-                  <p className="text-gray-600">Owner information not available.</p>
-                  <p className="text-sm text-gray-500 mt-2">Owner ID: {property.owner_id}</p>
-                </div>
               )
             ) : !user ? (
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
