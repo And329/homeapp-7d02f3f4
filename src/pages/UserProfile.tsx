@@ -161,10 +161,16 @@ const UserProfile = () => {
                         image: Array.isArray(request.images) && request.images.length > 0 
                           ? request.images[0] 
                           : '/placeholder.svg',
+                        images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
                         type: request.type,
                         isHotDeal: false,
                         description: request.description,
-                        amenities: Array.isArray(request.amenities) ? request.amenities : []
+                        amenities: Array.isArray(request.amenities) ? request.amenities : [],
+                        coordinates: {
+                          lat: request.latitude || 0,
+                          lng: request.longitude || 0
+                        },
+                        propertyType: request.property_type || 'Apartment'
                       };
                       
                       return (

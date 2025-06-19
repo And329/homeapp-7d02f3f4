@@ -98,10 +98,16 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               image: Array.isArray(property.images) && property.images.length > 0 
                 ? property.images[0] 
                 : '/placeholder.svg',
+              images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
               type: (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent' as 'rent' | 'sale',
               isHotDeal: property.is_hot_deal || false,
               description: property.description || '',
-              amenities: Array.isArray(property.amenities) ? property.amenities : []
+              amenities: Array.isArray(property.amenities) ? property.amenities : [],
+              coordinates: {
+                lat: property.latitude || 0,
+                lng: property.longitude || 0
+              },
+              propertyType: 'Apartment'
             };
 
             return (

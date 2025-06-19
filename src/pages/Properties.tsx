@@ -65,7 +65,7 @@ const Properties = () => {
   });
 
   const transformProperty = (property: Property) => ({
-    id: property.id,
+    id: property.id.toString(),
     title: property.title || 'Untitled Property',
     price: property.price || 0,
     location: property.location || 'Location not specified',
@@ -75,10 +75,16 @@ const Properties = () => {
     image: Array.isArray(property.images) && property.images.length > 0 
       ? property.images[0] 
       : '/placeholder.svg',
+    images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
     type: property.type || 'rent',
     isHotDeal: property.is_hot_deal || false,
     description: property.description || '',
     amenities: Array.isArray(property.amenities) ? property.amenities : [],
+    coordinates: {
+      lat: property.latitude || 0,
+      lng: property.longitude || 0
+    },
+    propertyType: 'Apartment',
     owner_id: property.owner_id
   });
 
