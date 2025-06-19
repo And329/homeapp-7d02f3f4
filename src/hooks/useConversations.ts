@@ -59,39 +59,64 @@ export const useConversations = () => {
         return [];
       }
 
-      // Get participant profiles
+      // Get participant profiles for better name display
       const participantIds = new Set<string>();
       conversationsData.forEach(conv => {
-        participantIds.add(conv.participant_1_id);
-        participantIds.add(conv.participant_2_id);
+        const otherParticipantId = conv.participant_1_id === user.id 
+          ? conv.participant_2_id 
+          : conv.participant_1_id;
+        
+        // Skip admin-support conversations (they don't have real user IDs)
+        if (otherParticipantId !== 'admin-support') {
+          participantIds.add(otherParticipantId);
+        }
       });
-      participantIds.delete(user.id); // Remove current user
 
-      if (participantIds.size === 0) {
-        return conversationsData.map(conv => ({
+      let profilesMap = new Map();
+      
+      if (participantIds.size > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, profile_picture')
+          .in('id', Array.from(participantIds));
+
+        if (profilesError) {
+          console.error('useConversations: Error fetching profiles:', profilesError);
+          // Continue without profiles rather than failing completely
+        } else {
+          profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        }
+      }
+
+      return conversationsData.map(conv => {
+        const otherParticipantId = conv.participant_1_id === user.id 
+          ? conv.participant_2_id 
+          : conv.participant_1_id;
+        
+        let otherParticipant = null;
+        
+        if (otherParticipantId === 'admin-support') {
+          // Special handling for admin support conversations
+          otherParticipant = {
+            id: 'admin-support',
+            full_name: 'Admin Support',
+            email: '329@riseup.net',
+            profile_picture: null
+          };
+        } else {
+          otherParticipant = profilesMap.get(otherParticipantId) || {
+            id: otherParticipantId,
+            full_name: null,
+            email: null,
+            profile_picture: null
+          };
+        }
+
+        return {
           ...conv,
-          other_participant: null
-        })) as Conversation[];
-      }
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, profile_picture')
-        .in('id', Array.from(participantIds));
-
-      if (profilesError) {
-        console.error('useConversations: Error fetching profiles:', profilesError);
-        // Continue without profiles rather than failing completely
-      }
-
-      const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-
-      return conversationsData.map(conv => ({
-        ...conv,
-        other_participant: profilesMap.get(
-          conv.participant_1_id === user.id ? conv.participant_2_id : conv.participant_1_id
-        ) || null
-      })) as Conversation[];
+          other_participant: otherParticipant
+        };
+      }) as Conversation[];
     },
     enabled: !!user,
   });
@@ -123,7 +148,32 @@ export const useConversations = () => {
         throw new Error('Cannot create conversation with yourself');
       }
 
-      // Use the database function
+      // Special handling for admin support conversations
+      if (otherUserId === 'admin-support') {
+        // For admin support, we create a conversation directly without using the function
+        // since 'admin-support' is not a real user ID
+        const { data: conversation, error } = await supabase
+          .from('conversations')
+          .insert({
+            participant_1_id: user.id,
+            participant_2_id: otherUserId,
+            subject: subject,
+            property_id: propertyId || null,
+            property_request_id: propertyRequestId || null
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('useConversations: Error creating admin conversation:', error);
+          throw error;
+        }
+
+        console.log('useConversations: Created admin conversation:', conversation);
+        return conversation;
+      }
+
+      // Use the database function for regular user conversations
       const { data: conversationId, error } = await supabase.rpc('create_conversation', {
         p_participant_1_id: user.id,
         p_participant_2_id: otherUserId,

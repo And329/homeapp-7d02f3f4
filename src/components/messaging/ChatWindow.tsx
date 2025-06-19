@@ -66,7 +66,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     if (senderId === user?.id) {
       return profile?.full_name || profile?.email || 'You';
     }
-    return otherUserName;
+    
+    // Handle admin support messages
+    if (otherUserName === 'Admin Support') {
+      return 'Admin Support';
+    }
+    
+    return otherUserName || 'User';
   };
 
   if (!conversationId) {

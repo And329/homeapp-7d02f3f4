@@ -1,107 +1,135 @@
 
 import React, { useState } from 'react';
-import { useConversations } from '@/hooks/useConversations';
-import { useAdminUser } from '@/hooks/useAdminUser';
-import { useAdminConversation } from '@/hooks/useAdminConversation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversations } from '@/hooks/useConversations';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageCircle } from 'lucide-react';
 import ChatWindow from './ChatWindow';
-import AdminChatSignInPrompt from './AdminChatSignInPrompt';
-import AdminChatAdminView from './AdminChatAdminView';
-import AdminChatLoading from './AdminChatLoading';
-import AdminChatError from './AdminChatError';
-import AdminChatInterface from './AdminChatInterface';
+
+const ADMIN_EMAIL = '329@riseup.net';
 
 const AdminChat: React.FC = () => {
+  const { user, profile } = useAuth();
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [chatPartnerName, setChatPartnerName] = useState<string>('');
-  const { user } = useAuth();
-  const { createConversationAsync, isCreatingConversation } = useConversations();
-  
-  const { 
-    adminUser, 
-    loadingAdmin, 
-    adminError, 
-    isCurrentUserAdmin,
-    ADMIN_EMAIL 
-  } = useAdminUser();
-  
-  const { existingConversation } = useAdminConversation(adminUser, isCurrentUserAdmin);
+  const [isCreating, setIsCreating] = useState(false);
+  const { createConversationAsync } = useConversations();
 
-  const handleStartChat = async () => {
-    if (!adminUser) {
-      console.error('AdminChat: Missing admin user');
-      return;
-    }
+  // Simple admin check
+  const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL || profile?.role === 'admin';
 
+  const handleStartAdminChat = async () => {
+    if (!user) return;
+    
+    setIsCreating(true);
     try {
-      console.log('AdminChat: Creating conversation with admin:', adminUser);
+      console.log('AdminChat: Starting chat with admin support');
       
+      // Create conversation with a fixed admin user ID approach
+      // We'll use a special subject to identify admin conversations
       const conversation = await createConversationAsync({
-        otherUserId: adminUser.id,
-        subject: 'Admin Support Chat'
+        otherUserId: 'admin-support', // Special identifier for admin conversations
+        subject: `Admin Support - ${user.email || 'User'}`
       });
       
-      console.log('AdminChat: Created conversation:', conversation);
+      console.log('AdminChat: Created admin conversation:', conversation);
       setConversationId(conversation.id);
-      setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin Support');
     } catch (error) {
       console.error('AdminChat: Failed to start admin chat:', error);
+    } finally {
+      setIsCreating(false);
     }
-  };
-
-  const handleUseExistingConversation = () => {
-    if (!existingConversation || !adminUser) return;
-
-    console.log('AdminChat: Using existing conversation:', existingConversation.id);
-    setConversationId(existingConversation.id);
-    setChatPartnerName(adminUser.full_name || adminUser.email || 'Admin Support');
   };
 
   // If user is not signed in
   if (!user) {
-    return <AdminChatSignInPrompt />;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Admin Support</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-4">Please sign in to contact admin support.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   // If current user is admin
   if (isCurrentUserAdmin) {
-    return <AdminChatAdminView />;
-  }
-
-  // If loading admin user
-  if (loadingAdmin) {
-    return <AdminChatLoading />;
-  }
-
-  // If error loading admin or admin not found
-  if (adminError || !adminUser) {
-    return <AdminChatError adminEmail={ADMIN_EMAIL} />;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <span>Admin Support</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-800 font-medium mb-2">You are an Administrator</p>
+            <p className="text-blue-700 text-sm">
+              As an admin, you can view and respond to user conversations through the main messaging interface.
+              Users can contact you through this admin support feature.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   // If chat window is active
-  if (conversationId && chatPartnerName) {
+  if (conversationId) {
     return (
       <div className="h-[70vh] min-h-[500px] max-h-[800px]">
         <ChatWindow
           conversationId={conversationId}
-          otherUserName={chatPartnerName}
-          onClose={() => {
-            setConversationId(null);
-            setChatPartnerName('');
-          }}
+          otherUserName="Admin Support"
+          onClose={() => setConversationId(null)}
         />
       </div>
     );
   }
 
-  // Default chat interface
+  // Default admin chat interface
   return (
-    <AdminChatInterface
-      adminUser={adminUser}
-      existingConversation={existingConversation}
-      onStartChat={handleStartChat}
-      onUseExistingConversation={handleUseExistingConversation}
-      isCreatingConversation={isCreatingConversation}
-    />
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <MessageCircle className="h-6 w-6 text-primary" />
+          <span>Admin Support</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="bg-blue-50 rounded-lg p-4">
+          <p className="text-gray-700">
+            Need help? Contact our admin support team for assistance with your account or any issues.
+          </p>
+        </div>
+
+        <Button
+          onClick={handleStartAdminChat}
+          disabled={isCreating}
+          className="w-full"
+          size="lg"
+        >
+          {isCreating ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Starting chat...
+            </>
+          ) : (
+            <>
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Contact Admin Support
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
