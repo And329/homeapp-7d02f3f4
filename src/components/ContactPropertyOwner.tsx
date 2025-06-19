@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { MessageCircle, Phone, Mail, User } from 'lucide-react';
+import { MessageCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import UserChat from './UserChat';
 
 interface ContactPropertyOwnerProps {
@@ -52,7 +51,7 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
   }
 
   return (
-    <Card>
+    <Card className="sticky top-24">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
@@ -73,54 +72,23 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <Mail className="h-4 w-4 text-gray-500" />
-            <span className="text-sm">{contactEmail}</span>
-          </div>
-          
-          {contactPhone && (
-            <div className="flex items-center space-x-3">
-              <Phone className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">{contactPhone}</span>
-            </div>
-          )}
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">
+            Interested in this property? Start a conversation with the owner.
+          </p>
         </div>
 
-        <div className="flex flex-col space-y-2">
-          <Button
-            onClick={() => {
-              console.log('Starting chat with owner:', ownerId);
-              setShowChat(true);
-            }}
-            className="w-full flex items-center justify-center space-x-2"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Start Chat</span>
-          </Button>
-          
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = `mailto:${contactEmail}`}
-              className="flex items-center justify-center space-x-2"
-            >
-              <Mail className="h-4 w-4" />
-              <span>Email</span>
-            </Button>
-            
-            {contactPhone && (
-              <Button
-                variant="outline"
-                onClick={() => window.location.href = `tel:${contactPhone}`}
-                className="flex items-center justify-center space-x-2"
-              >
-                <Phone className="h-4 w-4" />
-                <span>Call</span>
-              </Button>
-            )}
-          </div>
-        </div>
+        <Button
+          onClick={() => {
+            console.log('Starting chat with owner:', ownerId);
+            setShowChat(true);
+          }}
+          className="w-full flex items-center justify-center space-x-2"
+          size="lg"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span>Send Message</span>
+        </Button>
       </CardContent>
     </Card>
   );

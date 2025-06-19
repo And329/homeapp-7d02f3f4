@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MessageCircle, Send, User, Phone, Mail } from 'lucide-react';
+import { MessageCircle, Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -59,63 +58,16 @@ const UserChat: React.FC<UserChatProps> = ({
   const [chatId, setChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Create chat mutation
-  const createChatMutation = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+  console.log('UserChat initialized with:', { propertyId, propertyRequestId, ownerId, user: user?.id });
 
-      console.log('Creating user chat with:', {
-        propertyId,
-        propertyRequestId,
-        ownerId,
-        propertyTitle
-      });
-
-      const { data: newChat, error } = await supabase
-        .from('user_chats')
-        .insert([{
-          property_id: propertyId || null,
-          property_request_id: propertyRequestId || null,
-          requester_id: user.id,
-          owner_id: ownerId,
-          subject: `Inquiry about: ${propertyTitle}`,
-          status: 'active'
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Chat creation error:', error);
-        throw error;
-      }
-
-      console.log('Chat created successfully:', newChat);
-      setChatId(newChat.id);
-      return newChat as UserChatData;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['user-chat'] });
-      toast({
-        title: "Chat created",
-        description: "You can now start messaging with the property owner.",
-      });
-    },
-    onError: (error) => {
-      console.error('Failed to create chat:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create chat. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Get or create chat
+  // Create or find existing chat
   const { data: chat, isLoading: chatLoading } = useQuery({
-    queryKey: ['user-chat', propertyId, propertyRequestId, ownerId],
+    queryKey: ['user-chat', propertyId, propertyRequestId, ownerId, user?.id],
     queryFn: async () => {
       if (!user) return null;
 
+      console.log('Searching for existing chat...');
+      
       let query = supabase
         .from('user_chats')
         .select('*')
@@ -142,8 +94,30 @@ const UserChat: React.FC<UserChatProps> = ({
         return existingChat as UserChatData;
       }
 
-      console.log('No existing chat found, will need to create one');
-      return null;
+      console.log('No existing chat found, creating new one...');
+      
+      // Create new chat
+      const { data: newChat, error: createError } = await supabase
+        .from('user_chats')
+        .insert([{
+          property_id: propertyId || null,
+          property_request_id: propertyRequestId || null,
+          requester_id: user.id,
+          owner_id: ownerId,
+          subject: `Inquiry about: ${propertyTitle}`,
+          status: 'active'
+        }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Chat creation error:', createError);
+        throw createError;
+      }
+
+      console.log('Chat created successfully:', newChat);
+      setChatId(newChat.id);
+      return newChat as UserChatData;
     },
     enabled: !!user && !!ownerId,
   });
@@ -154,13 +128,20 @@ const UserChat: React.FC<UserChatProps> = ({
     queryFn: async () => {
       if (!chatId) return [];
 
+      console.log('Fetching messages for chat:', chatId);
+
       const { data, error } = await supabase
         .from('user_chat_messages')
         .select('*')
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
+
+      console.log('Messages fetched:', data);
       return data as UserChatMessage[];
     },
     enabled: !!chatId,
@@ -187,6 +168,8 @@ const UserChat: React.FC<UserChatProps> = ({
     mutationFn: async (message: string) => {
       if (!chatId || !user) throw new Error('Chat not initialized');
 
+      console.log('Sending message:', { chatId, senderId: user.id, message });
+
       const { error } = await supabase
         .from('user_chat_messages')
         .insert([{
@@ -195,7 +178,10 @@ const UserChat: React.FC<UserChatProps> = ({
           message
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
 
       // Update chat timestamp
       await supabase
@@ -204,10 +190,13 @@ const UserChat: React.FC<UserChatProps> = ({
         .eq('id', chatId);
     },
     onSuccess: () => {
+      console.log('Message sent successfully');
       queryClient.invalidateQueries({ queryKey: ['user-chat-messages', chatId] });
+      queryClient.invalidateQueries({ queryKey: ['user-chats-admin'] });
       setNewMessage('');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Failed to send message:', error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
@@ -225,22 +214,10 @@ const UserChat: React.FC<UserChatProps> = ({
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-
-    if (!chatId) {
-      // Create chat first, then send message
-      createChatMutation.mutate();
-      return;
-    }
-
+    
+    console.log('Attempting to send message:', newMessage.trim());
     sendMessageMutation.mutate(newMessage.trim());
   };
-
-  // Auto-send message after chat creation
-  useEffect(() => {
-    if (chatId && newMessage.trim() && createChatMutation.isSuccess) {
-      sendMessageMutation.mutate(newMessage.trim());
-    }
-  }, [chatId, createChatMutation.isSuccess]);
 
   if (!user) {
     return (
@@ -288,22 +265,17 @@ const UserChat: React.FC<UserChatProps> = ({
         </div>
         {onClose && (
           <Button variant="outline" size="sm" onClick={onClose}>
-            Close
+            <X className="h-4 w-4" />
           </Button>
         )}
       </CardHeader>
       
       <CardContent>
         <div className="h-80 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-gray-50">
-          {!chatId ? (
+          {messages.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Start the conversation by sending a message</p>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No messages yet. Send the first message!</p>
+              <p>Start the conversation by sending a message!</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -346,7 +318,7 @@ const UserChat: React.FC<UserChatProps> = ({
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending || createChatMutation.isPending}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending}
           >
             <Send className="h-4 w-4" />
           </Button>

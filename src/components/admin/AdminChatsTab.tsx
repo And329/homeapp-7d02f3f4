@@ -79,13 +79,16 @@ const AdminChatsTab: React.FC<AdminChatsTabProps> = ({
 
       if (chatsError) throw chatsError;
 
-      // Then get profile information for all unique user IDs
+      // Get all unique user IDs
       const userIds = new Set<string>();
       chatsData.forEach(chat => {
         userIds.add(chat.requester_id);
         userIds.add(chat.owner_id);
       });
 
+      if (userIds.size === 0) return [];
+
+      // Fetch profiles for all users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email')
@@ -93,9 +96,9 @@ const AdminChatsTab: React.FC<AdminChatsTabProps> = ({
 
       if (profilesError) throw profilesError;
 
-      // Create a profiles map for quick lookup
+      // Create profiles map
       const profilesMap = new Map();
-      profiles.forEach(profile => {
+      (profiles || []).forEach(profile => {
         profilesMap.set(profile.id, profile);
       });
 

@@ -1,23 +1,43 @@
 
-
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, Phone, Mail } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Calendar, Car, Heart, Share2, MessageCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyMap from '../components/PropertyMap';
+import ContactPropertyOwner from '../components/ContactPropertyOwner';
 import { getPropertyById } from '../data/properties';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const PropertyDetails = () => {
   const { id } = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showContactForm, setShowContactForm] = useState(false);
+  const { user } = useAuth();
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
     queryFn: () => getPropertyById(id || ''),
     enabled: !!id,
+  });
+
+  // Get property owner profile for contact information
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['property-owner', property?.owner_id],
+    queryFn: async () => {
+      if (!property?.owner_id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, profile_picture')
+        .eq('id', property.owner_id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!property?.owner_id,
   });
 
   if (isLoading) {
@@ -240,62 +260,33 @@ const PropertyDetails = () => {
 
           {/* Contact Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-              <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
-              
-              <div className="space-y-3 mb-6">
-                <button className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call Now
-                </button>
+            {user && property.owner_id && ownerProfile ? (
+              <ContactPropertyOwner
+                propertyId={parseInt(property.id)}
+                ownerId={property.owner_id}
+                propertyTitle={property.title}
+                contactName={ownerProfile.full_name || 'Property Owner'}
+                contactEmail={ownerProfile.email || ''}
+                ownerProfilePicture={ownerProfile.profile_picture}
+              />
+            ) : !user ? (
+              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+                <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
+                <p className="text-gray-600 mb-4">Please sign in to contact the property owner.</p>
                 <button 
-                  onClick={() => setShowContactForm(!showContactForm)}
-                  className="w-full border border-primary text-primary py-3 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center"
+                  onClick={() => window.location.href = '/auth'}
+                  className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send Message
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Sign In to Message
                 </button>
               </div>
-
-              {showContactForm && (
-                <form className="space-y-4 animate-fade-in-up">
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Your Name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="email"
-                      placeholder="Your Email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="tel"
-                      placeholder="Phone (Optional)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <textarea
-                      placeholder="Your Message"
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    ></textarea>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-primary text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Send Message
-                  </button>
-                </form>
-              )}
-            </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+                <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
+                <p className="text-gray-600">Loading owner information...</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -306,4 +297,3 @@ const PropertyDetails = () => {
 };
 
 export default PropertyDetails;
-
