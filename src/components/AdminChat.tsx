@@ -43,7 +43,7 @@ const AdminChat: React.FC = () => {
       console.log('AdminChat: Fetching admin users...');
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, role')
+        .select('id, full_name, role, email')
         .eq('role', 'admin');
 
       if (error) {
@@ -123,11 +123,22 @@ const AdminChat: React.FC = () => {
                 : "No admin users are currently available. Please try again later or contact us through other means."
               }
             </p>
-            <div className="text-sm text-gray-500">
-              <p>Debug info:</p>
+            <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded">
+              <p className="font-semibold mb-2">Debug info:</p>
               <p>Total admin users found: {adminUsers.length}</p>
               <p>Your role: {currentUserProfile?.role || 'unknown'}</p>
+              <p>Your user ID: {user?.id}</p>
               <p>Available admins for chat: {availableAdmins.length}</p>
+              {adminUsers.length > 0 && (
+                <div className="mt-2">
+                  <p className="font-medium">Admin users in database:</p>
+                  {adminUsers.map((admin, index) => (
+                    <p key={admin.id} className="ml-2">
+                      {index + 1}. {admin.full_name || admin.email || admin.id} (Role: {admin.role})
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -170,7 +181,7 @@ const AdminChat: React.FC = () => {
           size="lg"
         >
           <MessageCircle className="h-5 w-5" />
-          <span>Start Chat with {adminUser.full_name || 'Admin'}</span>
+          <span>Start Chat with {adminUser.full_name || adminUser.email || 'Admin'}</span>
         </Button>
         
         <p className="text-xs text-gray-500 text-center">
