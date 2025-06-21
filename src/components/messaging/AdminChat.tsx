@@ -5,13 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle } from 'lucide-react';
 import MessagingInterface from './MessagingInterface';
 
-const ADMIN_EMAIL = '329@riseup.net';
-
 const AdminChat: React.FC = () => {
   const { user, profile } = useAuth();
 
-  // Only allow the specific admin email to access admin features
-  const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL;
+  // Check if user is admin based on role in profile
+  const isCurrentUserAdmin = profile?.role === 'admin';
 
   // If user is not signed in
   if (!user) {
@@ -30,7 +28,7 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  // If current user is the designated admin
+  // If current user is admin
   if (isCurrentUserAdmin) {
     return (
       <div>

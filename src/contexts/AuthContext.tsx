@@ -57,14 +57,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data) {
         console.log('AuthContext: No profile found, creating one for user:', userId);
         
-        // Create profile if it doesn't exist
+        // Get user info for profile creation
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        // Create profile - set as admin if this is the designated admin email
+        const isAdmin = currentUser?.email === '329@riseup.net';
+        
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
             id: userId,
-            email: user?.email || null,
-            full_name: user?.user_metadata?.full_name || null,
-            role: 'user'
+            email: currentUser?.email || null,
+            full_name: currentUser?.user_metadata?.full_name || 'Administrator',
+            role: isAdmin ? 'admin' : 'user'
           })
           .select('id, email, full_name, role, profile_picture')
           .single();

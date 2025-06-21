@@ -13,14 +13,19 @@ export const useAdminConversations = () => {
 
   const createAdminConversationMutation = useMutation({
     mutationFn: async ({ requestId, userId }: { requestId: string; userId: string }) => {
-      // Only allow the specific admin email to create conversations
-      if (!user || !profile?.email || profile.email !== ADMIN_EMAIL) {
-        throw new Error('Only the designated admin can create conversations');
+      // Check if user is authenticated and is admin
+      if (!user || !profile) {
+        throw new Error('User not authenticated');
+      }
+
+      // Only allow admin users to create conversations
+      if (profile.role !== 'admin') {
+        throw new Error('Only administrators can create conversations');
       }
 
       console.log('useAdminConversations: Creating admin conversation for request:', requestId, 'with user:', userId);
 
-      // Use the new create_admin_conversation function
+      // Use the create_admin_conversation function
       const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
         p_admin_id: user.id,
         p_user_id: userId,

@@ -5,17 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
 import { deleteProperty as deletePropertyAPI } from '@/api/properties';
 
-const ADMIN_EMAIL = '329@riseup.net';
-
 export const useAdminMutations = (profile: any, propertyRequests: PropertyRequest[]) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const sendReplyMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
-      // Only allow the specific admin email to send replies
-      if (!profile?.email || profile.email !== ADMIN_EMAIL) {
-        throw new Error('Only the designated admin can send replies');
+      // Check if user is admin
+      if (!profile || profile.role !== 'admin') {
+        throw new Error('Only administrators can send replies');
       }
 
       console.log('Admin: Creating conversation for request:', requestId);
@@ -25,7 +23,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('Request user not found');
       }
 
-      // Use the new create_admin_conversation function
+      // Use the create_admin_conversation function
       const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
         p_admin_id: profile.id,
         p_user_id: request.user_id,
@@ -48,9 +46,9 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
 
   const sendChatMessageMutation = useMutation({
     mutationFn: async ({ conversationId, message }: { conversationId: string; message: string }) => {
-      // Only allow the specific admin email to send messages
-      if (!profile?.email || profile.email !== ADMIN_EMAIL) {
-        throw new Error('Only the designated admin can send messages');
+      // Check if user is admin
+      if (!profile || profile.role !== 'admin') {
+        throw new Error('Only administrators can send messages');
       }
 
       console.log('Admin: Sending chat message to conversation:', conversationId, message);
