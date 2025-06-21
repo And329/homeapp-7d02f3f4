@@ -81,7 +81,9 @@ const AdminDashboard = () => {
   // Transform property requests to match expected types
   const propertyRequests = rawPropertyRequests.map(request => ({
     ...request,
-    type: (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent' as 'rent' | 'sale'
+    type: (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent' as 'rent' | 'sale',
+    amenities: Array.isArray(request.amenities) ? request.amenities as string[] : null,
+    images: Array.isArray(request.images) ? request.images as string[] : null
   }));
 
   const mutations = useAdminMutations(profile, propertyRequests);
