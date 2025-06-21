@@ -1,13 +1,11 @@
 
 import React from 'react';
-import { MapPin, Bed, Bath, Square, MessageCircle, Heart } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useConversations } from '@/hooks/useConversations';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useToast } from '@/hooks/use-toast';
 import { Property } from '@/types/property';
 
 interface PropertyCardProps {
@@ -19,68 +17,10 @@ interface PropertyCardProps {
 const PropertyCard: React.FC<PropertyCardProps> = ({ 
   property, 
   onClick, 
-  showContactButton = true 
+  showContactButton = false // Changed default to false since we removed chat functionality
 }) => {
   const { user } = useAuth();
-  const { createConversationAsync } = useConversations();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
-  const { toast } = useToast();
-
-  const handleContactOwner = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    console.log('PropertyCard: Contact owner clicked for property:', property.id);
-    console.log('PropertyCard: Current user:', user);
-    console.log('PropertyCard: Property owner_id:', property.owner_id);
-    
-    if (!user) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to contact the property owner.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!property.owner_id) {
-      toast({
-        title: "Contact not available",
-        description: "Owner contact information is not available for this property.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (property.owner_id === user.id) {
-      toast({
-        title: "Cannot contact yourself",
-        description: "You cannot start a conversation with yourself.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('PropertyCard: Creating conversation...');
-      await createConversationAsync({
-        otherUserId: property.owner_id,
-        propertyId: property.id,
-        subject: `Inquiry about: ${property.title}`
-      });
-      
-      toast({
-        title: "Conversation started",
-        description: "You can now chat with the property owner.",
-      });
-    } catch (error) {
-      console.error('PropertyCard: Failed to start conversation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to start conversation. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,18 +94,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
               </span>
             </p>
           </div>
-          
-          {showContactButton && property.owner_id && user && property.owner_id !== user.id && (
-            <Button
-              onClick={handleContactOwner}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
-            >
-              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Contact</span>
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
