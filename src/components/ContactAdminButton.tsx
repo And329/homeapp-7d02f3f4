@@ -25,21 +25,10 @@ const ContactAdminButton: React.FC = () => {
     try {
       console.log('ContactAdminButton: Starting conversation with admin for user:', user.id);
       
-      // First, let's check all profiles to see what we have
-      const { data: allProfiles, error: debugError } = await supabase
-        .from('profiles')
-        .select('id, email, role, full_name');
-
-      console.log('ContactAdminButton: All profiles in database:', allProfiles);
-      
-      if (debugError) {
-        console.error('ContactAdminButton: Error fetching all profiles:', debugError);
-      }
-      
-      // Find an admin user - try multiple approaches
+      // Find an admin user - simplified approach
       let adminProfile = null;
       
-      // First try to find by role
+      // First try to find any user with admin role
       const { data: adminByRole, error: roleError } = await supabase
         .from('profiles')
         .select('id, email, role, full_name')
@@ -54,7 +43,7 @@ const ContactAdminButton: React.FC = () => {
         console.log('ContactAdminButton: Found admin by role:', adminProfile);
       }
 
-      // If no admin found by role, try to find by email (329@riseup.net)
+      // If no admin found, try to find the specific admin email
       if (!adminProfile) {
         const { data: adminByEmail, error: emailError } = await supabase
           .from('profiles')
@@ -69,28 +58,48 @@ const ContactAdminButton: React.FC = () => {
           adminProfile = adminByEmail;
           console.log('ContactAdminButton: Found admin by email:', adminProfile);
           
-          // Update this user's role to admin if it's not already set
-          if (adminProfile.role !== 'admin') {
-            console.log('ContactAdminButton: Updating admin role for user');
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ role: 'admin' })
-              .eq('id', adminProfile.id);
-              
-            if (updateError) {
-              console.error('ContactAdminButton: Error updating admin role:', updateError);
-            } else {
-              adminProfile.role = 'admin';
-            }
+          // Update this user's role to admin
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', adminProfile.id);
+            
+          if (updateError) {
+            console.error('ContactAdminButton: Error updating admin role:', updateError);
+          } else {
+            adminProfile.role = 'admin';
+          }
+        }
+      }
+
+      // If still no admin found, create a default admin profile for the current user if they are the admin email
+      if (!adminProfile) {
+        if (user.email === '329@riseup.net') {
+          console.log('ContactAdminButton: Current user is admin email, updating role');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', user.id);
+            
+          if (updateError) {
+            console.error('ContactAdminButton: Error updating current user to admin:', updateError);
+          } else {
+            // Use current user as admin
+            adminProfile = {
+              id: user.id,
+              email: user.email,
+              role: 'admin',
+              full_name: profile?.full_name || 'Admin'
+            };
           }
         }
       }
 
       if (!adminProfile) {
-        console.error('ContactAdminButton: No admin found in any way');
+        console.error('ContactAdminButton: No admin found');
         toast({
           title: "Error",
-          description: "Unable to find admin. Please try again later or contact support directly.",
+          description: "Admin support is not available at the moment. Please try again later.",
           variant: "destructive",
         });
         return;

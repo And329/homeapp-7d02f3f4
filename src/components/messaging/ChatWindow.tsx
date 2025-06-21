@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,18 +65,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         if (profileError) {
           console.error('ChatWindow: Error fetching other participant profile:', profileError);
-          // Fallback to conversation subject or default
-          setConversationTitle(conversation.subject || 'Chat');
+          setConversationTitle('Administrator');
           return;
         }
 
         console.log('ChatWindow: Other participant profile:', otherProfile);
 
-        // Set the display name based on role and available info
+        // Set the display name based on role and current user's role
         let displayName = 'User';
         if (otherProfile) {
           if (otherProfile.role === 'admin') {
-            displayName = 'Admin Support';
+            // If current user is admin, show actual name; if regular user, show "Administrator"
+            if (profile?.role === 'admin') {
+              displayName = otherProfile.full_name || otherProfile.email || 'Admin';
+            } else {
+              displayName = 'Administrator';
+            }
           } else if (otherProfile.full_name) {
             displayName = otherProfile.full_name;
           } else if (otherProfile.email) {
@@ -90,12 +93,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       } catch (error) {
         console.error('ChatWindow: Error in fetchConversationDetails:', error);
-        setConversationTitle(otherUserName || 'Chat');
+        setConversationTitle('Administrator');
       }
     };
     
     fetchConversationDetails();
-  }, [conversationId, user, otherUserName]);
+  }, [conversationId, user, profile]);
 
   // Fetch user names for message senders
   useEffect(() => {
@@ -121,15 +124,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         console.log('ChatWindow: Fetched profiles:', profiles);
         
         if (profiles) {
-          profiles.forEach(profile => {
-            if (profile.role === 'admin') {
-              namesMap[profile.id] = 'Admin Support';
-            } else if (profile.full_name) {
-              namesMap[profile.id] = profile.full_name;
-            } else if (profile.email) {
-              namesMap[profile.id] = profile.email;
+          profiles.forEach(profileData => {
+            if (profileData.role === 'admin') {
+              // If current user is admin, show actual name; if regular user, show "Administrator"
+              if (profile?.role === 'admin') {
+                namesMap[profileData.id] = profileData.full_name || profileData.email || 'Admin';
+              } else {
+                namesMap[profileData.id] = 'Administrator';
+              }
+            } else if (profileData.full_name) {
+              namesMap[profileData.id] = profileData.full_name;
+            } else if (profileData.email) {
+              namesMap[profileData.id] = profileData.email;
             } else {
-              namesMap[profile.id] = 'User';
+              namesMap[profileData.id] = 'User';
             }
           });
         }
@@ -142,7 +150,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
     
     fetchUserNames();
-  }, [messages]);
+  }, [messages, profile]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
