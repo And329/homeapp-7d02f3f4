@@ -83,7 +83,10 @@ const AdminDashboard = () => {
     ...request,
     type: (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent' as 'rent' | 'sale',
     amenities: Array.isArray(request.amenities) ? request.amenities as string[] : null,
-    images: Array.isArray(request.images) ? request.images as string[] : null
+    images: Array.isArray(request.images) ? request.images as string[] : null,
+    status: (['pending', 'approved', 'rejected', 'deletion_requested'].includes(request.status)) 
+      ? request.status as 'pending' | 'approved' | 'rejected' | 'deletion_requested'
+      : 'pending' as 'pending' | 'approved' | 'rejected' | 'deletion_requested'
   }));
 
   const mutations = useAdminMutations(profile, propertyRequests);
