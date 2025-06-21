@@ -18,7 +18,7 @@ export interface PropertyRequest {
   contact_name: string;
   contact_email: string;
   contact_phone: string | null;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'deletion_requested';
   created_at: string;
   updated_at: string | null;
   approved_by: string | null;
