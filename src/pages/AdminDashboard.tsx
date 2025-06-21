@@ -14,6 +14,7 @@ import AdminPropertiesTab from '@/components/admin/AdminPropertiesTab';
 import AdminRequestsTab from '@/components/admin/AdminRequestsTab';
 import AdminContentTab from '@/components/admin/AdminContentTab';
 import AdminChatsTab from '@/components/admin/AdminChatsTab';
+import AdminContactTab from '@/components/admin/AdminContactTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
@@ -48,6 +49,8 @@ const AdminDashboard = () => {
     propertiesLoading,
     propertyRequests,
     requestsLoading,
+    contactInquiries,
+    contactInquiriesLoading,
     blogPosts,
     blogLoading,
     newsArticles,
@@ -59,7 +62,7 @@ const AdminDashboard = () => {
 
   // Transform properties to match AdminPropertiesTab expectations (with number IDs)
   const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
-    id: parseInt(property.id) || 0, // Convert string ID to number
+    id: parseInt(property.id) || 0,
     title: property.title || 'Untitled Property',
     price: property.price || 0,
     location: property.location || 'Unknown Location',
@@ -85,17 +88,15 @@ const AdminDashboard = () => {
     state
   );
 
-  // Updated handlers to work with transformed properties and convert between ID types
   const handleEdit = (property: AdminProperty) => {
-    // Convert back to Property type for editing
     const propertyForEdit: Property = {
-      id: String(property.id), // Convert number ID back to string
+      id: String(property.id),
       title: property.title,
       price: property.price,
       location: property.location,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
-      area: 1000, // Default area
+      area: 1000,
       image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
       images: property.images || ['/placeholder.svg'],
       type: property.type,
@@ -117,7 +118,6 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id: number) => {
-    // Convert number ID to string for the API call
     await handlers.handleDelete(String(id));
   };
 
@@ -154,6 +154,7 @@ const AdminDashboard = () => {
           propertiesCount={transformedProperties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
           openChatsCount={conversations.length}
+          contactInquiriesCount={contactInquiries.filter(inquiry => inquiry.status === 'new').length}
         />
 
         {state.activeTab === 'properties' && (
@@ -200,6 +201,10 @@ const AdminDashboard = () => {
 
         {state.activeTab === 'chats' && (
           <AdminChatsTab />
+        )}
+
+        {state.activeTab === 'contact' && (
+          <AdminContactTab />
         )}
       </div>
 

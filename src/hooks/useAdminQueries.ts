@@ -1,32 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { PropertyRequest } from '@/types/propertyRequest';
 import { Property } from '@/types/property';
-import { transformDatabaseProperty } from '@/utils/propertyTransform';
+import { PropertyRequest } from '@/types/propertyRequest';
 
 export const useAdminQueries = (selectedConversation: string | null, selectedChatUserId: string | null) => {
-  const propertiesQuery = useQuery({
+  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
     queryKey: ['admin-properties'],
     queryFn: async () => {
-      console.log('Admin: Fetching ALL properties...');
-      
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Admin: Error fetching properties:', error);
-        throw error;
-      }
-      
-      console.log('Admin: Found properties:', data?.length || 0);
-      return data.map(transformDatabaseProperty) as Property[];
+      if (error) throw error;
+      return data || [];
     },
   });
 
-  const propertyRequestsQuery = useQuery({
-    queryKey: ['property-requests'],
+  const { data: propertyRequests = [], isLoading: requestsLoading } = useQuery({
+    queryKey: ['admin-property-requests'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('property_requests')
@@ -34,50 +26,73 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PropertyRequest[];
+      return data || [];
     },
   });
 
-  const blogPostsQuery = useQuery({
+  // Add contact inquiries query
+  const { data: contactInquiries = [], isLoading: contactInquiriesLoading } = useQuery({
+    queryKey: ['contact-inquiries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contact_inquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: blogPosts = [], isLoading: blogLoading } = useQuery({
     queryKey: ['admin-blog-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_blog_posts')
+        .from('blog_posts')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  const newsArticlesQuery = useQuery({
+  const { data: newsArticles = [], isLoading: newsLoading } = useQuery({
     queryKey: ['admin-news-articles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_news_articles')
+        .from('news_articles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  const conversationsQuery = useQuery({
+  const { data: conversations = [] } = useQuery({
     queryKey: ['admin-conversations'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('conversations')
-        .select('*')
+        .select(`
+          id,
+          participant_1_id,
+          participant_2_id,
+          subject,
+          created_at,
+          last_message_at,
+          is_admin_support,
+          profiles!conversations_participant_2_id_fkey(full_name, email)
+        `)
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  const messagesQuery = useQuery({
+  const { data: messages = [] } = useQuery({
     queryKey: ['admin-messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
@@ -89,13 +104,13 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!selectedConversation,
   });
 
-  const selectedUserRequestsQuery = useQuery({
-    queryKey: ['selected-user-requests', selectedChatUserId],
+  const { data: selectedUserRequests = [] } = useQuery({
+    queryKey: ['user-property-requests', selectedChatUserId],
     queryFn: async () => {
       if (!selectedChatUserId) return [];
       
@@ -106,22 +121,24 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PropertyRequest[];
+      return data || [];
     },
     enabled: !!selectedChatUserId,
   });
 
   return {
-    properties: propertiesQuery.data || [],
-    propertiesLoading: propertiesQuery.isLoading,
-    propertyRequests: propertyRequestsQuery.data || [],
-    requestsLoading: propertyRequestsQuery.isLoading,
-    blogPosts: blogPostsQuery.data || [],
-    blogLoading: blogPostsQuery.isLoading,
-    newsArticles: newsArticlesQuery.data || [],
-    newsLoading: newsArticlesQuery.isLoading,
-    conversations: conversationsQuery.data || [],
-    messages: messagesQuery.data || [],
-    selectedUserRequests: selectedUserRequestsQuery.data || [],
+    properties,
+    propertiesLoading,
+    propertyRequests,
+    requestsLoading,
+    contactInquiries,
+    contactInquiriesLoading,
+    blogPosts,
+    blogLoading,
+    newsArticles,
+    newsLoading,
+    conversations,
+    messages,
+    selectedUserRequests,
   };
 };
