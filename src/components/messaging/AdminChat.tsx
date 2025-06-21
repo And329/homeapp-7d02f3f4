@@ -18,7 +18,7 @@ const AdminChat: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <span>Admin Support</span>
+            <span>Administrator</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
