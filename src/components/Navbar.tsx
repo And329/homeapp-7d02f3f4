@@ -144,12 +144,6 @@ const Navbar = () => {
                         <span>My Profile</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
-                        <MessageCircle className="h-4 w-4" />
-                        <span>Messages</span>
-                      </Link>
-                    </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center space-x-2 cursor-pointer">
@@ -249,16 +243,6 @@ const Navbar = () => {
                   >
                     <PlusCircle className="h-4 w-4" />
                     <span>List Property</span>
-                  </Link>
-                  
-                  <Link
-                    to="/profile"
-                    className="flex items-center space-x-2 text-gray-700 hover:text-primary transition-colors text-sm sm:text-base"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Messages</span>
-                    <MessageNotificationBadge />
                   </Link>
                   
                   <Link
