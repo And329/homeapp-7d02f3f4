@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, X, Paperclip, Photo } from 'lucide-react';
+import { Send, User, X, Paperclip, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -307,7 +307,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 onClick={() => photoInputRef.current?.click()}
                 className="p-2"
               >
-                <Photo className="h-4 w-4" />
+                <Image className="h-4 w-4" />
               </Button>
               
               <input
