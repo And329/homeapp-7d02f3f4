@@ -1,6 +1,5 @@
 
 import React from 'react';
-import ChatWindow from './messaging/ChatWindow';
 
 interface UnifiedChatProps {
   otherUserId?: string;
@@ -11,13 +10,19 @@ interface UnifiedChatProps {
   className?: string;
 }
 
-// This is a legacy wrapper component - new code should use MessagingInterface or ChatWindow directly
+// This component is deprecated in the new simplified system
 const UnifiedChat: React.FC<UnifiedChatProps> = ({
   className = '',
 }) => {
   return (
     <div className={`flex items-center justify-center h-full ${className}`}>
-      <p className="text-gray-500">Please use the new messaging interface</p>
+      <div className="text-center p-8">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Direct Contact Available</h3>
+        <p className="text-gray-500">
+          In our simplified system, you can contact property owners directly using their contact information, 
+          or admins may reach out to you regarding your property requests.
+        </p>
+      </div>
     </div>
   );
 };

@@ -5,77 +5,43 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export const useAdminConversations = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const createAdminConversationMutation = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error('User not authenticated');
-
-      console.log('useAdminConversations: Creating admin support conversation for user:', user.id);
-
-      // Find admin user ID - try multiple approaches
-      let adminUserId = null;
-      
-      // First try to find by email
-      const { data: adminProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', '329@riseup.net')
-        .maybeSingle();
-
-      if (adminProfile) {
-        adminUserId = adminProfile.id;
-      } else {
-        // Fallback: find by role
-        const { data: adminByRole } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'admin')
-          .limit(1)
-          .maybeSingle();
-        
-        if (adminByRole) {
-          adminUserId = adminByRole.id;
-        }
+    mutationFn: async ({ requestId, userId }: { requestId: string; userId: string }) => {
+      if (!user || !profile?.role || profile.role !== 'admin') {
+        throw new Error('Only admins can create conversations');
       }
 
-      if (!adminUserId) {
-        console.error('useAdminConversations: No admin profile found');
-        throw new Error('Admin support is currently unavailable');
-      }
+      console.log('useAdminConversations: Creating admin conversation for request:', requestId, 'with user:', userId);
 
-      console.log('useAdminConversations: Found admin user ID:', adminUserId);
-
-      // Create admin support conversation
-      const { data: conversation, error } = await supabase
-        .from('conversations')
-        .insert({
-          participant_1_id: user.id,
-          participant_2_id: adminUserId,
-          subject: `Admin Support - ${user.email || 'User'}`,
-          is_admin_support: true
-        })
-        .select()
-        .single();
+      // Use the new create_admin_conversation function
+      const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
+        p_admin_id: user.id,
+        p_user_id: userId,
+        p_property_request_id: requestId,
+        p_subject: 'Property Request Support'
+      });
 
       if (error) {
         console.error('useAdminConversations: Error creating admin conversation:', error);
         throw error;
       }
 
-      console.log('useAdminConversations: Created admin conversation:', conversation);
-      return conversation;
+      console.log('useAdminConversations: Created admin conversation:', conversationId);
+      return conversationId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
     },
     onError: (error) => {
       console.error('useAdminConversations: Failed to create admin conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to start admin chat. Please try again.",
+        description: "Failed to start conversation. Please try again.",
         variant: "destructive",
       });
     },

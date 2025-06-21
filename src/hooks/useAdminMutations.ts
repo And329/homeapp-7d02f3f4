@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,34 +18,16 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('Request user not found');
       }
 
-      // Create or find existing conversation
-      const conversationSubject = `Property Request: ${request.title}`;
-      
-      let { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('property_request_id', requestId)
-        .eq('participant_1_id', profile.id)
-        .eq('participant_2_id', request.user_id)
-        .maybeSingle();
+      // Use the new create_admin_conversation function
+      const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
+        p_admin_id: profile.id,
+        p_user_id: request.user_id,
+        p_property_request_id: requestId,
+        p_subject: `Property Request: ${request.title}`
+      });
 
-      if (!existingConversation) {
-        const { data: newConversation, error: conversationError } = await supabase
-          .from('conversations')
-          .insert({
-            participant_1_id: profile.id,
-            participant_2_id: request.user_id,
-            property_request_id: requestId,
-            subject: conversationSubject
-          })
-          .select()
-          .single();
-
-        if (conversationError) throw conversationError;
-        existingConversation = newConversation;
-      }
-
-      return existingConversation.id;
+      if (error) throw error;
+      return conversationId;
     },
     onError: (error) => {
       console.error('Failed to create conversation:', error);
@@ -85,7 +68,7 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { // Changed from number to string
+    mutationFn: async (id: string) => {
       console.log('Admin: Deleting property with ID:', id);
       await deletePropertyAPI(id);
     },

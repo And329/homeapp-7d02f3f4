@@ -166,44 +166,34 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          is_admin_support: boolean | null
+          is_admin_support: boolean
           last_message_at: string
           participant_1_id: string
           participant_2_id: string
-          property_id: string | null
           property_request_id: string | null
           subject: string
         }
         Insert: {
           created_at?: string
           id?: string
-          is_admin_support?: boolean | null
+          is_admin_support?: boolean
           last_message_at?: string
           participant_1_id: string
           participant_2_id: string
-          property_id?: string | null
           property_request_id?: string | null
           subject: string
         }
         Update: {
           created_at?: string
           id?: string
-          is_admin_support?: boolean | null
+          is_admin_support?: boolean
           last_message_at?: string
           participant_1_id?: string
           participant_2_id?: string
-          property_id?: string | null
           property_request_id?: string | null
           subject?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "conversations_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "conversations_property_request_id_fkey"
             columns: ["property_request_id"]
@@ -545,18 +535,10 @@ export type Database = {
           participant_1_name: string | null
           participant_2_id: string | null
           participant_2_name: string | null
-          property_id: string | null
           property_request_id: string | null
           subject: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "conversations_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "conversations_property_request_id_fkey"
             columns: ["property_request_id"]
@@ -572,13 +554,12 @@ export type Database = {
         Args: { request_id: string }
         Returns: string
       }
-      create_conversation: {
+      create_admin_conversation: {
         Args: {
-          p_participant_1_id: string
-          p_participant_2_id: string
+          p_admin_id: string
+          p_user_id: string
+          p_property_request_id: string
           p_subject?: string
-          p_property_id?: string
-          p_property_request_id?: string
         }
         Returns: string
       }

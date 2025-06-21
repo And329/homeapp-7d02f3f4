@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Conversation {
   id: string;
-  property_id: string | null;
   property_request_id: string | null;
   participant_1_id: string;
   participant_2_id: string;
@@ -31,21 +30,23 @@ export interface Message {
 }
 
 export const useConversations = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get all conversations for the current user
+  // Get all admin support conversations for the current user
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      console.log('useConversations: Fetching conversations for user:', user.id);
+      console.log('useConversations: Fetching admin conversations for user:', user.id);
 
+      // Only fetch admin support conversations
       const { data: conversationsData, error } = await supabase
         .from('conversations')
         .select('*')
+        .eq('is_admin_support', true)
         .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
@@ -54,7 +55,7 @@ export const useConversations = () => {
         throw error;
       }
 
-      console.log('useConversations: Fetched conversations:', conversationsData?.length || 0);
+      console.log('useConversations: Fetched admin conversations:', conversationsData?.length || 0);
 
       if (!conversationsData || conversationsData.length === 0) {
         return [];
@@ -63,13 +64,10 @@ export const useConversations = () => {
       // Get participant profiles for better name display
       const participantIds = new Set<string>();
       conversationsData.forEach(conv => {
-        if (!conv.is_admin_support) {
-          // Only fetch profiles for non-admin conversations
-          const otherParticipantId = conv.participant_1_id === user.id 
-            ? conv.participant_2_id 
-            : conv.participant_1_id;
-          participantIds.add(otherParticipantId);
-        }
+        const otherParticipantId = conv.participant_1_id === user.id 
+          ? conv.participant_2_id 
+          : conv.participant_1_id;
+        participantIds.add(otherParticipantId);
       });
 
       let profilesMap = new Map();
@@ -77,7 +75,7 @@ export const useConversations = () => {
       if (participantIds.size > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, full_name, email, profile_picture')
+          .select('id, full_name, email, profile_picture, role')
           .in('id', Array.from(participantIds));
 
         if (profilesError) {
@@ -92,23 +90,16 @@ export const useConversations = () => {
           ? conv.participant_2_id 
           : conv.participant_1_id;
         
-        let otherParticipant = null;
-        
-        if (conv.is_admin_support) {
-          // Special handling for admin support conversations
-          otherParticipant = {
-            id: 'admin-support',
-            full_name: 'Admin Support',
-            email: '329@riseup.net',
-            profile_picture: null
-          };
-        } else {
-          otherParticipant = profilesMap.get(otherParticipantId) || {
-            id: otherParticipantId,
-            full_name: null,
-            email: null,
-            profile_picture: null
-          };
+        const otherParticipant = profilesMap.get(otherParticipantId) || {
+          id: otherParticipantId,
+          full_name: null,
+          email: null,
+          profile_picture: null
+        };
+
+        // For display purposes, show admin as "Admin Support" and users by their name
+        if (otherParticipant.role === 'admin') {
+          otherParticipant.full_name = 'Admin Support';
         }
 
         return {
@@ -120,81 +111,9 @@ export const useConversations = () => {
     enabled: !!user,
   });
 
-  // Create or find conversation using the database function
-  const createConversationMutation = useMutation({
-    mutationFn: async ({ 
-      otherUserId, 
-      propertyId, 
-      propertyRequestId, 
-      subject 
-    }: {
-      otherUserId: string;
-      propertyId?: string;
-      propertyRequestId?: string;
-      subject: string;
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      console.log('useConversations: Creating conversation with:', {
-        currentUserId: user.id,
-        otherUserId,
-        propertyId,
-        propertyRequestId,
-        subject
-      });
-
-      if (user.id === otherUserId) {
-        throw new Error('Cannot create conversation with yourself');
-      }
-
-      // Use the database function for regular user conversations
-      const { data: conversationId, error } = await supabase.rpc('create_conversation', {
-        p_participant_1_id: user.id,
-        p_participant_2_id: otherUserId,
-        p_subject: subject,
-        p_property_id: propertyId || null,
-        p_property_request_id: propertyRequestId || null
-      });
-
-      if (error) {
-        console.error('useConversations: Error creating conversation:', error);
-        throw error;
-      }
-
-      // Fetch the conversation details
-      const { data: conversation, error: fetchError } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', conversationId)
-        .single();
-
-      if (fetchError) {
-        console.error('useConversations: Error fetching created conversation:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('useConversations: Created conversation:', conversation);
-      return conversation;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-    onError: (error) => {
-      console.error('useConversations: Failed to create conversation:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to start conversation. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   return {
     conversations,
     conversationsLoading,
-    createConversation: createConversationMutation.mutate,
-    createConversationAsync: createConversationMutation.mutateAsync,
-    isCreatingConversation: createConversationMutation.isPending,
   };
 };
 
