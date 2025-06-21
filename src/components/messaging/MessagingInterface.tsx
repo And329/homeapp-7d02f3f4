@@ -2,29 +2,36 @@
 import React, { useState } from 'react';
 import ConversationsList from './ConversationsList';
 import ChatWindow from './ChatWindow';
+import { useConversations } from '@/hooks/useConversations';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MessagingInterface: React.FC = () => {
-  const [selectedConversation, setSelectedConversation] = useState<{
-    id: string;
-    otherUserId: string;
-    otherUserName: string;
-  } | null>(null);
+  const { user } = useAuth();
+  const { conversations } = useConversations();
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
 
-  const handleSelectConversation = (conversationId: string, otherUserId: string, otherUserName: string) => {
-    setSelectedConversation({
-      id: conversationId,
-      otherUserId,
-      otherUserName
-    });
+  const handleConversationSelect = (conversation: any) => {
+    setSelectedConversation(conversation.id);
+    setSelectedChatUserId(
+      conversation.participant_1_id === user?.id 
+        ? conversation.participant_2_id 
+        : conversation.participant_1_id
+    );
   };
+
+  const selectedConversationData = conversations.find(c => c.id === selectedConversation);
+  const otherUserName = selectedConversationData ? 'Administrator' : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[70vh] min-h-[500px] max-h-[800px]">
       {/* Conversations List */}
       <div className="w-full lg:w-1/3 flex-shrink-0">
         <ConversationsList
-          onSelectConversation={handleSelectConversation}
-          selectedConversationId={selectedConversation?.id}
+          conversations={conversations}
+          selectedConversation={selectedConversation}
+          onConversationSelect={handleConversationSelect}
+          currentUserId={user?.id || ''}
         />
       </div>
       
@@ -32,8 +39,8 @@ const MessagingInterface: React.FC = () => {
       <div className="w-full lg:w-2/3 flex-grow">
         {selectedConversation ? (
           <ChatWindow
-            conversationId={selectedConversation.id}
-            otherUserName={selectedConversation.otherUserName}
+            conversationId={selectedConversation}
+            otherUserName={otherUserName}
           />
         ) : (
           <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">

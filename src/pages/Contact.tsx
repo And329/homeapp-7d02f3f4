@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AdminChat from '../components/AdminChat';
 import ContactAdminButton from '../components/ContactAdminButton';
+import LiveSupportChat from '../components/messaging/LiveSupportChat';
 
 const Contact = () => {
   return (
@@ -142,6 +143,9 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
+      {/* Live Support Chat Widget */}
+      <LiveSupportChat />
 
       <Footer />
     </div>
