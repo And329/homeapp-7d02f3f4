@@ -5,12 +5,19 @@ import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
 import { deleteProperty as deletePropertyAPI } from '@/api/properties';
 
+const ADMIN_EMAIL = '329@riseup.net';
+
 export const useAdminMutations = (profile: any, propertyRequests: PropertyRequest[]) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const sendReplyMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
+      // Only allow the specific admin email to send replies
+      if (!profile?.email || profile.email !== ADMIN_EMAIL) {
+        throw new Error('Only the designated admin can send replies');
+      }
+
       console.log('Admin: Creating conversation for request:', requestId);
       
       const request = propertyRequests.find(r => r.id === requestId);
@@ -41,6 +48,11 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
 
   const sendChatMessageMutation = useMutation({
     mutationFn: async ({ conversationId, message }: { conversationId: string; message: string }) => {
+      // Only allow the specific admin email to send messages
+      if (!profile?.email || profile.email !== ADMIN_EMAIL) {
+        throw new Error('Only the designated admin can send messages');
+      }
+
       console.log('Admin: Sending chat message to conversation:', conversationId, message);
       
       const { error } = await supabase

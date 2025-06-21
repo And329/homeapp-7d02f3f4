@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+const ADMIN_EMAIL = '329@riseup.net';
+
 export const useAdminConversations = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -11,8 +13,9 @@ export const useAdminConversations = () => {
 
   const createAdminConversationMutation = useMutation({
     mutationFn: async ({ requestId, userId }: { requestId: string; userId: string }) => {
-      if (!user || !profile?.role || profile.role !== 'admin') {
-        throw new Error('Only admins can create conversations');
+      // Only allow the specific admin email to create conversations
+      if (!user || !profile?.email || profile.email !== ADMIN_EMAIL) {
+        throw new Error('Only the designated admin can create conversations');
       }
 
       console.log('useAdminConversations: Creating admin conversation for request:', requestId, 'with user:', userId);

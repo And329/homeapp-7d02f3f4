@@ -10,8 +10,8 @@ const ADMIN_EMAIL = '329@riseup.net';
 const AdminChat: React.FC = () => {
   const { user, profile } = useAuth();
 
-  // Simple admin check
-  const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL || profile?.role === 'admin';
+  // Only allow the specific admin email to access admin features
+  const isCurrentUserAdmin = profile?.email === ADMIN_EMAIL;
 
   // If user is not signed in
   if (!user) {
@@ -30,7 +30,7 @@ const AdminChat: React.FC = () => {
     );
   }
 
-  // If current user is admin
+  // If current user is the designated admin
   if (isCurrentUserAdmin) {
     return (
       <div>
