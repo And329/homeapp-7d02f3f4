@@ -25,78 +25,26 @@ const ContactAdminButton: React.FC = () => {
     try {
       console.log('ContactAdminButton: Starting conversation with admin for user:', user.id);
       
-      // Find an admin user - simplified approach
-      let adminProfile = null;
-      
-      // First try to find any user with admin role
-      const { data: adminByRole, error: roleError } = await supabase
+      // Find an admin user by role only - don't try to update roles
+      const { data: adminProfile, error: adminError } = await supabase
         .from('profiles')
         .select('id, email, role, full_name')
         .eq('role', 'admin')
         .limit(1)
         .maybeSingle();
 
-      if (roleError) {
-        console.error('ContactAdminButton: Error finding admin by role:', roleError);
-      } else if (adminByRole) {
-        adminProfile = adminByRole;
-        console.log('ContactAdminButton: Found admin by role:', adminProfile);
-      }
-
-      // If no admin found, try to find the specific admin email
-      if (!adminProfile) {
-        const { data: adminByEmail, error: emailError } = await supabase
-          .from('profiles')
-          .select('id, email, role, full_name')
-          .eq('email', '329@riseup.net')
-          .limit(1)
-          .maybeSingle();
-
-        if (emailError) {
-          console.error('ContactAdminButton: Error finding admin by email:', emailError);
-        } else if (adminByEmail) {
-          adminProfile = adminByEmail;
-          console.log('ContactAdminButton: Found admin by email:', adminProfile);
-          
-          // Update this user's role to admin
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ role: 'admin' })
-            .eq('id', adminProfile.id);
-            
-          if (updateError) {
-            console.error('ContactAdminButton: Error updating admin role:', updateError);
-          } else {
-            adminProfile.role = 'admin';
-          }
-        }
-      }
-
-      // If still no admin found, create a default admin profile for the current user if they are the admin email
-      if (!adminProfile) {
-        if (user.email === '329@riseup.net') {
-          console.log('ContactAdminButton: Current user is admin email, updating role');
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ role: 'admin' })
-            .eq('id', user.id);
-            
-          if (updateError) {
-            console.error('ContactAdminButton: Error updating current user to admin:', updateError);
-          } else {
-            // Use current user as admin
-            adminProfile = {
-              id: user.id,
-              email: user.email,
-              role: 'admin',
-              full_name: profile?.full_name || 'Admin'
-            };
-          }
-        }
+      if (adminError) {
+        console.error('ContactAdminButton: Error finding admin:', adminError);
+        toast({
+          title: "Error",
+          description: "Unable to connect to admin support. Please try again later.",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!adminProfile) {
-        console.error('ContactAdminButton: No admin found');
+        console.log('ContactAdminButton: No admin found');
         toast({
           title: "Error",
           description: "Admin support is not available at the moment. Please try again later.",
@@ -105,7 +53,7 @@ const ContactAdminButton: React.FC = () => {
         return;
       }
 
-      console.log('ContactAdminButton: Using admin profile:', adminProfile);
+      console.log('ContactAdminButton: Found admin profile:', adminProfile);
 
       // Check if conversation already exists between user and this admin
       const { data: existingConversation, error: conversationError } = await supabase

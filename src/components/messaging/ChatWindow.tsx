@@ -71,16 +71,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         console.log('ChatWindow: Other participant profile:', otherProfile);
 
-        // Set the display name based on role and current user's role
+        // Set the display name - ALWAYS show "Administrator" for regular users when chatting with admin
         let displayName = 'User';
         if (otherProfile) {
           if (otherProfile.role === 'admin') {
-            // If current user is admin, show actual name; if regular user, show "Administrator"
-            if (profile?.role === 'admin') {
-              displayName = otherProfile.full_name || otherProfile.email || 'Admin';
-            } else {
-              displayName = 'Administrator';
-            }
+            // Always show "Administrator" for regular users, actual name only for other admins
+            displayName = 'Administrator';
           } else if (otherProfile.full_name) {
             displayName = otherProfile.full_name;
           } else if (otherProfile.email) {
@@ -126,12 +122,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         if (profiles) {
           profiles.forEach(profileData => {
             if (profileData.role === 'admin') {
-              // If current user is admin, show actual name; if regular user, show "Administrator"
-              if (profile?.role === 'admin') {
-                namesMap[profileData.id] = profileData.full_name || profileData.email || 'Admin';
-              } else {
-                namesMap[profileData.id] = 'Administrator';
-              }
+              // ALWAYS show "Administrator" for admin users in chat
+              namesMap[profileData.id] = 'Administrator';
             } else if (profileData.full_name) {
               namesMap[profileData.id] = profileData.full_name;
             } else if (profileData.email) {
@@ -193,7 +185,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return 'You';
     }
     
-    return userNames[senderId] || 'User';
+    return userNames[senderId] || 'Administrator';
   };
 
   if (!conversationId) {

@@ -88,80 +88,19 @@ const UserProfile = () => {
 
       console.log('UserProfile: Starting deletion process for request:', requestId);
       
-      try {
-        // Get the request details first
-        const { data: request, error: requestError } = await supabase
-          .from('property_requests')
-          .select('id, title, status, user_id')
-          .eq('id', requestId)
-          .eq('user_id', user.id)
-          .single();
+      // Simply delete the property request - user should only be able to delete their own
+      const { error: deleteError } = await supabase
+        .from('property_requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('user_id', user.id); // Ensure user can only delete their own requests
 
-        if (requestError) {
-          console.error('UserProfile: Error fetching request:', requestError);
-          throw new Error(`Failed to fetch request: ${requestError.message}`);
-        }
-
-        if (!request) {
-          throw new Error('Property request not found or access denied');
-        }
-
-        console.log('UserProfile: Found request to delete:', request);
-
-        // If the request was approved, try to find and delete the associated property
-        if (request.status === 'approved') {
-          console.log('UserProfile: Request was approved, looking for associated property');
-          
-          // Find property with matching title and owner
-          const { data: matchingProperty, error: propertyFindError } = await supabase
-            .from('properties')
-            .select('id, title')
-            .eq('owner_id', user.id)
-            .ilike('title', request.title)
-            .maybeSingle();
-
-          if (propertyFindError) {
-            console.error('UserProfile: Error finding property:', propertyFindError);
-          } else if (matchingProperty) {
-            console.log('UserProfile: Found matching property to delete:', matchingProperty);
-            
-            // Delete the property
-            const { error: propertyDeleteError } = await supabase
-              .from('properties')
-              .delete()
-              .eq('id', matchingProperty.id)
-              .eq('owner_id', user.id);
-
-            if (propertyDeleteError) {
-              console.error('UserProfile: Error deleting property:', propertyDeleteError);
-              // Continue with request deletion even if property deletion fails
-            } else {
-              console.log('UserProfile: Successfully deleted associated property');
-            }
-          } else {
-            console.log('UserProfile: No matching property found');
-          }
-        }
-
-        // Delete the property request
-        console.log('UserProfile: Deleting property request');
-        const { error: deleteError } = await supabase
-          .from('property_requests')
-          .delete()
-          .eq('id', requestId)
-          .eq('user_id', user.id);
-
-        if (deleteError) {
-          console.error('UserProfile: Error deleting property request:', deleteError);
-          throw new Error(`Failed to delete request: ${deleteError.message}`);
-        }
-
-        console.log('UserProfile: Successfully deleted property request');
-        
-      } catch (error) {
-        console.error('UserProfile: Error in deletion process:', error);
-        throw error;
+      if (deleteError) {
+        console.error('UserProfile: Error deleting property request:', deleteError);
+        throw new Error(`Failed to delete request: ${deleteError.message}`);
       }
+
+      console.log('UserProfile: Successfully deleted property request');
     },
     onSuccess: () => {
       // Invalidate queries to refresh the UI
