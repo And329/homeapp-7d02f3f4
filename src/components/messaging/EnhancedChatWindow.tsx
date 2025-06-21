@@ -172,10 +172,14 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
     }
   }, [conversationId]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
-      sendMessage({ content: newMessage.trim() });
-      setNewMessage('');
+      try {
+        await sendMessage({ content: newMessage.trim() });
+        setNewMessage('');
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
     }
   };
 
@@ -290,7 +294,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Select a conversation to start messaging</p>
+          <p className="text-gray-500">{t('chat.selectConversation', 'Select a conversation to start messaging')}</p>
         </CardContent>
       </Card>
     );
@@ -302,7 +306,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center space-x-2">
             <User className="h-5 w-5" />
-            <span>Administrator</span>
+            <span>{t('chat.administrator', 'Administrator')}</span>
           </div>
           {onClose && (
             <Button
@@ -326,7 +330,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
           {messagesLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
+              <span className="ml-3 text-sm text-gray-600">{t('chat.loadingMessages', 'Loading messages...')}</span>
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -335,8 +339,8 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p className="font-medium">No messages yet</p>
-              <p className="text-sm">Start the conversation by sending a message below</p>
+              <p className="font-medium">{t('chat.noMessages', 'No messages yet')}</p>
+              <p className="text-sm">{t('chat.startConversation', 'Start the conversation by sending a message below')}</p>
             </div>
           ) : (
             messages.map((message) => (

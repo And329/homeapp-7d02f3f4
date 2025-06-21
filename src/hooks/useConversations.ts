@@ -96,16 +96,25 @@ export const useMessages = (conversationId: string) => {
         messageData.file_size = file_size;
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
-        .insert(messageData);
+        .insert(messageData)
+        .select()
+        .single();
 
       if (error) {
         console.error('useMessages: Error sending message:', error);
         throw error;
       }
 
+      // Update conversation timestamp
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
       console.log('useMessages: Message sent successfully');
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });

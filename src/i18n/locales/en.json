@@ -10,7 +10,10 @@
     "signup": "Sign Up",
     "listProperty": "List Property",
     "admin": "Admin",
-    "profile": "Profile"
+    "profile": "Profile",
+    "information": "Information",
+    "team": "Our Team",
+    "instructions": "Instructions"
   },
   "contact": {
     "title": "Contact HomeApp",
@@ -55,7 +58,13 @@
     "uploadFile": "Upload File",
     "fileShared": "File shared",
     "downloading": "Downloading...",
-    "download": "Download"
+    "download": "Download",
+    "administrator": "Administrator",
+    "you": "You",
+    "selectConversation": "Select a conversation to start messaging",
+    "loadingMessages": "Loading messages...",
+    "noMessages": "No messages yet",
+    "startConversation": "Start the conversation by sending a message below"
   },
   "admin": {
     "contactInquiries": "Contact Inquiries",
@@ -67,5 +76,34 @@
     "updateStatus": "Update Status",
     "addNotes": "Add Notes",
     "save": "Save"
+  },
+  "information": {
+    "title": "About HomeApp",
+    "subtitle": "Your trusted partner in UAE real estate",
+    "mission": "Our Mission",
+    "missionText": "To simplify and enhance the real estate experience in the UAE by providing innovative technology solutions that connect buyers, sellers, and renters seamlessly.",
+    "vision": "Our Vision",
+    "visionText": "To become the leading real estate platform in the UAE, empowering everyone to make informed property decisions.",
+    "services": "Our Services",
+    "servicesList": {
+      "buying": "Property Buying Assistance",
+      "selling": "Property Selling Support", 
+      "renting": "Rental Services",
+      "consultation": "Real Estate Consultation",
+      "valuation": "Property Valuation",
+      "investment": "Investment Advisory"
+    }
+  },
+  "team": {
+    "title": "Meet Our Team",
+    "subtitle": "Experienced professionals dedicated to your success"
+  },
+  "instructions": {
+    "title": "How to Use HomeApp",
+    "subtitle": "Step-by-step guide to get the most out of our platform",
+    "gettingStarted": "Getting Started",
+    "searchProperties": "Searching Properties",
+    "listProperty": "Listing Your Property",
+    "contactSupport": "Getting Support"
   }
 }

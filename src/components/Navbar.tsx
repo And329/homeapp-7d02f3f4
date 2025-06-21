@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -12,12 +13,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, User, LogOut, Settings, Home, Building2, BookOpen, Newspaper, Contact, UserPlus, Plus } from 'lucide-react';
+import { Menu, User, LogOut, Settings, Home, Building2, BookOpen, Newspaper, Contact, UserPlus, Plus, Info, Users, FileText } from 'lucide-react';
 import MessageNotificationBadge from './MessageNotificationBadge';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -30,11 +32,14 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/properties', label: 'Properties', icon: Building2 },
-    { path: '/blog', label: 'Blog', icon: BookOpen },
-    { path: '/news', label: 'News', icon: Newspaper },
-    { path: '/contact', label: 'Contact', icon: Contact },
+    { path: '/', label: t('navbar.home'), icon: Home },
+    { path: '/properties', label: t('navbar.properties'), icon: Building2 },
+    { path: '/blog', label: t('navbar.blog'), icon: BookOpen },
+    { path: '/news', label: t('navbar.news'), icon: Newspaper },
+    { path: '/information', label: t('navbar.information'), icon: Info },
+    { path: '/team', label: t('navbar.team'), icon: Users },
+    { path: '/instructions', label: t('navbar.instructions'), icon: FileText },
+    { path: '/contact', label: t('navbar.contact'), icon: Contact },
   ];
 
   return (
@@ -75,7 +80,7 @@ const Navbar = () => {
                 <Button asChild variant="outline" size="sm">
                   <Link to="/list-property" className="flex items-center space-x-2">
                     <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">List Property</span>
+                    <span className="hidden sm:inline">{t('navbar.listProperty')}</span>
                   </Link>
                 </Button>
 
@@ -111,14 +116,14 @@ const Navbar = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/profile" className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
-                        Profile
+                        {t('navbar.profile')}
                       </Link>
                     </DropdownMenuItem>
                     {profile?.role === 'admin' && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="cursor-pointer">
                           <Settings className="mr-2 h-4 w-4" />
-                          Admin Dashboard
+                          {t('navbar.admin')}
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -133,12 +138,12 @@ const Navbar = () => {
             ) : (
               <div className="flex items-center space-x-2">
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/auth">Sign In</Link>
+                  <Link to="/auth">{t('navbar.login')}</Link>
                 </Button>
                 <Button asChild size="sm">
                   <Link to="/auth" className="flex items-center space-x-2">
                     <UserPlus className="h-4 w-4" />
-                    <span>Sign Up</span>
+                    <span>{t('navbar.signup')}</span>
                   </Link>
                 </Button>
               </div>
@@ -182,7 +187,7 @@ const Navbar = () => {
                             className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100"
                           >
                             <Plus className="h-5 w-5" />
-                            <span>List Property</span>
+                            <span>{t('navbar.listProperty')}</span>
                           </Link>
                           <Link
                             to="/profile"
@@ -190,7 +195,7 @@ const Navbar = () => {
                             className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100"
                           >
                             <User className="h-5 w-5" />
-                            <span>Profile</span>
+                            <span>{t('navbar.profile')}</span>
                           </Link>
                           {profile?.role === 'admin' && (
                             <Link
@@ -199,7 +204,7 @@ const Navbar = () => {
                               className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100"
                             >
                               <Settings className="h-5 w-5" />
-                              <span>Admin Dashboard</span>
+                              <span>{t('navbar.admin')}</span>
                             </Link>
                           )}
                           <button
