@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,28 +60,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Get user info for profile creation
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         
-        // Create profile - set as admin if this is the designated admin email
-        const isAdmin = currentUser?.email === '329@riseup.net';
-        const fullName = currentUser?.user_metadata?.full_name || (isAdmin ? 'Administrator' : null);
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: currentUser?.email || null,
-            full_name: fullName,
-            role: isAdmin ? 'admin' : 'user'
-          })
-          .select('id, email, full_name, role, profile_picture')
-          .single();
-
-        if (createError) {
-          console.error('AuthContext: Error creating profile:', createError);
+        if (!currentUser) {
+          console.error('AuthContext: No authenticated user found');
           return null;
         }
 
-        console.log('AuthContext: Created new profile:', newProfile);
-        return newProfile as Profile;
+        // Create profile - set as admin if this is the designated admin email
+        const isAdmin = currentUser.email === '329@riseup.net';
+        const fullName = currentUser.user_metadata?.full_name || (isAdmin ? 'Administrator' : null);
+        
+        // Try to create profile with retry logic for foreign key issues
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: currentUser.email || null,
+                full_name: fullName,
+                role: isAdmin ? 'admin' : 'user'
+              })
+              .select('id, email, full_name, role, profile_picture')
+              .single();
+
+            if (createError) {
+              if (createError.code === '23503' && retryCount < maxRetries - 1) {
+                // Foreign key constraint error, wait and retry
+                console.log(`AuthContext: Foreign key error, retrying... (${retryCount + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                retryCount++;
+                continue;
+              }
+              throw createError;
+            }
+
+            console.log('AuthContext: Created new profile:', newProfile);
+            return newProfile as Profile;
+          } catch (error) {
+            if (retryCount === maxRetries - 1) {
+              console.error('AuthContext: Failed to create profile after retries:', error);
+              return null;
+            }
+            retryCount++;
+          }
+        }
       }
       
       console.log('AuthContext: Found existing profile:', data);
@@ -110,12 +136,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch profile after a short delay to avoid auth deadlock
+          // Fetch profile after a short delay to ensure auth state is stable
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
             setLoading(false);
-          }, 100);
+          }, 500);
         } else {
           setProfile(null);
           setLoading(false);
