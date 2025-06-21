@@ -32,6 +32,7 @@ const ContactAdminButton: React.FC = () => {
         .from('profiles')
         .select('id, email, role, full_name')
         .eq('email', ADMIN_EMAIL)
+        .eq('role', 'admin')
         .single();
 
       if (adminError || !adminProfile) {
@@ -46,50 +47,25 @@ const ContactAdminButton: React.FC = () => {
 
       console.log('ContactAdminButton: Found admin profile:', adminProfile);
 
-      // Check if conversation already exists between user and this admin
-      const { data: existingConversation, error: conversationError } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('is_admin_support', true)
-        .or(`and(participant_1_id.eq.${adminProfile.id},participant_2_id.eq.${user.id}),and(participant_1_id.eq.${user.id},participant_2_id.eq.${adminProfile.id})`)
-        .maybeSingle();
+      // Use the create_admin_conversation function
+      const { data: conversationId, error: conversationError } = await supabase.rpc('create_admin_conversation', {
+        p_admin_id: adminProfile.id,
+        p_user_id: user.id,
+        p_property_request_id: null,
+        p_subject: 'General Support'
+      });
 
       if (conversationError) {
-        console.error('ContactAdminButton: Error checking existing conversation:', conversationError);
+        console.error('ContactAdminButton: Error creating conversation:', conversationError);
+        toast({
+          title: "Error",
+          description: "Failed to start conversation. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      let conversationId = existingConversation?.id;
-
-      // Create new conversation if none exists
-      if (!conversationId) {
-        console.log('ContactAdminButton: Creating new admin support conversation');
-        
-        const { data: newConversation, error: createError } = await supabase
-          .from('conversations')
-          .insert({
-            participant_1_id: adminProfile.id,
-            participant_2_id: user.id,
-            subject: 'General Support',
-            is_admin_support: true,
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('ContactAdminButton: Error creating conversation:', createError);
-          toast({
-            title: "Error",
-            description: "Failed to start conversation. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        conversationId = newConversation.id;
-        console.log('ContactAdminButton: Created new conversation:', conversationId);
-      } else {
-        console.log('ContactAdminButton: Using existing conversation:', conversationId);
-      }
+      console.log('ContactAdminButton: Created/found conversation:', conversationId);
 
       toast({
         title: "Conversation ready",

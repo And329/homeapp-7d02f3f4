@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
 import { Property } from '@/types/property';
+import { usePropertyDeletion } from '@/hooks/usePropertyDeletion';
 
 export const useAdminHandlers = (
   queryClient: any,
@@ -12,6 +13,7 @@ export const useAdminHandlers = (
   state: any
 ) => {
   const { toast } = useToast();
+  const { approveDeletion } = usePropertyDeletion();
 
   const handleApproveRequest = async (request: PropertyRequest) => {
     console.log('useAdminHandlers: Approving request:', request.id);
@@ -126,6 +128,16 @@ export const useAdminHandlers = (
     }
   };
 
+  const handleApproveDeletion = async (requestId: string) => {
+    console.log('useAdminHandlers: Approving deletion for request:', requestId);
+    
+    try {
+      await approveDeletion(requestId);
+    } catch (error: any) {
+      console.error('useAdminHandlers: Failed to approve deletion:', error);
+    }
+  };
+
   const handleEdit = (property: Property) => {
     state.setEditingProperty(property);
     state.setIsFormOpen(true);
@@ -173,6 +185,7 @@ export const useAdminHandlers = (
     handleApproveRequest,
     handleRejectRequest,
     handleSendReply,
+    handleApproveDeletion,
     handleEdit,
     handleDelete,
     handleApprovalSubmit,

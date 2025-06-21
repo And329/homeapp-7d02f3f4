@@ -230,6 +230,13 @@ export type Database = {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
+            referencedRelation: "conversation_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
             referencedRelation: "conversation_participants"
             referencedColumns: ["id"]
           },
@@ -525,6 +532,33 @@ export type Database = {
       }
     }
     Views: {
+      conversation_details: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_admin_support: boolean | null
+          last_message_at: string | null
+          participant_1_email: string | null
+          participant_1_id: string | null
+          participant_1_name: string | null
+          participant_1_role: string | null
+          participant_2_email: string | null
+          participant_2_id: string | null
+          participant_2_name: string | null
+          participant_2_role: string | null
+          property_request_id: string | null
+          subject: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_property_request_id_fkey"
+            columns: ["property_request_id"]
+            isOneToOne: false
+            referencedRelation: "property_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           created_at: string | null
@@ -550,6 +584,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_property_deletion: {
+        Args: { property_request_id: string }
+        Returns: undefined
+      }
       approve_property_request: {
         Args: { request_id: string }
         Returns: string
@@ -558,7 +596,7 @@ export type Database = {
         Args: {
           p_admin_id: string
           p_user_id: string
-          p_property_request_id: string
+          p_property_request_id?: string
           p_subject?: string
         }
         Returns: string
@@ -574,6 +612,10 @@ export type Database = {
       get_setting: {
         Args: { setting_key: string }
         Returns: string
+      }
+      request_property_deletion: {
+        Args: { property_request_id: string }
+        Returns: undefined
       }
       upsert_setting: {
         Args: { setting_key: string; setting_value: string }
