@@ -22,10 +22,72 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const { user, profile } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [conversationOtherUser, setConversationOtherUser] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
+
+  // Fetch conversation details and other participant info
+  useEffect(() => {
+    const fetchConversationDetails = async () => {
+      if (!conversationId || !user) return;
+      
+      console.log('ChatWindow: Fetching conversation details for:', conversationId);
+      
+      try {
+        const { data: conversation, error } = await supabase
+          .from('conversations')
+          .select('participant_1_id, participant_2_id')
+          .eq('id', conversationId)
+          .single();
+
+        if (error) {
+          console.error('ChatWindow: Error fetching conversation:', error);
+          return;
+        }
+
+        // Determine the other participant
+        const otherParticipantId = conversation.participant_1_id === user.id 
+          ? conversation.participant_2_id 
+          : conversation.participant_1_id;
+
+        console.log('ChatWindow: Other participant ID:', otherParticipantId);
+
+        // Fetch the other participant's profile
+        const { data: otherProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email, role')
+          .eq('id', otherParticipantId)
+          .single();
+
+        if (profileError) {
+          console.error('ChatWindow: Error fetching other participant profile:', profileError);
+          return;
+        }
+
+        console.log('ChatWindow: Other participant profile:', otherProfile);
+
+        // Set the display name based on role and available info
+        let displayName = 'Unknown User';
+        if (otherProfile) {
+          if (otherProfile.role === 'admin') {
+            displayName = 'Admin Support';
+          } else {
+            displayName = otherProfile.full_name || otherProfile.email || 'User';
+          }
+        }
+
+        setConversationOtherUser(displayName);
+        console.log('ChatWindow: Set conversation other user to:', displayName);
+
+      } catch (error) {
+        console.error('ChatWindow: Error in fetchConversationDetails:', error);
+      }
+    };
+    
+    fetchConversationDetails();
+  }, [conversationId, user]);
 
   // Fetch user names for message senders
   useEffect(() => {
@@ -38,18 +100,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       try {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, full_name, email')
+          .select('id, full_name, email, role')
           .in('id', senderIds);
         
         if (profiles) {
           profiles.forEach(profile => {
-            namesMap[profile.id] = profile.full_name || profile.email || 'Unknown User';
+            if (profile.role === 'admin') {
+              namesMap[profile.id] = 'Admin Support';
+            } else {
+              namesMap[profile.id] = profile.full_name || profile.email || 'User';
+            }
           });
         }
         
         setUserNames(namesMap);
       } catch (error) {
-        console.error('Error fetching user names:', error);
+        console.error('ChatWindow: Error fetching user names:', error);
       }
     };
     
@@ -97,8 +163,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return profile?.full_name || profile?.email || 'You';
     }
     
-    // Use fetched user names
-    return userNames[senderId] || otherUserName || 'User';
+    // Use fetched user names first, then fallback to the conversation other user name
+    return userNames[senderId] || conversationOtherUser || otherUserName || 'User';
   };
 
   if (!conversationId) {
@@ -117,7 +183,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center space-x-2">
             <User className="h-5 w-5" />
-            <span>{otherUserName}</span>
+            <span>{conversationOtherUser || otherUserName}</span>
           </div>
           {onClose && (
             <Button

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export const useMessageNotifications = () => {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastReadTime, setLastReadTime] = useState<Date>(new Date());
 
   // Get conversations for the current user
   const { data: conversations = [] } = useQuery({
@@ -61,24 +62,23 @@ export const useMessageNotifications = () => {
     enabled: conversations.length > 0,
   });
 
-  // Calculate unread count
+  // Calculate unread count based on messages after last read time
   useEffect(() => {
     if (!user || !latestMessages.length) {
       setUnreadCount(0);
       return;
     }
 
-    // For simplicity, count messages from the last hour that aren't from the current user
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentUnreadCount = latestMessages.filter(message => 
+    // Count messages from others that are newer than last read time
+    const newUnreadCount = latestMessages.filter(message => 
       message &&
       message.sender_id !== user.id && 
-      new Date(message.created_at) > oneHourAgo
+      new Date(message.created_at) > lastReadTime
     ).length;
 
-    console.log('useMessageNotifications: Unread count:', recentUnreadCount);
-    setUnreadCount(recentUnreadCount);
-  }, [latestMessages, user]);
+    console.log('useMessageNotifications: Unread count:', newUnreadCount);
+    setUnreadCount(newUnreadCount);
+  }, [latestMessages, user, lastReadTime]);
 
   // Set up real-time subscription for new messages
   useEffect(() => {
@@ -115,6 +115,7 @@ export const useMessageNotifications = () => {
 
   const markAsRead = () => {
     console.log('useMessageNotifications: Marking messages as read');
+    setLastReadTime(new Date());
     setUnreadCount(0);
   };
 

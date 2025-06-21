@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AdminChat from '../components/AdminChat';
+import ContactAdminButton from '../components/ContactAdminButton';
 
 const Contact = () => {
   return (
@@ -34,6 +34,9 @@ const Contact = () => {
 
             {/* Contact Information */}
             <div className="space-y-8">
+              {/* Contact Admin Button */}
+              <ContactAdminButton />
+
               <div className="bg-white rounded-xl shadow-lg p-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h3>
                 

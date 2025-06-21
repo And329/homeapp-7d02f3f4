@@ -21,9 +21,10 @@ const MessageNotificationBadge: React.FC<MessageNotificationBadgeProps> = ({
   if (!user) return null;
 
   const handleClick = () => {
-    if (unreadCount > 0) {
-      markAsRead();
-    }
+    console.log('MessageNotificationBadge: Clicked, marking messages as read');
+    // Always mark as read when clicked, regardless of unread count
+    markAsRead();
+    
     if (onClick) {
       onClick();
     }
