@@ -1,0 +1,168 @@
+
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Send } from 'lucide-react';
+
+const ContactForm: React.FC = () => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    inquiryType: '',
+    message: ''
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('contact_inquiries')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          inquiry_type: formData.inquiryType,
+          message: formData.message
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: t('contact.form.success'),
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        inquiryType: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "Error",
+        description: t('contact.form.error'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Send className="h-6 w-6 text-primary" />
+          <span>{t('contact.form.title')}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {t('contact.form.name')} *
+              </label>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder={t('contact.form.namePlaceholder')}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {t('contact.form.email')} *
+              </label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder={t('contact.form.emailPlaceholder')}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {t('contact.form.phone')}
+              </label>
+              <Input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder={t('contact.form.phonePlaceholder')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {t('contact.form.inquiryType')} *
+              </label>
+              <Select value={formData.inquiryType} onValueChange={(value) => handleInputChange('inquiryType', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">{t('contact.form.inquiryTypes.general')}</SelectItem>
+                  <SelectItem value="property">{t('contact.form.inquiryTypes.property')}</SelectItem>
+                  <SelectItem value="viewing">{t('contact.form.inquiryTypes.viewing')}</SelectItem>
+                  <SelectItem value="selling">{t('contact.form.inquiryTypes.selling')}</SelectItem>
+                  <SelectItem value="buying">{t('contact.form.inquiryTypes.buying')}</SelectItem>
+                  <SelectItem value="renting">{t('contact.form.inquiryTypes.renting')}</SelectItem>
+                  <SelectItem value="support">{t('contact.form.inquiryTypes.support')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              {t('contact.form.message')} *
+            </label>
+            <Textarea
+              value={formData.message}
+              onChange={(e) => handleInputChange('message', e.target.value)}
+              placeholder={t('contact.form.messagePlaceholder')}
+              rows={5}
+              required
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !formData.name || !formData.email || !formData.inquiryType || !formData.message}
+            className="w-full"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            {isSubmitting ? 'Sending...' : t('contact.form.submit')}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ContactForm;

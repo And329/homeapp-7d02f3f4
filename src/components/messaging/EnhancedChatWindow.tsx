@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '@/hooks/use-toast';
+import FileAttachment from '../FileAttachment';
 
 interface EnhancedChatWindowProps {
   conversationId: string;
@@ -18,6 +21,8 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
   otherUserName,
   onClose
 }) => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const { user, profile } = useAuth();
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [conversationTitle, setConversationTitle] = useState<string>('');
@@ -181,19 +186,95 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // For now, just send a message indicating a file was shared
-      sendMessage({ content: `📎 Shared a file: ${file.name}` });
+    if (!file || !user) return;
+
+    try {
+      // Create unique file path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Upload file to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Send message with file metadata
+      await sendMessage({
+        content: `📎 ${file.name}`,
+        file_url: filePath,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size
+      });
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
     }
   };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // For now, just send a message indicating a photo was shared
-      sendMessage({ content: `📷 Shared a photo: ${file.name}` });
+    if (!file || !user) return;
+
+    // Validate that it's an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create unique file path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Upload file to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Send message with image metadata
+      await sendMessage({
+        content: `📷 ${file.name}`,
+        file_url: filePath,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size
+      });
+
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
     }
   };
 
@@ -275,7 +356,21 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                   <div className="font-medium text-xs mb-1 opacity-75">
                     {getUserDisplayName(message.sender_id)}
                   </div>
-                  <div className="leading-relaxed break-words">{message.content}</div>
+                  
+                  {/* Display file attachment if present */}
+                  {message.file_url && message.file_name ? (
+                    <div className="mb-2">
+                      <FileAttachment
+                        fileName={message.file_name}
+                        fileUrl={message.file_url}
+                        fileType={message.file_type || 'application/octet-stream'}
+                        fileSize={message.file_size || 0}
+                      />
+                    </div>
+                  ) : (
+                    <div className="leading-relaxed break-words">{message.content}</div>
+                  )}
+                  
                   <div className="text-xs mt-1 opacity-60">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
@@ -306,6 +401,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 size="sm"
                 onClick={() => photoInputRef.current?.click()}
                 className="p-2"
+                title={t('chat.uploadPhoto')}
               >
                 <Image className="h-4 w-4" />
               </Button>
@@ -322,6 +418,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2"
+                title={t('chat.uploadFile')}
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -330,7 +427,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('chat.typeMessage')}
               onKeyPress={handleKeyPress}
               disabled={isSendingMessage}
               className="text-sm flex-1"

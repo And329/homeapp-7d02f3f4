@@ -15,8 +15,8 @@ export const useAdminState = () => {
   const [approvingRequest, setApprovingRequest] = useState<PropertyRequest | null>(null);
   const [showMap, setShowMap] = useState(false);
   
-  // Navigation state
-  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats'>('properties');
+  // Navigation state - updated to include contact tab
+  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats' | 'contact'>('properties');
   
   // Chat states
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);

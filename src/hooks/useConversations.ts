@@ -69,20 +69,36 @@ export const useMessages = (conversationId: string) => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content }: { content: string }) => {
+    mutationFn: async ({ content, file_url, file_name, file_type, file_size }: { 
+      content: string;
+      file_url?: string;
+      file_name?: string;
+      file_type?: string;
+      file_size?: number;
+    }) => {
       if (!user || !conversationId) {
         throw new Error('User not authenticated or conversation not selected');
       }
 
       console.log('useMessages: Sending message to conversation:', conversationId);
       
+      const messageData: any = {
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: content.trim()
+      };
+
+      // Add file metadata if present
+      if (file_url) {
+        messageData.file_url = file_url;
+        messageData.file_name = file_name;
+        messageData.file_type = file_type;
+        messageData.file_size = file_size;
+      }
+
       const { error } = await supabase
         .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          content: content.trim()
-        });
+        .insert(messageData);
 
       if (error) {
         console.error('useMessages: Error sending message:', error);

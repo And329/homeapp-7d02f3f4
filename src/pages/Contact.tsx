@@ -1,12 +1,15 @@
+
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import AdminChat from '../components/AdminChat';
-import ContactAdminButton from '../components/ContactAdminButton';
+import ContactForm from '../components/ContactForm';
 import LiveSupportChat from '../components/messaging/LiveSupportChat';
 
 const Contact = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -15,29 +18,25 @@ const Contact = () => {
       <section className="uae-gradient text-white py-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact HomeApp</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('contact.title')}</h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Get in touch with our expert team for all your UAE real estate needs
+              {t('contact.subtitle')}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Chat and Contact Information */}
+      {/* Contact Form and Information */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Admin Chat */}
+            {/* Contact Form */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Instant Support</h2>
-              <AdminChat />
+              <ContactForm />
             </div>
 
             {/* Contact Information */}
             <div className="space-y-8">
-              {/* Contact Admin Button */}
-              <ContactAdminButton />
-
               <div className="bg-white rounded-xl shadow-lg p-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h3>
                 
@@ -47,10 +46,9 @@ const Contact = () => {
                       <MapPin className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Visit Our Office</h4>
-                      <p className="text-gray-600">
-                        Marina Plaza, Level 25<br />
-                        Dubai Marina, Dubai, UAE
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('contact.info.office')}</h4>
+                      <p className="text-gray-600 whitespace-pre-line">
+                        {t('contact.info.officeAddress')}
                       </p>
                     </div>
                   </div>
@@ -60,7 +58,7 @@ const Contact = () => {
                       <Phone className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Call Us</h4>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('contact.info.call')}</h4>
                       <p className="text-gray-600">
                         +971 4 123 4567<br />
                         +971 50 987 6543
@@ -73,7 +71,7 @@ const Contact = () => {
                       <Mail className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Email Us</h4>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('contact.info.email')}</h4>
                       <p className="text-gray-600">
                         info@homeapp.ae<br />
                         sales@homeapp.ae
@@ -86,11 +84,9 @@ const Contact = () => {
                       <Clock className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Business Hours</h4>
-                      <p className="text-gray-600">
-                        Monday - Friday: 9:00 AM - 7:00 PM<br />
-                        Saturday: 9:00 AM - 5:00 PM<br />
-                        Sunday: By Appointment
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('contact.info.hours')}</h4>
+                      <p className="text-gray-600 whitespace-pre-line">
+                        {t('contact.info.hoursText')}
                       </p>
                     </div>
                   </div>

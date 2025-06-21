@@ -1,0 +1,71 @@
+
+{
+  "navbar": {
+    "home": "Home",
+    "properties": "Properties",
+    "blog": "Blog",
+    "news": "News",
+    "contact": "Contact",
+    "login": "Login",
+    "signup": "Sign Up",
+    "listProperty": "List Property",
+    "admin": "Admin",
+    "profile": "Profile"
+  },
+  "contact": {
+    "title": "Contact HomeApp",
+    "subtitle": "Get in touch with our expert team for all your UAE real estate needs",
+    "form": {
+      "title": "Send us a message",
+      "name": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email address",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
+      "inquiryType": "Inquiry Type",
+      "inquiryTypes": {
+        "general": "General Inquiry",
+        "property": "Property Information",
+        "viewing": "Property Viewing",
+        "selling": "Selling Property",
+        "buying": "Buying Property",
+        "renting": "Renting Property",
+        "support": "Technical Support"
+      },
+      "message": "Message",
+      "messagePlaceholder": "Tell us how we can help you...",
+      "submit": "Send Message",
+      "success": "Message sent successfully! We'll get back to you soon.",
+      "error": "Failed to send message. Please try again."
+    },
+    "info": {
+      "office": "Visit Our Office",
+      "officeAddress": "Marina Plaza, Level 25\nDubai Marina, Dubai, UAE",
+      "call": "Call Us",
+      "email": "Email Us",
+      "hours": "Business Hours",
+      "hoursText": "Monday - Friday: 9:00 AM - 7:00 PM\nSaturday: 9:00 AM - 5:00 PM\nSunday: By Appointment"
+    }
+  },
+  "chat": {
+    "typeMessage": "Type your message...",
+    "send": "Send",
+    "uploadPhoto": "Upload Photo",
+    "uploadFile": "Upload File",
+    "fileShared": "File shared",
+    "downloading": "Downloading...",
+    "download": "Download"
+  },
+  "admin": {
+    "contactInquiries": "Contact Inquiries",
+    "inquiryStatus": {
+      "new": "New",
+      "in_progress": "In Progress", 
+      "resolved": "Resolved"
+    },
+    "updateStatus": "Update Status",
+    "addNotes": "Add Notes",
+    "save": "Save"
+  }
+}
