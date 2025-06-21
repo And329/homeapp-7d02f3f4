@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings } from 'lucide-react';
@@ -83,78 +82,42 @@ const UserProfile = () => {
     enabled: !!user,
   });
 
-  const deletePropertyRequestMutation = useMutation({
+  const requestDeletionMutation = useMutation({
     mutationFn: async (requestId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('UserProfile: Starting deletion process for request:', requestId);
+      console.log('UserProfile: Creating deletion request for:', requestId);
       
-      // First, check if this request was approved and has a corresponding property
-      const { data: request, error: requestError } = await supabase
+      // Create a deletion request for admin approval
+      const { error } = await supabase
         .from('property_requests')
-        .select('id, status, user_id')
-        .eq('id', requestId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (requestError) {
-        console.error('UserProfile: Error fetching property request:', requestError);
-        throw new Error(`Failed to find request: ${requestError.message}`);
-      }
-
-      if (!request) {
-        throw new Error('Property request not found or you do not have permission to delete it');
-      }
-
-      // If the request was approved, we need to delete the corresponding property from the global catalog
-      if (request.status === 'approved') {
-        console.log('UserProfile: Request was approved, deleting corresponding property');
-        
-        // Find and delete the property that was created from this request
-        // We'll search for properties with the same user as owner
-        const { error: propertyDeleteError } = await supabase
-          .from('properties')
-          .delete()
-          .eq('owner_id', user.id);
-
-        if (propertyDeleteError) {
-          console.error('UserProfile: Error deleting property:', propertyDeleteError);
-          // Continue with request deletion even if property deletion fails
-        } else {
-          console.log('UserProfile: Successfully deleted corresponding property');
-        }
-      }
-
-      // Delete the property request
-      const { error: deleteError } = await supabase
-        .from('property_requests')
-        .delete()
+        .update({ 
+          status: 'deletion_requested',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', requestId)
         .eq('user_id', user.id);
 
-      if (deleteError) {
-        console.error('UserProfile: Error deleting property request:', deleteError);
-        throw new Error(`Failed to delete request: ${deleteError.message}`);
+      if (error) {
+        console.error('UserProfile: Error creating deletion request:', error);
+        throw new Error(`Failed to request deletion: ${error.message}`);
       }
 
-      console.log('UserProfile: Successfully deleted property request');
+      console.log('UserProfile: Deletion request created successfully');
     },
     onSuccess: () => {
-      // Invalidate queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
       
       toast({
-        title: "Listing deleted",
-        description: "Your property listing has been deleted successfully.",
+        title: "Deletion requested",
+        description: "Your deletion request has been sent to admin for approval.",
       });
     },
     onError: (error: any) => {
-      console.error('UserProfile: Failed to delete listing:', error);
+      console.error('UserProfile: Failed to request deletion:', error);
       toast({
-        title: "Error deleting listing",
-        description: error.message || 'Failed to delete listing. Please try again.',
+        title: "Error requesting deletion",
+        description: error.message || 'Failed to request deletion. Please try again.',
         variant: "destructive",
       });
     },
@@ -164,7 +127,8 @@ const UserProfile = () => {
     const statusConfig = {
       pending: { icon: Clock, className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
       approved: { icon: CheckCircle, className: 'bg-green-100 text-green-800', label: 'Approved' },
-      rejected: { icon: XCircle, className: 'bg-red-100 text-red-800', label: 'Rejected' }
+      rejected: { icon: XCircle, className: 'bg-red-100 text-red-800', label: 'Rejected' },
+      deletion_requested: { icon: Trash2, className: 'bg-orange-100 text-orange-800', label: 'Deletion Requested' }
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -178,10 +142,10 @@ const UserProfile = () => {
     );
   };
 
-  const handleDeleteListing = (requestId: string) => {
-    if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone and will remove it from the global catalog if approved.')) {
-      console.log('UserProfile: User confirmed deletion for request:', requestId);
-      deletePropertyRequestMutation.mutate(requestId);
+  const handleRequestDeletion = (requestId: string) => {
+    if (window.confirm('Are you sure you want to request deletion of this listing? An admin will need to approve this request.')) {
+      console.log('UserProfile: User confirmed deletion request for:', requestId);
+      requestDeletionMutation.mutate(requestId);
     }
   };
 
@@ -316,19 +280,21 @@ const UserProfile = () => {
                           <PropertyCard property={transformedProperty} />
                           <div className="absolute top-4 right-4 z-10 flex gap-2">
                             {getStatusBadge(request.status)}
-                            <Button
-                              onClick={() => handleDeleteListing(request.id)}
-                              variant="outline"
-                              size="sm"
-                              className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                              disabled={deletePropertyRequestMutation.isPending}
-                            >
-                              {deletePropertyRequestMutation.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                              ) : (
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              )}
-                            </Button>
+                            {request.status !== 'deletion_requested' && (
+                              <Button
+                                onClick={() => handleRequestDeletion(request.id)}
+                                variant="outline"
+                                size="sm"
+                                className="bg-white/90 hover:bg-red-50 hover:border-red-200"
+                                disabled={requestDeletionMutation.isPending}
+                              >
+                                {requestDeletionMutation.isPending ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                ) : (
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );

@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
+const ADMIN_EMAIL = '329@riseup.net';
+
 const ContactAdminButton: React.FC = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -25,42 +27,20 @@ const ContactAdminButton: React.FC = () => {
     try {
       console.log('ContactAdminButton: Starting conversation with admin for user:', user.id);
       
-      // Find admin user by email first, then by role
-      let adminProfile = null;
-      
-      // Try to find admin by the known admin email
-      const { data: adminByEmail, error: emailError } = await supabase
+      // Find admin user by the hardcoded email
+      const { data: adminProfile, error: adminError } = await supabase
         .from('profiles')
         .select('id, email, role, full_name')
-        .eq('email', '329@riseup.net')
+        .eq('email', ADMIN_EMAIL)
         .single();
 
-      if (!emailError && adminByEmail) {
-        adminProfile = adminByEmail;
-        console.log('ContactAdminButton: Found admin by email:', adminProfile);
-      } else {
-        // Fallback: try to find any admin user
-        const { data: adminByRole, error: roleError } = await supabase
-          .from('profiles')
-          .select('id, email, role, full_name')
-          .eq('role', 'admin')
-          .limit(1)
-          .single();
-
-        if (!roleError && adminByRole) {
-          adminProfile = adminByRole;
-          console.log('ContactAdminButton: Found admin by role:', adminProfile);
-        }
-      }
-
-      if (!adminProfile) {
-        console.log('ContactAdminButton: No admin found, creating default admin conversation');
-        // Create a conversation anyway - the system will handle it
+      if (adminError || !adminProfile) {
+        console.error('ContactAdminButton: Admin not found:', adminError);
         toast({
-          title: "Starting conversation",
-          description: "Connecting you with admin support...",
+          title: "Error",
+          description: "Unable to connect to admin support. Please try again later.",
+          variant: "destructive",
         });
-        navigate('/profile?tab=messages');
         return;
       }
 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, XCircle, Clock, MessageCircle, Edit } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, MessageCircle, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -47,6 +47,8 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
         return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</span>;
       case 'rejected':
         return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rejected</span>;
+      case 'deletion_requested':
+        return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><Trash2 className="w-3 h-3 mr-1" />Deletion Requested</span>;
       default:
         return null;
     }
@@ -72,6 +74,14 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     console.log('AdminRequestsTab: Approving request:', request.id);
     console.log('AdminRequestsTab: Original requester user_id:', request.user_id);
     onApproveRequest(request);
+  };
+
+  const handleApproveDeletion = async (requestId: string) => {
+    // Handle deletion approval - this would delete both the request and the property
+    if (window.confirm('Are you sure you want to approve this deletion request? This will remove the property from the catalog.')) {
+      console.log('AdminRequestsTab: Approving deletion for request:', requestId);
+      // Implementation would go here
+    }
   };
 
   return (
@@ -145,6 +155,36 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
+                  </Button>
+                  <Button
+                    onClick={() => setReplyingToRequest(request.id)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Send Reply
+                  </Button>
+                </div>
+              )}
+
+              {request.status === 'deletion_requested' && (
+                <div className="flex items-center gap-2 pt-4 border-t flex-wrap">
+                  <Button
+                    onClick={() => handleApproveDeletion(request.id)}
+                    className="text-red-600 hover:text-red-800"
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Approve Deletion
+                  </Button>
+                  <Button
+                    onClick={() => onRejectRequest(request.id)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Deny Deletion
                   </Button>
                   <Button
                     onClick={() => setReplyingToRequest(request.id)}

@@ -72,16 +72,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         console.log('ChatWindow: Other participant profile:', otherProfile);
 
-        // Set the display name - ALWAYS show "Administrator" for regular users when chatting with admin
-        let displayName = 'User';
+        // Set the display name - Always show "Administrator" for admin users when viewed by regular users
+        let displayName = 'Administrator';
         if (otherProfile) {
           if (otherProfile.role === 'admin') {
-            // Show "Administrator" for regular users, actual name only for other admins
-            displayName = (profile?.role === 'admin') ? (otherProfile.full_name || 'Administrator') : 'Administrator';
+            // Always show "Administrator" for admin users, regardless of who's viewing
+            displayName = 'Administrator';
           } else if (otherProfile.full_name) {
             displayName = otherProfile.full_name;
           } else if (otherProfile.email) {
             displayName = otherProfile.email;
+          } else {
+            displayName = 'User';
           }
         }
 
@@ -123,8 +125,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         if (profiles) {
           profiles.forEach(profileData => {
             if (profileData.role === 'admin') {
-              // Show "Administrator" for regular users, actual name only for other admins
-              namesMap[profileData.id] = (profile?.role === 'admin') ? (profileData.full_name || 'Administrator') : 'Administrator';
+              // Always show "Administrator" for admin users
+              namesMap[profileData.id] = 'Administrator';
             } else if (profileData.full_name) {
               namesMap[profileData.id] = profileData.full_name;
             } else if (profileData.email) {
