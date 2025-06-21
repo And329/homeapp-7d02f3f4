@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, XCircle, Clock, MessageCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, MessageCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -16,6 +16,7 @@ interface AdminRequestsTabProps {
   onApproveRequest: (request: PropertyRequest) => void;
   onRejectRequest: (requestId: string) => void;
   onSendReply: (requestId: string) => void;
+  onReviewRequest?: (request: PropertyRequest) => void;
 }
 
 const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
@@ -29,6 +30,7 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
   onApproveRequest,
   onRejectRequest,
   onSendReply,
+  onReviewRequest,
 }) => {
   const formatPrice = (price: number, type: string) => {
     if (type === 'rent') {
@@ -51,22 +53,18 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
   };
 
   const handleSendReply = async (requestId: string) => {
-    console.log('Sending reply for request:', requestId);
-    console.log('Reply message:', replyMessage);
+    console.log('AdminRequestsTab: Sending reply for request:', requestId);
+    console.log('AdminRequestsTab: Reply message:', replyMessage);
+    
     if (!replyMessage.trim()) {
-      console.log('Reply message is empty');
+      console.log('AdminRequestsTab: Reply message is empty');
       return;
     }
     
     try {
-      // First create the conversation
-      await sendReplyMutation.mutateAsync({ requestId });
-      
-      // Clear the reply form
-      setReplyingToRequest(null);
-      setReplyMessage('');
+      await onSendReply(requestId);
     } catch (error) {
-      console.error('Failed to send reply:', error);
+      console.error('AdminRequestsTab: Failed to send reply:', error);
     }
   };
 
@@ -119,19 +117,31 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
               )}
 
               {request.status === 'pending' && (
-                <div className="flex items-center gap-2 pt-4 border-t">
+                <div className="flex items-center gap-2 pt-4 border-t flex-wrap">
                   <Button
                     onClick={() => handleApproveRequest(request)}
                     className="text-green-600 hover:text-green-800"
                     variant="outline"
+                    size="sm"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
+                    Quick Approve
                   </Button>
+                  {onReviewRequest && (
+                    <Button
+                      onClick={() => onReviewRequest(request)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Review & Edit
+                    </Button>
+                  )}
                   <Button
                     onClick={() => onRejectRequest(request.id)}
                     className="text-red-600 hover:text-red-800"
                     variant="outline"
+                    size="sm"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
@@ -139,6 +149,7 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                   <Button
                     onClick={() => setReplyingToRequest(request.id)}
                     variant="outline"
+                    size="sm"
                   >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Send Reply

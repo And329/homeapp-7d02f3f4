@@ -183,6 +183,7 @@ const AdminDashboard = () => {
             onApproveRequest={handlers.handleApproveRequest}
             onRejectRequest={handlers.handleRejectRequest}
             onSendReply={handlers.handleSendReply}
+            onReviewRequest={handlers.handleReviewRequest}
           />
         )}
 

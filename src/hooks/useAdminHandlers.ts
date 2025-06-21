@@ -94,14 +94,18 @@ export const useAdminHandlers = (
     
     try {
       // First create/get the conversation
+      console.log('useAdminHandlers: Creating conversation...');
       const conversationId = await sendReplyMutation.mutateAsync({ requestId });
+      console.log('useAdminHandlers: Got conversation ID:', conversationId);
       
-      // Then send the message
+      // Then send the message immediately
       if (conversationId && state.replyMessage.trim()) {
+        console.log('useAdminHandlers: Sending message to conversation:', conversationId);
         await sendChatMessageMutation.mutateAsync({
           conversationId,
           message: state.replyMessage.trim()
         });
+        console.log('useAdminHandlers: Message sent successfully');
         
         // Clear the form
         state.setReplyingToRequest(null);
@@ -137,6 +141,11 @@ export const useAdminHandlers = (
     console.log('Handling approval submit:', { requestId, updatedData });
   };
 
+  const handleReviewRequest = (request: PropertyRequest) => {
+    state.setApprovingRequest(request);
+    state.setIsApprovalFormOpen(true);
+  };
+
   const handleSendChatMessage = async () => {
     if (!state.newMessage.trim() || !state.selectedConversation) return;
     
@@ -167,6 +176,7 @@ export const useAdminHandlers = (
     handleEdit,
     handleDelete,
     handleApprovalSubmit,
+    handleReviewRequest,
     handleSendChatMessage,
     handleConversationSelect,
   };

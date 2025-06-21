@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useConversations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatWindowProps {
   conversationId: string;
@@ -20,10 +21,40 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const { user, profile } = useAuth();
   const [newMessage, setNewMessage] = useState('');
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
+
+  // Fetch user names for message senders
+  useEffect(() => {
+    const fetchUserNames = async () => {
+      if (messages.length === 0) return;
+      
+      const senderIds = [...new Set(messages.map(m => m.sender_id))];
+      const namesMap: Record<string, string> = {};
+      
+      try {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', senderIds);
+        
+        if (profiles) {
+          profiles.forEach(profile => {
+            namesMap[profile.id] = profile.full_name || profile.email || 'Unknown User';
+          });
+        }
+        
+        setUserNames(namesMap);
+      } catch (error) {
+        console.error('Error fetching user names:', error);
+      }
+    };
+    
+    fetchUserNames();
+  }, [messages]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -66,12 +97,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return profile?.full_name || profile?.email || 'You';
     }
     
-    // Handle admin support messages or other users
-    if (otherUserName === 'Admin Support') {
-      return 'Admin Support';
-    }
-    
-    return otherUserName || 'User';
+    // Use fetched user names
+    return userNames[senderId] || otherUserName || 'User';
   };
 
   if (!conversationId) {
