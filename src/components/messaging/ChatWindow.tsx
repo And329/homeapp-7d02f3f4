@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,8 +76,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         let displayName = 'User';
         if (otherProfile) {
           if (otherProfile.role === 'admin') {
-            // Always show "Administrator" for regular users, actual name only for other admins
-            displayName = 'Administrator';
+            // Show "Administrator" for regular users, actual name only for other admins
+            displayName = (profile?.role === 'admin') ? (otherProfile.full_name || 'Administrator') : 'Administrator';
           } else if (otherProfile.full_name) {
             displayName = otherProfile.full_name;
           } else if (otherProfile.email) {
@@ -122,8 +123,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         if (profiles) {
           profiles.forEach(profileData => {
             if (profileData.role === 'admin') {
-              // ALWAYS show "Administrator" for admin users in chat
-              namesMap[profileData.id] = 'Administrator';
+              // Show "Administrator" for regular users, actual name only for other admins
+              namesMap[profileData.id] = (profile?.role === 'admin') ? (profileData.full_name || 'Administrator') : 'Administrator';
             } else if (profileData.full_name) {
               namesMap[profileData.id] = profileData.full_name;
             } else if (profileData.email) {
@@ -185,6 +186,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return 'You';
     }
     
+    // Use the cached user names or fallback to "Administrator"
     return userNames[senderId] || 'Administrator';
   };
 

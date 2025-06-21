@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings } from 'lucide-react';
@@ -88,12 +89,48 @@ const UserProfile = () => {
 
       console.log('UserProfile: Starting deletion process for request:', requestId);
       
-      // Simply delete the property request - user should only be able to delete their own
+      // First, check if this request was approved and has a corresponding property
+      const { data: request, error: requestError } = await supabase
+        .from('property_requests')
+        .select('id, status, user_id')
+        .eq('id', requestId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (requestError) {
+        console.error('UserProfile: Error fetching property request:', requestError);
+        throw new Error(`Failed to find request: ${requestError.message}`);
+      }
+
+      if (!request) {
+        throw new Error('Property request not found or you do not have permission to delete it');
+      }
+
+      // If the request was approved, we need to delete the corresponding property from the global catalog
+      if (request.status === 'approved') {
+        console.log('UserProfile: Request was approved, deleting corresponding property');
+        
+        // Find and delete the property that was created from this request
+        // We'll search for properties with the same user as owner
+        const { error: propertyDeleteError } = await supabase
+          .from('properties')
+          .delete()
+          .eq('owner_id', user.id);
+
+        if (propertyDeleteError) {
+          console.error('UserProfile: Error deleting property:', propertyDeleteError);
+          // Continue with request deletion even if property deletion fails
+        } else {
+          console.log('UserProfile: Successfully deleted corresponding property');
+        }
+      }
+
+      // Delete the property request
       const { error: deleteError } = await supabase
         .from('property_requests')
         .delete()
         .eq('id', requestId)
-        .eq('user_id', user.id); // Ensure user can only delete their own requests
+        .eq('user_id', user.id);
 
       if (deleteError) {
         console.error('UserProfile: Error deleting property request:', deleteError);
@@ -142,7 +179,7 @@ const UserProfile = () => {
   };
 
   const handleDeleteListing = (requestId: string) => {
-    if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone and will remove it from the global catalog if approved.')) {
       console.log('UserProfile: User confirmed deletion for request:', requestId);
       deletePropertyRequestMutation.mutate(requestId);
     }

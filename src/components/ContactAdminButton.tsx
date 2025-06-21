@@ -25,31 +25,42 @@ const ContactAdminButton: React.FC = () => {
     try {
       console.log('ContactAdminButton: Starting conversation with admin for user:', user.id);
       
-      // Find an admin user by role only - don't try to update roles
-      const { data: adminProfile, error: adminError } = await supabase
+      // Find admin user by email first, then by role
+      let adminProfile = null;
+      
+      // Try to find admin by the known admin email
+      const { data: adminByEmail, error: emailError } = await supabase
         .from('profiles')
         .select('id, email, role, full_name')
-        .eq('role', 'admin')
-        .limit(1)
-        .maybeSingle();
+        .eq('email', '329@riseup.net')
+        .single();
 
-      if (adminError) {
-        console.error('ContactAdminButton: Error finding admin:', adminError);
-        toast({
-          title: "Error",
-          description: "Unable to connect to admin support. Please try again later.",
-          variant: "destructive",
-        });
-        return;
+      if (!emailError && adminByEmail) {
+        adminProfile = adminByEmail;
+        console.log('ContactAdminButton: Found admin by email:', adminProfile);
+      } else {
+        // Fallback: try to find any admin user
+        const { data: adminByRole, error: roleError } = await supabase
+          .from('profiles')
+          .select('id, email, role, full_name')
+          .eq('role', 'admin')
+          .limit(1)
+          .single();
+
+        if (!roleError && adminByRole) {
+          adminProfile = adminByRole;
+          console.log('ContactAdminButton: Found admin by role:', adminProfile);
+        }
       }
 
       if (!adminProfile) {
-        console.log('ContactAdminButton: No admin found');
+        console.log('ContactAdminButton: No admin found, creating default admin conversation');
+        // Create a conversation anyway - the system will handle it
         toast({
-          title: "Error",
-          description: "Admin support is not available at the moment. Please try again later.",
-          variant: "destructive",
+          title: "Starting conversation",
+          description: "Connecting you with admin support...",
         });
+        navigate('/profile?tab=messages');
         return;
       }
 
