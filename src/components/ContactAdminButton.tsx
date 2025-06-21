@@ -23,29 +23,82 @@ const ContactAdminButton: React.FC = () => {
     }
 
     try {
-      console.log('ContactAdminButton: Starting conversation with admin');
+      console.log('ContactAdminButton: Starting conversation with admin for user:', user.id);
       
-      // Find an admin user
-      const { data: adminProfile, error: adminError } = await supabase
+      // First, let's check all profiles to see what we have
+      const { data: allProfiles, error: debugError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email, role, full_name');
+
+      console.log('ContactAdminButton: All profiles in database:', allProfiles);
+      
+      if (debugError) {
+        console.error('ContactAdminButton: Error fetching all profiles:', debugError);
+      }
+      
+      // Find an admin user - try multiple approaches
+      let adminProfile = null;
+      
+      // First try to find by role
+      const { data: adminByRole, error: roleError } = await supabase
+        .from('profiles')
+        .select('id, email, role, full_name')
         .eq('role', 'admin')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (adminError || !adminProfile) {
-        console.error('ContactAdminButton: No admin found:', adminError);
+      if (roleError) {
+        console.error('ContactAdminButton: Error finding admin by role:', roleError);
+      } else if (adminByRole) {
+        adminProfile = adminByRole;
+        console.log('ContactAdminButton: Found admin by role:', adminProfile);
+      }
+
+      // If no admin found by role, try to find by email (329@riseup.net)
+      if (!adminProfile) {
+        const { data: adminByEmail, error: emailError } = await supabase
+          .from('profiles')
+          .select('id, email, role, full_name')
+          .eq('email', '329@riseup.net')
+          .limit(1)
+          .maybeSingle();
+
+        if (emailError) {
+          console.error('ContactAdminButton: Error finding admin by email:', emailError);
+        } else if (adminByEmail) {
+          adminProfile = adminByEmail;
+          console.log('ContactAdminButton: Found admin by email:', adminProfile);
+          
+          // Update this user's role to admin if it's not already set
+          if (adminProfile.role !== 'admin') {
+            console.log('ContactAdminButton: Updating admin role for user');
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: 'admin' })
+              .eq('id', adminProfile.id);
+              
+            if (updateError) {
+              console.error('ContactAdminButton: Error updating admin role:', updateError);
+            } else {
+              adminProfile.role = 'admin';
+            }
+          }
+        }
+      }
+
+      if (!adminProfile) {
+        console.error('ContactAdminButton: No admin found in any way');
         toast({
           title: "Error",
-          description: "Unable to find admin. Please try again later.",
+          description: "Unable to find admin. Please try again later or contact support directly.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('ContactAdminButton: Found admin:', adminProfile.id);
+      console.log('ContactAdminButton: Using admin profile:', adminProfile);
 
-      // Check if conversation already exists
+      // Check if conversation already exists between user and this admin
       const { data: existingConversation, error: conversationError } = await supabase
         .from('conversations')
         .select('id')
@@ -61,7 +114,7 @@ const ContactAdminButton: React.FC = () => {
 
       // Create new conversation if none exists
       if (!conversationId) {
-        console.log('ContactAdminButton: Creating new conversation');
+        console.log('ContactAdminButton: Creating new admin support conversation');
         
         const { data: newConversation, error: createError } = await supabase
           .from('conversations')
@@ -86,10 +139,12 @@ const ContactAdminButton: React.FC = () => {
 
         conversationId = newConversation.id;
         console.log('ContactAdminButton: Created new conversation:', conversationId);
+      } else {
+        console.log('ContactAdminButton: Using existing conversation:', conversationId);
       }
 
       toast({
-        title: "Conversation started",
+        title: "Conversation ready",
         description: "Redirecting you to chat with admin support.",
       });
 

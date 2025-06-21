@@ -87,70 +87,97 @@ const UserProfile = () => {
     mutationFn: async (requestId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('UserProfile: Deleting property request:', requestId);
+      console.log('UserProfile: Starting deletion process for request:', requestId);
       
-      // First check if this request has been approved and created a property
-      const { data: request, error: requestError } = await supabase
-        .from('property_requests')
-        .select('status, title')
-        .eq('id', requestId)
-        .eq('user_id', user.id)
-        .single();
+      try {
+        // First get the request details
+        const { data: request, error: requestError } = await supabase
+          .from('property_requests')
+          .select('*')
+          .eq('id', requestId)
+          .eq('user_id', user.id)
+          .single();
 
-      if (requestError) {
-        console.error('UserProfile: Error fetching request:', requestError);
-        throw requestError;
-      }
+        if (requestError) {
+          console.error('UserProfile: Error fetching request:', requestError);
+          throw new Error(`Failed to fetch request: ${requestError.message}`);
+        }
 
-      console.log('UserProfile: Found request with status:', request?.status);
+        if (!request) {
+          throw new Error('Property request not found or you do not have permission to delete it');
+        }
 
-      // If the request was approved, also delete the associated property
-      if (request && request.status === 'approved') {
-        console.log('UserProfile: Looking for associated property to delete');
-        
-        const { data: properties, error: propertiesError } = await supabase
-          .from('properties')
-          .select('id')
-          .eq('owner_id', user.id)
-          .eq('title', request.title);
+        console.log('UserProfile: Found request:', request);
 
-        if (propertiesError) {
-          console.error('UserProfile: Error fetching properties:', propertiesError);
-        } else if (properties && properties.length > 0) {
-          console.log('UserProfile: Deleting associated property:', properties[0].id);
+        // If the request was approved, we need to find and delete the associated property
+        if (request.status === 'approved') {
+          console.log('UserProfile: Request was approved, looking for associated property');
           
-          const { error: propertyDeleteError } = await supabase
+          // Try to find the property by matching title and owner
+          const { data: properties, error: propertiesError } = await supabase
             .from('properties')
-            .delete()
-            .eq('id', properties[0].id)
+            .select('id, title, owner_id')
             .eq('owner_id', user.id);
 
-          if (propertyDeleteError) {
-            console.error('UserProfile: Error deleting associated property:', propertyDeleteError);
-            throw propertyDeleteError;
+          if (propertiesError) {
+            console.error('UserProfile: Error fetching user properties:', propertiesError);
+          } else if (properties && properties.length > 0) {
+            console.log('UserProfile: Found user properties:', properties);
+            
+            // Find property that matches the request title
+            const matchingProperty = properties.find(prop => 
+              prop.title?.toLowerCase().trim() === request.title?.toLowerCase().trim()
+            );
+
+            if (matchingProperty) {
+              console.log('UserProfile: Found matching property to delete:', matchingProperty.id);
+              
+              // Delete the property first (due to potential foreign key constraints)
+              const { error: propertyDeleteError } = await supabase
+                .from('properties')
+                .delete()
+                .eq('id', matchingProperty.id)
+                .eq('owner_id', user.id);
+
+              if (propertyDeleteError) {
+                console.error('UserProfile: Error deleting property:', propertyDeleteError);
+                throw new Error(`Failed to delete associated property: ${propertyDeleteError.message}`);
+              }
+              
+              console.log('UserProfile: Successfully deleted associated property');
+            } else {
+              console.log('UserProfile: No matching property found by title');
+            }
           }
         }
+
+        // Now delete the property request
+        console.log('UserProfile: Deleting property request');
+        const { error: deleteError } = await supabase
+          .from('property_requests')
+          .delete()
+          .eq('id', requestId)
+          .eq('user_id', user.id);
+
+        if (deleteError) {
+          console.error('UserProfile: Error deleting property request:', deleteError);
+          throw new Error(`Failed to delete property request: ${deleteError.message}`);
+        }
+
+        console.log('UserProfile: Successfully deleted property request');
+        
+      } catch (error) {
+        console.error('UserProfile: Error in deletion process:', error);
+        throw error;
       }
-
-      // Delete the property request
-      const { error: deleteError } = await supabase
-        .from('property_requests')
-        .delete()
-        .eq('id', requestId)
-        .eq('user_id', user.id);
-
-      if (deleteError) {
-        console.error('UserProfile: Error deleting property request:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('UserProfile: Successfully deleted property request');
     },
     onSuccess: () => {
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['user-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      
       toast({
         title: "Listing deleted",
         description: "Your property listing has been deleted successfully.",
@@ -186,6 +213,7 @@ const UserProfile = () => {
 
   const handleDeleteListing = (requestId: string) => {
     if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      console.log('UserProfile: User confirmed deletion for request:', requestId);
       deletePropertyRequestMutation.mutate(requestId);
     }
   };

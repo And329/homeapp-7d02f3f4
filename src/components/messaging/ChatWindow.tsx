@@ -20,15 +20,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onClose
 }) => {
   const { user, profile } = useAuth();
-  const [newMessage, setNewMessage] = useState('');
   const [userNames, setUserNames] = useState<Record<string, string>>({});
-  const [conversationOtherUser, setConversationOtherUser] = useState<string>('');
+  const [conversationTitle, setConversationTitle] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [newMessage, setNewMessage] = useState('');
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
 
-  // Fetch conversation details and other participant info
+  // Fetch conversation details and determine the title
   useEffect(() => {
     const fetchConversationDetails = async () => {
       if (!conversationId || !user) return;
@@ -36,9 +36,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       console.log('ChatWindow: Fetching conversation details for:', conversationId);
       
       try {
+        // Get conversation details
         const { data: conversation, error } = await supabase
           .from('conversations')
-          .select('participant_1_id, participant_2_id')
+          .select('participant_1_id, participant_2_id, is_admin_support, subject')
           .eq('id', conversationId)
           .single();
 
@@ -46,6 +47,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           console.error('ChatWindow: Error fetching conversation:', error);
           return;
         }
+
+        console.log('ChatWindow: Conversation details:', conversation);
 
         // Determine the other participant
         const otherParticipantId = conversation.participant_1_id === user.id 
@@ -63,31 +66,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         if (profileError) {
           console.error('ChatWindow: Error fetching other participant profile:', profileError);
+          // Fallback to conversation subject or default
+          setConversationTitle(conversation.subject || 'Chat');
           return;
         }
 
         console.log('ChatWindow: Other participant profile:', otherProfile);
 
         // Set the display name based on role and available info
-        let displayName = 'Unknown User';
+        let displayName = 'User';
         if (otherProfile) {
           if (otherProfile.role === 'admin') {
             displayName = 'Admin Support';
-          } else {
-            displayName = otherProfile.full_name || otherProfile.email || 'User';
+          } else if (otherProfile.full_name) {
+            displayName = otherProfile.full_name;
+          } else if (otherProfile.email) {
+            displayName = otherProfile.email;
           }
         }
 
-        setConversationOtherUser(displayName);
-        console.log('ChatWindow: Set conversation other user to:', displayName);
+        setConversationTitle(displayName);
+        console.log('ChatWindow: Set conversation title to:', displayName);
 
       } catch (error) {
         console.error('ChatWindow: Error in fetchConversationDetails:', error);
+        setConversationTitle(otherUserName || 'Chat');
       }
     };
     
     fetchConversationDetails();
-  }, [conversationId, user]);
+  }, [conversationId, user, otherUserName]);
 
   // Fetch user names for message senders
   useEffect(() => {
@@ -98,21 +106,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const namesMap: Record<string, string> = {};
       
       try {
-        const { data: profiles } = await supabase
+        console.log('ChatWindow: Fetching user names for sender IDs:', senderIds);
+        
+        const { data: profiles, error } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
           .in('id', senderIds);
+        
+        if (error) {
+          console.error('ChatWindow: Error fetching user profiles:', error);
+          return;
+        }
+
+        console.log('ChatWindow: Fetched profiles:', profiles);
         
         if (profiles) {
           profiles.forEach(profile => {
             if (profile.role === 'admin') {
               namesMap[profile.id] = 'Admin Support';
+            } else if (profile.full_name) {
+              namesMap[profile.id] = profile.full_name;
+            } else if (profile.email) {
+              namesMap[profile.id] = profile.email;
             } else {
-              namesMap[profile.id] = profile.full_name || profile.email || 'User';
+              namesMap[profile.id] = 'User';
             }
           });
         }
         
+        console.log('ChatWindow: Names map:', namesMap);
         setUserNames(namesMap);
       } catch (error) {
         console.error('ChatWindow: Error fetching user names:', error);
@@ -160,11 +182,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const getUserDisplayName = (senderId: string) => {
     if (senderId === user?.id) {
-      return profile?.full_name || profile?.email || 'You';
+      return 'You';
     }
     
-    // Use fetched user names first, then fallback to the conversation other user name
-    return userNames[senderId] || conversationOtherUser || otherUserName || 'User';
+    return userNames[senderId] || 'User';
   };
 
   if (!conversationId) {
@@ -183,7 +204,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center space-x-2">
             <User className="h-5 w-5" />
-            <span>{conversationOtherUser || otherUserName}</span>
+            <span>{conversationTitle}</span>
           </div>
           {onClose && (
             <Button
