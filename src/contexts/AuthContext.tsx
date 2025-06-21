@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,13 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Create profile - set as admin if this is the designated admin email
         const isAdmin = currentUser?.email === '329@riseup.net';
+        const fullName = currentUser?.user_metadata?.full_name || (isAdmin ? 'Administrator' : null);
         
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
             id: userId,
             email: currentUser?.email || null,
-            full_name: currentUser?.user_metadata?.full_name || 'Administrator',
+            full_name: fullName,
             role: isAdmin ? 'admin' : 'user'
           })
           .select('id, email, full_name, role, profile_picture')
