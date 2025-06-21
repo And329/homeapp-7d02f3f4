@@ -144,8 +144,21 @@ export const useAdminHandlers = (
   };
 
   const handleDelete = async (id: string) => {
+    console.log('useAdminHandlers: Attempting to delete property with ID:', id);
+    
     if (window.confirm('Are you sure you want to delete this property?')) {
-      await deleteMutation.mutateAsync(id);
+      try {
+        console.log('useAdminHandlers: Confirmed deletion, calling mutation...');
+        await deleteMutation.mutateAsync(id);
+        console.log('useAdminHandlers: Property deleted successfully');
+      } catch (error: any) {
+        console.error('useAdminHandlers: Error deleting property:', error);
+        toast({
+          title: "Error",
+          description: `Failed to delete property: ${error.message || 'Please try again.'}`,
+          variant: "destructive",
+        });
+      }
     }
   };
 

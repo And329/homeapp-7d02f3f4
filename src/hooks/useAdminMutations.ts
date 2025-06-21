@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
-import { deleteProperty as deletePropertyAPI } from '@/api/properties';
 
 export const useAdminMutations = (profile: any, propertyRequests: PropertyRequest[]) => {
   const { toast } = useToast();
@@ -80,7 +79,23 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Admin: Deleting property with ID:', id);
-      await deletePropertyAPI(id);
+      
+      // Check if user is admin
+      if (!profile || profile.role !== 'admin') {
+        throw new Error('Only administrators can delete properties');
+      }
+
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Admin: Error deleting property:', error);
+        throw error;
+      }
+
+      console.log('Admin: Property deleted successfully');
     },
     onSuccess: () => {
       toast({
@@ -88,12 +103,13 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         description: "The property has been successfully deleted.",
       });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to delete property:', error);
       toast({
         title: "Error",
-        description: "Failed to delete property. Please try again.",
+        description: `Failed to delete property: ${error.message || 'Please try again.'}`,
         variant: "destructive",
       });
     },
