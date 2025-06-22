@@ -7,7 +7,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import PropertyMap from '@/components/PropertyMap';
 import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
@@ -20,6 +19,7 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -91,7 +91,7 @@ const PropertyDetails = () => {
     });
   };
 
-  // Combine images and videos for the carousel
+  // Combine images and videos for the media gallery
   const allMedia = [
     ...(property.images || []).map(img => ({ type: 'image', src: img })),
     ...(property.videos || []).map(vid => ({ type: 'video', src: vid }))
@@ -102,14 +102,45 @@ const PropertyDetails = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Property Media Carousel */}
+        {/* Property Media Gallery */}
         <div className="mb-8">
           {allMedia.length > 0 ? (
-            <Carousel className="w-full">
-              <CarouselContent>
-                {allMedia.map((media, index) => (
-                  <CarouselItem key={index}>
-                    <div className="relative aspect-video rounded-lg overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Main focused media on the left */}
+              <div className="lg:col-span-3">
+                <div className="relative aspect-video rounded-lg overflow-hidden">
+                  {allMedia[selectedMediaIndex]?.type === 'image' ? (
+                    <img
+                      src={allMedia[selectedMediaIndex].src}
+                      alt={`${property.title} - Main`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <video
+                      src={allMedia[selectedMediaIndex]?.src}
+                      className="w-full h-full object-cover"
+                      controls
+                    />
+                  )}
+                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                    {selectedMediaIndex + 1} / {allMedia.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Thumbnail selection on the right */}
+              <div className="lg:col-span-1">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 max-h-96 overflow-y-auto">
+                  {allMedia.map((media, index) => (
+                    <div
+                      key={index}
+                      className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                        selectedMediaIndex === index 
+                          ? 'border-primary ring-2 ring-primary ring-opacity-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedMediaIndex(index)}
+                    >
                       {media.type === 'image' ? (
                         <img
                           src={media.src}
@@ -117,26 +148,24 @@ const PropertyDetails = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <video
-                          src={media.src}
-                          className="w-full h-full object-cover"
-                          controls
-                        />
+                        <div className="relative w-full h-full bg-gray-200 flex items-center justify-center">
+                          <video
+                            src={media.src}
+                            className="w-full h-full object-cover"
+                            muted
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <div className="w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
+                              <div className="w-0 h-0 border-l-[6px] border-l-gray-700 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-1"></div>
+                            </div>
+                          </div>
+                        </div>
                       )}
-                      <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                        {index + 1} / {allMedia.length}
-                      </div>
                     </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              {allMedia.length > 1 && (
-                <>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </>
-              )}
-            </Carousel>
+                  ))}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="aspect-video rounded-lg bg-gray-200 flex items-center justify-center">
               <Camera className="h-12 w-12 text-gray-400" />
