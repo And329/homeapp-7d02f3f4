@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X, Paperclip, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -196,9 +197,19 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
 
     console.log('EnhancedChatWindow: Starting file upload:', file.name, file.type, file.size);
 
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "File must be smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Create unique file path
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop() || 'file';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
@@ -211,7 +222,12 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
 
       if (uploadError) {
         console.error('EnhancedChatWindow: Upload error:', uploadError);
-        throw uploadError;
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload file: ${uploadError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('EnhancedChatWindow: File uploaded successfully:', data);
@@ -263,9 +279,19 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
 
     console.log('EnhancedChatWindow: Starting photo upload:', file.name, file.type, file.size);
 
+    // Validate file size (max 5MB for images)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Create unique file path
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
@@ -278,7 +304,12 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
 
       if (uploadError) {
         console.error('EnhancedChatWindow: Photo upload error:', uploadError);
-        throw uploadError;
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload photo: ${uploadError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('EnhancedChatWindow: Photo uploaded successfully:', data);
@@ -420,11 +451,11 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message input with enhanced file upload buttons */}
-        <div className="flex-shrink-0 p-4 border-t bg-gradient-to-r from-blue-50 to-green-50">
-          <div className="bg-white rounded-lg p-3 shadow-sm border">
-            {/* File attachment buttons row - More prominent */}
-            <div className="flex gap-3 mb-3 pb-3 border-b border-gray-100">
+        {/* Message input area */}
+        <div className="flex-shrink-0 p-4 border-t bg-gray-50">
+          <div className="bg-white rounded-xl shadow-sm border p-4">
+            {/* File attachment buttons */}
+            <div className="flex gap-2 mb-3">
               <input
                 ref={photoInputRef}
                 type="file"
@@ -437,10 +468,10 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => photoInputRef.current?.click()}
-                className="flex-1 h-12 bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 text-blue-700 font-medium transition-all duration-200 shadow-sm"
+                className="flex-1 bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
                 title="Upload Photo"
               >
-                <Image className="h-5 w-5 mr-2" />
+                <Image className="h-4 w-4 mr-2" />
                 Add Photo
               </Button>
               
@@ -455,15 +486,15 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 h-12 bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 text-green-700 font-medium transition-all duration-200 shadow-sm"
+                className="flex-1 bg-green-50 border-green-200 hover:bg-green-100 text-green-700"
                 title="Upload Document"
               >
-                <Paperclip className="h-5 w-5 mr-2" />
-                Add Document
+                <Paperclip className="h-4 w-4 mr-2" />
+                Add File
               </Button>
             </div>
             
-            {/* Message input row */}
+            {/* Message input */}
             <div className="flex gap-2 items-center">
               <Input
                 value={newMessage}
@@ -471,13 +502,12 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 placeholder="Type your message..."
                 onKeyPress={handleKeyPress}
                 disabled={isSendingMessage}
-                className="text-sm flex-1 border-gray-200 focus:border-primary focus:ring-primary"
+                className="flex-1"
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || isSendingMessage}
                 size="sm"
-                className="h-10 px-4 bg-primary hover:bg-primary/90 text-white font-medium"
               >
                 <Send className="h-4 w-4" />
               </Button>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,43 +85,61 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     e.preventDefault();
     setLoading(true);
 
-    console.log('PropertyForm: Submitting with images:', formData.images.length);
-    console.log('PropertyForm: Images array:', formData.images);
+    console.log('PropertyForm: Submitting with data:', formData);
 
     try {
+      // Validate required fields
+      if (!formData.title.trim()) {
+        throw new Error('Title is required');
+      }
+      if (!formData.price || parseInt(formData.price) <= 0) {
+        throw new Error('Valid price is required');
+      }
+      if (!formData.location.trim()) {
+        throw new Error('Location is required');
+      }
+      if (!formData.emirate) {
+        throw new Error('Emirate is required');
+      }
+      if (!formData.bedrooms || parseInt(formData.bedrooms) < 0) {
+        throw new Error('Valid number of bedrooms is required');
+      }
+      if (!formData.bathrooms || parseInt(formData.bathrooms) < 0) {
+        throw new Error('Valid number of bathrooms is required');
+      }
+
       const dataToSubmit = {
-        title: formData.title,
+        title: formData.title.trim(),
         price: parseInt(formData.price),
-        location: formData.location,
+        location: formData.location.trim(),
         emirate: formData.emirate,
         latitude: formData.latitude,
         longitude: formData.longitude,
         bedrooms: parseInt(formData.bedrooms),
-        bathrooms: parseInt(formData.bathrooms),
+        bathrooms: parseFloat(formData.bathrooms),
         type: formData.type,
-        description: formData.description,
+        description: formData.description.trim(),
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
-        qr_code: formData.qr_code,
+        qr_code: formData.qr_code.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
 
       if (property) {
         console.log('PropertyForm: Updating existing property');
-        const result = await supabase
+        const { error } = await supabase
           .from('properties')
           .update(dataToSubmit)
           .eq('id', property.id);
 
-        if (result.error) {
-          console.error('PropertyForm: Database error:', result.error);
-          throw result.error;
+        if (error) {
+          console.error('PropertyForm: Database update error:', error);
+          throw new Error(`Update failed: ${error.message}`);
         }
       } else {
-        console.log('PropertyForm: Creating new property using API');
-        // Use the createProperty API function which properly sets owner_id
+        console.log('PropertyForm: Creating new property');
         await createProperty(dataToSubmit);
       }
 
@@ -132,11 +151,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       });
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('PropertyForm: Submit error:', error);
+      const errorMessage = error.message || `Failed to ${property ? 'update' : 'create'} property`;
+      
       toast({
         title: "Error",
-        description: `Failed to ${property ? 'update' : 'create'} property. Please try again.`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
