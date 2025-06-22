@@ -19,10 +19,11 @@ const PropertyContactInfo: React.FC<PropertyContactInfoProps> = ({
       <h3 className="text-lg font-medium mb-4">Contact Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700 mb-1">
             Contact Name
           </label>
           <input
+            id="contact_name"
             type="text"
             name="contact_name"
             value={formData.contact_name}
@@ -33,10 +34,11 @@ const PropertyContactInfo: React.FC<PropertyContactInfoProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700 mb-1">
             Contact Email
           </label>
           <input
+            id="contact_email"
             type="email"
             name="contact_email"
             value={formData.contact_email}
@@ -47,10 +49,11 @@ const PropertyContactInfo: React.FC<PropertyContactInfoProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="contact_phone" className="block text-sm font-medium text-gray-700 mb-1">
             Contact Phone
           </label>
           <input
+            id="contact_phone"
             type="tel"
             name="contact_phone"
             value={formData.contact_phone}

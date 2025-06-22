@@ -109,35 +109,44 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
   console.log('PropertyImageUpload render - Current images:', images.length);
 
   return (
-    <div>
+    <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         Property Images
       </label>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-        {images.map((image, index) => (
-          <div key={index} className="relative group">
-            <img
-              src={image}
-              alt={`Property ${index + 1}`}
-              className="w-full h-32 object-cover rounded-lg border border-gray-200"
-              onError={(e) => {
-                console.error('Image failed to load at index:', index);
-                // Remove the broken image
-                removeImage(index);
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => removeImage(index)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-        
-        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors">
+      {/* Images Grid */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+          {images.map((image, index) => (
+            <div key={index} className="relative group aspect-square">
+              <img
+                src={image}
+                alt={`Property ${index + 1}`}
+                className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm group-hover:shadow-md transition-shadow"
+                onError={(e) => {
+                  console.error('Image failed to load at index:', index);
+                  // Remove the broken image
+                  removeImage(index);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Image {index + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Upload Area */}
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+        <label className="cursor-pointer">
           <input
             type="file"
             multiple
@@ -147,19 +156,34 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
             disabled={uploading}
           />
           {uploading ? (
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
+              <span className="text-sm text-gray-600">Uploading images...</span>
+            </div>
           ) : (
-            <>
-              <Plus className="h-6 w-6 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-500">Add Images</span>
-            </>
+            <div className="flex flex-col items-center">
+              <div className="bg-gray-100 rounded-full p-4 mb-3">
+                <Image className="h-8 w-8 text-gray-400" />
+              </div>
+              <span className="text-lg font-medium text-gray-700 mb-1">Add Property Images</span>
+              <span className="text-sm text-gray-500 mb-3">
+                Drag and drop images here, or click to browse
+              </span>
+              <Button type="button" variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Choose Files
+              </Button>
+            </div>
           )}
         </label>
       </div>
       
-      <p className="text-xs text-gray-500">
-        Upload up to 10 images. Max file size: 5MB per image. Supported formats: JPG, PNG, WebP.
-      </p>
+      <div className="text-xs text-gray-500 space-y-1">
+        <p>• Upload up to 10 high-quality images</p>
+        <p>• Maximum file size: 5MB per image</p>
+        <p>• Supported formats: JPG, PNG, WebP</p>
+        <p>• First image will be used as the main property photo</p>
+      </div>
     </div>
   );
 };
