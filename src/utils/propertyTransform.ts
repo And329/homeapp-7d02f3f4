@@ -62,6 +62,6 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     is_approved: dbProperty.is_approved,
     created_at: dbProperty.created_at,
     emirate: dbProperty.emirate || '',
-    qr_code: dbProperty.qr_code || '' // Ensure QR code is properly transformed
+    qr_code: dbProperty.qr_code || ''
   };
 };

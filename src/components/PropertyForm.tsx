@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         title: property.title || '',
         price: property.price?.toString() || '',
         location: property.location || '',
-        emirate: property.emirate || '', // Fix: properly map emirate field
+        emirate: property.emirate || '',
         latitude: property.latitude || property.coordinates?.lat || null,
         longitude: property.longitude || property.coordinates?.lng || null,
         bedrooms: property.bedrooms?.toString() || '',
@@ -53,7 +54,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
         amenities: property.amenities || [],
         images: property.images || [],
-        qr_code: property.qr_code || '', // Fix: properly map QR code field
+        qr_code: property.qr_code || '',
       };
       console.log('PropertyForm: Setting form data from property:', newFormData);
       setFormData(newFormData);
@@ -106,6 +107,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (!formData.bathrooms || parseInt(formData.bathrooms) < 0) {
         throw new Error('Valid number of bathrooms is required');
       }
+      if (!formData.qr_code.trim()) {
+        throw new Error('QR code is required for legal compliance');
+      }
 
       const dataToSubmit = {
         title: formData.title.trim(),
@@ -121,7 +125,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
-        qr_code: formData.qr_code.trim() || null,
+        qr_code: formData.qr_code.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -129,7 +133,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
-        // Convert property ID to string to ensure compatibility
         const propertyId = String(property.id);
         console.log('PropertyForm: Using property ID as string:', propertyId);
 
@@ -329,6 +332,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
           <QRCodeUpload
             qrCode={formData.qr_code}
             onQRCodeChange={handleQRCodeChange}
+            required
           />
 
           <PropertyAmenities

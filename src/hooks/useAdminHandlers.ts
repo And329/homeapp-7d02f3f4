@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -183,8 +182,17 @@ export const useAdminHandlers = (
   const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
     console.log('Handling approval submit:', { requestId, updatedData });
     
+    if (!updatedData.qr_code?.trim()) {
+      toast({
+        title: "QR Code Required",
+        description: "QR code is required for legal compliance before approval.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
-      // First update the property request with the new data
+      // First update the property request with the new data including QR code
       const { error: updateError } = await supabase
         .from('property_requests')
         .update({
@@ -199,7 +207,7 @@ export const useAdminHandlers = (
           description: updatedData.description,
           amenities: updatedData.amenities,
           images: updatedData.images,
-          qr_code: updatedData.qr_code, // Store QR code in property request
+          qr_code: updatedData.qr_code,
         })
         .eq('id', requestId);
 
@@ -220,7 +228,7 @@ export const useAdminHandlers = (
 
       console.log('Request approved successfully, created property ID:', data);
 
-      // Update the created property with the QR code
+      // Update the created property with the QR code to ensure it's properly set
       if (data && updatedData.qr_code) {
         const { error: qrUpdateError } = await supabase
           .from('properties')
@@ -229,7 +237,6 @@ export const useAdminHandlers = (
 
         if (qrUpdateError) {
           console.error('Error updating property QR code:', qrUpdateError);
-          // Don't throw here as the property was created successfully
         } else {
           console.log('QR code updated successfully for property:', data);
         }

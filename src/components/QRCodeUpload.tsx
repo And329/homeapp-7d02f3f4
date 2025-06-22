@@ -1,17 +1,19 @@
 
 import React, { useState } from 'react';
-import { X, Upload, QrCode } from 'lucide-react';
+import { X, QrCode, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 interface QRCodeUploadProps {
   qrCode: string;
   onQRCodeChange: (qrCode: string) => void;
+  required?: boolean;
 }
 
 const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
   qrCode,
   onQRCodeChange,
+  required = false,
 }) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -32,11 +34,11 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
       return;
     }
 
-    // Validate file size (max 2MB for QR codes)
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file size (max 5MB for QR codes)
+    if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "QR code image must be smaller than 2MB.",
+        description: "QR code image must be smaller than 5MB.",
         variant: "destructive",
       });
       return;
@@ -89,15 +91,18 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        QR Code (Required by Law)
+        QR Code Image {required && '*'}
       </label>
+      <p className="text-xs text-gray-500 mb-3">
+        Upload a QR code image for property legal compliance as required by UAE law.
+      </p>
       
       {qrCode ? (
         <div className="relative group mb-4">
           <img
             src={qrCode}
             alt="QR Code"
-            className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+            className="w-32 h-32 object-contain rounded-lg border border-gray-200 bg-white shadow-sm"
           />
           <button
             type="button"
@@ -126,23 +131,6 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
           )}
         </label>
       )}
-      
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Or enter QR code text/URL
-        </label>
-        <input
-          type="text"
-          value={qrCode && !qrCode.startsWith('data:') ? qrCode : ''}
-          onChange={(e) => onQRCodeChange(e.target.value)}
-          placeholder="Enter QR code text or URL"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-        />
-      </div>
-      
-      <p className="text-xs text-gray-500">
-        Upload a QR code image or enter text/URL. Required by UAE property law for legal compliance.
-      </p>
     </div>
   );
 };

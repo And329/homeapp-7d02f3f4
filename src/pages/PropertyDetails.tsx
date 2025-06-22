@@ -1,154 +1,54 @@
-import React, { useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle, QrCode } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import PropertyMap from '../components/PropertyMap';
-import ContactPropertyOwner from '../components/ContactPropertyOwner';
-import PropertyQRCode from '../components/PropertyQRCode';
-import { getPropertyById } from '../data/properties';
-import { updatePropertyOwner } from '../api/properties';
-import { useAuth } from '../contexts/AuthContext';
-import { useFavorites } from '../hooks/useFavorites';
-import { useToast } from '../hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
-interface MapProperty {
-  id: number;
-  title: string;
-  location: string;
-  price: number;
-  type: 'rent' | 'sale';
-  latitude?: number;
-  longitude?: number;
-}
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import PropertyMap from '@/components/PropertyMap';
+import ContactPropertyOwner from '@/components/ContactPropertyOwner';
+import PropertyQRCode from '@/components/PropertyQRCode';
+import { getPropertyById } from '@/api/properties';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PropertyDetails = () => {
-  const { id } = useParams();
-  const [selectedImage, setSelectedImage] = useState(0);
-  const { user } = useAuth();
-  const { isFavorite, toggleFavorite, isToggling } = useFavorites();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  console.log('PropertyDetails: Component mounted with ID:', id);
-  console.log('PropertyDetails: Current user:', user);
+  const { user } = useAuth();
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showContactForm, setShowContactForm] = useState(false);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
-    queryFn: () => {
-      console.log('PropertyDetails: Fetching property with ID:', id);
-      return getPropertyById(id || '');
-    },
+    queryFn: () => getPropertyById(id!),
     enabled: !!id,
   });
-
-  console.log('PropertyDetails: Property data:', property);
-
-  const { data: ownerProfile, isLoading: ownerLoading } = useQuery({
-    queryKey: ['property-owner', property?.owner_id],
-    queryFn: async () => {
-      if (!property?.owner_id) {
-        console.log('PropertyDetails: No owner_id found for property');
-        return null;
-      }
-      
-      console.log('PropertyDetails: Fetching owner profile for ID:', property.owner_id);
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, profile_picture')
-        .eq('id', property.owner_id)
-        .single();
-
-      if (error) {
-        console.error('PropertyDetails: Error fetching owner profile:', error);
-        return null;
-      }
-      
-      console.log('PropertyDetails: Owner profile data:', data);
-      return data;
-    },
-    enabled: !!property?.owner_id,
-  });
-
-  const handleShare = async () => {
-    const url = window.location.href;
-    const title = property?.title || 'Property';
-    const text = `Check out this property: ${title}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text,
-          url,
-        });
-        toast({
-          title: "Shared successfully",
-          description: "Property has been shared.",
-        });
-      } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-          await navigator.clipboard.writeText(url);
-          toast({
-            title: "Link copied",
-            description: "Property link has been copied to clipboard.",
-          });
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast({
-          title: "Link copied",
-          description: "Property link has been copied to clipboard.",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Could not share or copy link.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleFavoriteClick = () => {
-    if (property) {
-      toggleFavorite(property.id);
-    }
-  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading property details...</p>
-          </div>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
         <Footer />
       </div>
     );
   }
 
-  if (error) {
-    console.error('PropertyDetails: Error loading property:', error);
+  if (error || !property) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <p className="text-red-600">Error loading property: {error.message}</p>
-            <button 
-              onClick={() => window.location.href = '/properties'}
-              className="mt-4 bg-primary text-white px-4 py-2 rounded"
-            >
-              Back to Properties
-            </button>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Property Not Found</h1>
+            <p className="text-gray-600 mb-4">The property you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={() => navigate('/')}>Go Back Home</Button>
           </div>
         </div>
         <Footer />
@@ -156,284 +56,247 @@ const PropertyDetails = () => {
     );
   }
 
-  if (!property) {
-    console.log('PropertyDetails: No property found, redirecting to properties page');
-    return <Navigate to="/properties" replace />;
-  }
-
-  const formatPrice = (price: number, type: 'rent' | 'sale') => {
-    if (type === 'rent') {
-      return `AED ${price.toLocaleString()}/month`;
-    }
-    return `AED ${price.toLocaleString()}`;
-  };
-
-  const getCoordinates = () => {
-    console.log('PropertyDetails: Parsing coordinates for property:', property);
-    
-    if (property.coordinates?.lat && property.coordinates?.lng) {
-      console.log('PropertyDetails: Using coordinates object:', property.coordinates);
-      return {
-        lat: property.coordinates.lat,
-        lng: property.coordinates.lng
-      };
-    }
-    
-    if (property.location && typeof property.location === 'string') {
-      const coordMatch = property.location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
-      if (coordMatch) {
-        const lat = parseFloat(coordMatch[1]);
-        const lng = parseFloat(coordMatch[2]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          console.log('PropertyDetails: Parsed coordinates from location string:', { lat, lng });
-          return { lat, lng };
-        }
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: property.title,
+          text: `Check out this property: ${property.title}`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
       }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied!",
+        description: "Property link has been copied to clipboard.",
+      });
     }
-    
-    console.log('PropertyDetails: No valid coordinates found');
-    return null;
   };
 
-  const coords = getCoordinates();
-  const mapProperties: MapProperty[] = coords ? [{
-    id: parseInt(property.id) || 0,
-    title: property.title,
-    location: property.location,
-    price: property.price,
-    type: property.type,
-    latitude: coords.lat,
-    longitude: coords.lng,
-  }] : [];
-
-  const isPropertyFavorited = isFavorite(property.id);
+  const handleAddToFavorites = () => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to add properties to favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Added to favorites!",
+      description: "Property has been added to your favorites.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <section className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-          <div className="lg:col-span-3">
-            <img
-              src={property.images[selectedImage]}
-              alt={property.title}
-              className="w-full h-96 lg:h-[500px] object-cover rounded-xl"
-            />
-          </div>
-          <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto">
-            {property.images.map((image, index) => (
+      <div className="container mx-auto px-4 py-8">
+        {/* Property Images */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <div className="lg:col-span-2">
+            <div className="relative aspect-video rounded-lg overflow-hidden">
               <img
-                key={index}
-                src={image}
-                alt={`${property.title} ${index + 1}`}
-                onClick={() => setSelectedImage(index)}
-                className={`w-20 h-20 lg:w-full lg:h-24 object-cover rounded-lg cursor-pointer flex-shrink-0 ${
-                  selectedImage === index ? 'ring-2 ring-primary' : ''
-                }`}
+                src={property.images[selectedImageIndex]}
+                alt={property.title}
+                className="w-full h-full object-cover"
               />
-            ))}
+              {property.images.length > 1 && (
+                <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                  {selectedImageIndex + 1} / {property.images.length}
+                </div>
+              )}
+            </div>
+            
+            {property.images.length > 1 && (
+              <div className="flex gap-2 mt-4 overflow-x-auto">
+                {property.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Property ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* QR Code Section */}
+          <div className="lg:col-span-1">
+            <PropertyQRCode
+              qrCode={property.qr_code}
+              propertyTitle={property.title}
+              className="h-full"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            {/* Property Header */}
+            <div className="mb-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <MapPin className="h-5 w-5 mr-2" />
-                    <span className="text-lg">{property.location}</span>
+                  <div className="flex items-center text-gray-600 mb-2">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {property.location}
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={handleFavoriteClick}
-                    disabled={isToggling}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isPropertyFavorited 
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Heart className={`h-5 w-5 ${isPropertyFavorited ? 'fill-current' : ''}`} />
-                  </button>
-                  <button 
-                    onClick={handleShare}
-                    className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <Share2 className="h-5 w-5 text-gray-600" />
-                  </button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleAddToFavorites}>
+                    <Heart className="h-4 w-4 mr-1" />
+                    Save
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleShare}>
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Share
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between mb-6">
-                <div className="text-3xl font-bold text-primary">
-                  {formatPrice(property.price, property.type)}
-                </div>
-                <div className="bg-primary text-white px-4 py-2 rounded-full font-semibold">
+              
+              <div className="flex items-center gap-4 mb-4">
+                <span className="text-3xl font-bold text-primary">
+                  AED {property.price.toLocaleString()}
+                  {property.type === 'rent' && '/month'}
+                </span>
+                {property.isHotDeal && (
+                  <Badge variant="destructive">Hot Deal</Badge>
+                )}
+                <Badge variant="outline">
                   For {property.type === 'rent' ? 'Rent' : 'Sale'}
-                </div>
+                </Badge>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Bed className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <div className="font-semibold">{property.bedrooms}</div>
-                  <div className="text-sm text-gray-600">Bedrooms</div>
+              <div className="flex items-center gap-6 text-gray-700">
+                <div className="flex items-center">
+                  <Bed className="h-4 w-4 mr-1" />
+                  {property.bedrooms} Bedrooms
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Bath className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <div className="font-semibold">{property.bathrooms}</div>
-                  <div className="text-sm text-gray-600">Bathrooms</div>
+                <div className="flex items-center">
+                  <Bath className="h-4 w-4 mr-1" />
+                  {property.bathrooms} Bathrooms
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Square className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <div className="font-semibold">{property.area}</div>
-                  <div className="text-sm text-gray-600">Sq Ft</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <Car className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <div className="font-semibold">{property.parking || 'N/A'}</div>
-                  <div className="text-sm text-gray-600">Parking</div>
-                </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <h2 className="text-xl font-semibold mb-3">Description</h2>
-                <p className="text-gray-700 leading-relaxed">{property.description}</p>
-              </div>
-
-              {/* QR Code Section - Simplified and using the new component */}
-              <div className="border-t pt-6 mt-6">
-                <div className="flex items-center mb-4">
-                  <QrCode className="h-6 w-6 text-primary mr-2" />
-                  <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
-                </div>
-                <PropertyQRCode 
-                  qrCode={property.qr_code} 
-                  propertyTitle={property.title}
-                />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {property.amenities.map((amenity, index) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span className="text-sm">{amenity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">Property Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Property Type</span>
-                  <span className="font-semibold">{property.propertyType}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Year Built</span>
-                  <span className="font-semibold">{property.yearBuilt || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Area</span>
-                  <span className="font-semibold">{property.area} sq ft</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-600">Parking Spaces</span>
-                  <span className="font-semibold">{property.parking || 'N/A'}</span>
+                <div className="flex items-center">
+                  <Square className="h-4 w-4 mr-1" />
+                  {property.area} sq ft
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* Description */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Description</h2>
+              <p className="text-gray-700 leading-relaxed">{property.description}</p>
+            </div>
+
+            {/* Amenities */}
+            {property.amenities && property.amenities.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {property.amenities.map((amenity, index) => (
+                    <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
+                      <span className="text-sm">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Map */}
+            <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Location</h2>
-              {coords ? (
+              <div className="h-64 rounded-lg overflow-hidden">
                 <PropertyMap
-                  properties={mapProperties}
-                  selectedPropertyId={parseInt(property.id) || 0}
-                  height="400px"
+                  properties={[{
+                    id: property.id,
+                    title: property.title,
+                    location: property.location,
+                    price: property.price,
+                    type: property.type,
+                    latitude: property.coordinates.lat,
+                    longitude: property.coordinates.lng,
+                  }]}
+                  height="256px"
                 />
-              ) : (
-                <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 font-medium">Location coordinates not available</p>
-                    <p className="text-sm text-gray-500">{property.location}</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {user && property.owner_id ? (
-            property.owner_id === user.id ? (
-              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                <h3 className="text-xl font-semibold mb-4">Your Property</h3>
-                <p className="text-gray-600">This is your own property listing.</p>
-              </div>
-            ) : (
-              <ContactPropertyOwner
-                propertyId={property.id}
-                ownerId={property.owner_id}
-                propertyTitle={property.title}
-                contactName={ownerProfile?.full_name || 'Property Owner'}
-                contactEmail={ownerProfile?.email || ''}
-                ownerProfilePicture={ownerProfile?.profile_picture}
-              />
-            )
-          ) : !user ? (
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-              <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
-              <p className="text-gray-600 mb-4">Please sign in to contact the property owner.</p>
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Sign In to Message
-              </button>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <h3 className="text-xl font-semibold mb-2 text-red-800">Property Owner Missing</h3>
-                <p className="text-red-700 text-sm mb-2">
-                  This property doesn't have an owner assigned. This is a data issue that needs to be fixed.
-                </p>
-                <p className="text-sm text-red-600">
-                  Property ID: {property.id} | Owner ID: {property.owner_id || 'NULL'}
-                </p>
-                {user && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        console.log('Attempting to fix owner_id for property:', property.id);
-                        await updatePropertyOwner(property.id, user.id);
-                        window.location.reload();
-                      } catch (error) {
-                        console.error('Failed to fix owner_id:', error);
-                      }
-                    }}
-                    className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              {/* Contact Card */}
+              <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
+                <h3 className="text-lg font-semibold mb-4">Contact Property Owner</h3>
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full"
+                    onClick={() => setShowContactForm(true)}
                   >
-                    Fix Owner Assignment
-                  </button>
-                )}
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Message
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call Now
+                  </Button>
+                </div>
               </div>
-              <p className="text-gray-600">
-                Unable to display contact information because this property doesn't have an owner assigned in the database.
-              </p>
+
+              {/* Property Details */}
+              <div className="bg-white border rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Property Details</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Property Type</span>
+                    <span className="font-medium">{property.propertyType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Listing Type</span>
+                    <span className="font-medium capitalize">{property.type}</span>
+                  </div>
+                  {property.yearBuilt && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Year Built</span>
+                      <span className="font-medium">{property.yearBuilt}</span>
+                    </div>
+                  )}
+                  {property.parking && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Parking</span>
+                      <span className="font-medium">{property.parking} spaces</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </section>
+      </div>
+
+      {/* Contact Form Modal */}
+      {showContactForm && (
+        <ContactPropertyOwner
+          property={property}
+          onClose={() => setShowContactForm(false)}
+        />
+      )}
 
       <Footer />
     </div>

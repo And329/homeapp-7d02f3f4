@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { X, QrCode, Upload } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
-import DragDropFileUpload from '@/components/DragDropFileUpload';
+import QRCodeUpload from '@/components/QRCodeUpload';
 import { PropertyRequest } from '@/types/propertyRequest';
 
 interface PropertyRequestApprovalFormProps {
@@ -32,13 +32,23 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     description: request.description || '',
     amenities: request.amenities || [],
     images: request.images || [],
-    qr_code: request.qr_code || '', // Use qr_code consistently
+    qr_code: request.qr_code || '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.qr_code.trim()) {
+      toast({
+        title: "QR Code Required",
+        description: "QR code is required for legal compliance before approval.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -54,7 +64,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         description: formData.description,
         amenities: formData.amenities,
         images: formData.images,
-        qr_code: formData.qr_code, // Send as qr_code consistently
+        qr_code: formData.qr_code,
       };
 
       console.log('Submitting approval with data:', updatedData);
@@ -90,13 +100,8 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     setFormData(prev => ({ ...prev, images }));
   };
 
-  const handleQrCodeUpload = (fileData: { url: string; name: string; type: string; size: number }) => {
-    console.log('QR Code uploaded:', fileData);
-    setFormData(prev => ({ ...prev, qr_code: fileData.url }));
-    toast({
-      title: "QR Code uploaded",
-      description: "QR code has been uploaded successfully.",
-    });
+  const handleQRCodeChange = (qrCode: string) => {
+    setFormData(prev => ({ ...prev, qr_code: qrCode }));
   };
 
   return (
@@ -199,29 +204,6 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
                 required
               />
             </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <QrCode className="h-4 w-4 inline mr-2" />
-                QR Code Image
-              </label>
-              <DragDropFileUpload
-                onFileUploaded={handleQrCodeUpload}
-                acceptedTypes="image/*"
-                maxSize={5 * 1024 * 1024} // 5MB
-                uploadType="image"
-              />
-              {formData.qr_code && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <p className="text-sm text-gray-600 mb-2">Current QR Code:</p>
-                  <img
-                    src={formData.qr_code}
-                    alt="QR Code Preview"
-                    className="w-32 h-32 object-contain border rounded-lg bg-white"
-                  />
-                </div>
-              )}
-            </div>
           </div>
 
           <div>
@@ -241,6 +223,12 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
           <PropertyImageUpload
             images={formData.images}
             onImagesChange={handleImagesChange}
+          />
+
+          <QRCodeUpload
+            qrCode={formData.qr_code}
+            onQRCodeChange={handleQRCodeChange}
+            required
           />
 
           <PropertyAmenities
