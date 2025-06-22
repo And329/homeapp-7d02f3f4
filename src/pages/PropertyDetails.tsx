@@ -1,16 +1,16 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode, Play } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import PropertyMap from '@/components/PropertyMap';
 import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
+import PropertyMediaGallery from '@/components/PropertyMediaGallery';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +20,6 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -94,8 +93,8 @@ const PropertyDetails = () => {
 
   // Combine images and videos for the media gallery
   const allMedia = [
-    ...(property.images || []).map(img => ({ type: 'image', src: img })),
-    ...(property.videos || []).map(vid => ({ type: 'video', src: vid }))
+    ...(property.images || []).map(img => ({ type: 'image' as const, src: img })),
+    ...(property.videos || []).map(vid => ({ type: 'video' as const, src: vid }))
   ];
 
   return (
@@ -105,71 +104,7 @@ const PropertyDetails = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Property Media Gallery */}
         <div className="mb-8">
-          {allMedia.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* Main Image */}
-              <div className="lg:col-span-3">
-                <div className="aspect-video rounded-lg overflow-hidden">
-                  {allMedia[selectedMediaIndex]?.type === 'image' ? (
-                    <img
-                      src={allMedia[selectedMediaIndex].src}
-                      alt={`${property.title} - Main`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <video
-                      src={allMedia[selectedMediaIndex]?.src}
-                      className="w-full h-full object-cover"
-                      controls
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Thumbnails */}
-              <div className="lg:col-span-1">
-                <ScrollArea className="h-full">
-                  <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 lg:h-[28rem]">
-                    {allMedia.map((media, index) => (
-                      <div
-                        key={index}
-                        className={`aspect-video rounded cursor-pointer overflow-hidden transition-all duration-200 ${
-                          selectedMediaIndex === index ? 'ring-2 ring-primary' : 'hover:opacity-80'
-                        }`}
-                        onClick={() => setSelectedMediaIndex(index)}
-                      >
-                        {media.type === 'image' ? (
-                          <img
-                            src={media.src}
-                            alt={`${property.title} - ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="relative w-full h-full">
-                            <video
-                              src={media.src}
-                              className="w-full h-full object-cover"
-                              muted
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                              <Play className="w-6 h-6 text-white" fill="currentColor" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            </div>
-          ) : (
-            <div className="aspect-video rounded-lg bg-gray-100 flex items-center justify-center">
-              <div className="text-center">
-                <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No media available</p>
-              </div>
-            </div>
-          )}
+          <PropertyMediaGallery title={property.title} media={allMedia} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -267,61 +202,55 @@ const PropertyDetails = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="space-y-6">
-              {/* Contact Information */}
-              <ContactPropertyOwner
-                propertyId={property.id}
-                ownerId={property.owner_id || ''}
-                propertyTitle={property.title}
-                contactName={property.contact_name || 'Property Owner'}
-                contactEmail={property.contact_email || 'owner@example.com'}
-                contactPhone={property.contact_phone}
-                ownerProfilePicture={property.owner_profile_picture}
-              />
+          <div className="lg:col-span-1 space-y-6">
+            {/* Contact Information */}
+            <ContactPropertyOwner
+              propertyId={property.id}
+              ownerId={property.owner_id || ''}
+              propertyTitle={property.title}
+              contactName={property.contact_name || 'Property Owner'}
+              contactEmail={property.contact_email || 'owner@example.com'}
+              contactPhone={property.contact_phone}
+              ownerProfilePicture={property.owner_profile_picture}
+            />
 
-              {/* Property Details */}
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Property Details</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Property Type</span>
-                    <span className="font-medium">{property.propertyType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Listing Type</span>
-                    <span className="font-medium capitalize">{property.type}</span>
-                  </div>
-                  {property.yearBuilt && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Year Built</span>
-                      <span className="font-medium">{property.yearBuilt}</span>
-                    </div>
-                  )}
-                  {property.parking && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Parking</span>
-                      <span className="font-medium">{property.parking} spaces</span>
-                    </div>
-                  )}
+            {/* Property Details */}
+            <div className="bg-white border rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Property Details</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Property Type</span>
+                  <span className="font-medium">{property.propertyType}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Listing Type</span>
+                  <span className="font-medium capitalize">{property.type}</span>
+                </div>
+                {property.yearBuilt && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Year Built</span>
+                    <span className="font-medium">{property.yearBuilt}</span>
+                  </div>
+                )}
+                {property.parking && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Parking</span>
+                    <span className="font-medium">{property.parking} spaces</span>
+                  </div>
+                )}
               </div>
-
-              {/* QR Code - Small and unobtrusive */}
-              {property.qr_code && (
-                <div className="bg-gray-50 border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Legal Documentation</span>
-                    <QrCode className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <PropertyQRCode
-                    qrCode={property.qr_code}
-                    propertyTitle={property.title}
-                    className="max-w-24"
-                  />
-                </div>
-              )}
             </div>
+
+            {/* QR Code - Small and unobtrusive */}
+            {property.qr_code && (
+              <div className="bg-gray-50 border rounded-lg p-4">
+                <PropertyQRCode
+                  qrCode={property.qr_code}
+                  propertyTitle={property.title}
+                  className="max-w-20 mx-auto"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
 import QRCodeUpload from '@/components/QRCodeUpload';
@@ -32,7 +33,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     is_hot_deal: false,
     amenities: [] as string[],
     images: [] as string[],
+    videos: [] as string[],
     qr_code: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -55,7 +60,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
         amenities: Array.isArray(property.amenities) ? property.amenities : [],
         images: Array.isArray(property.images) && property.images.length > 0 ? property.images : [],
+        videos: Array.isArray(property.videos) && property.videos.length > 0 ? property.videos : [],
         qr_code: property.qr_code || '',
+        contact_name: property.contact_name || '',
+        contact_email: property.contact_email || '',
+        contact_phone: property.contact_phone || '',
       };
       console.log('PropertyForm: Setting form data from property:', newFormData);
       setFormData(newFormData);
@@ -75,7 +84,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: false,
         amenities: [] as string[],
         images: [] as string[],
+        videos: [] as string[],
         qr_code: '',
+        contact_name: '',
+        contact_email: '',
+        contact_phone: '',
       };
       console.log('PropertyForm: Resetting form data for new property');
       setFormData(resetFormData);
@@ -126,7 +139,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
+        videos: formData.videos,
         qr_code: formData.qr_code.trim(),
+        contact_name: formData.contact_name.trim(),
+        contact_email: formData.contact_email.trim(),
+        contact_phone: formData.contact_phone.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -209,6 +226,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, images }));
   };
 
+  const handleVideosChange = (videos: string[]) => {
+    console.log('PropertyForm: Videos changed to:', videos.length, 'videos');
+    setFormData(prev => ({ ...prev, videos }));
+  };
+
   const handleEmirateChange = (emirate: string) => {
     setFormData(prev => ({ ...prev, emirate }));
   };
@@ -219,7 +241,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {property ? 'Edit Property' : 'Add New Property'}
@@ -325,6 +347,54 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
             </div>
           </div>
 
+          {/* Contact Information Section */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Name
+                </label>
+                <input
+                  type="text"
+                  name="contact_name"
+                  value={formData.contact_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Property owner name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Email
+                </label>
+                <input
+                  type="email"
+                  name="contact_email"
+                  value={formData.contact_email}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="contact@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Phone
+                </label>
+                <input
+                  type="tel"
+                  name="contact_phone"
+                  value={formData.contact_phone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="+971 XX XXX XXXX"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
@@ -339,10 +409,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
             />
           </div>
 
-          <PropertyImageUpload
-            images={formData.images}
-            onImagesChange={handleImagesChange}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PropertyImageUpload
+              images={formData.images}
+              onImagesChange={handleImagesChange}
+            />
+
+            <PropertyVideoUpload
+              videos={formData.videos}
+              onVideosChange={handleVideosChange}
+            />
+          </div>
 
           <QRCodeUpload
             qrCode={formData.qr_code}
