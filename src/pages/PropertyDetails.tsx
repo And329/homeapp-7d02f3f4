@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import PropertyMap from '@/components/PropertyMap';
 import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
@@ -127,36 +128,38 @@ const PropertyDetails = () => {
 
               {/* Thumbnails */}
               <div className="lg:col-span-1">
-                <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 max-h-96 overflow-y-auto">
-                  {allMedia.map((media, index) => (
-                    <div
-                      key={index}
-                      className={`aspect-video rounded cursor-pointer overflow-hidden transition-all duration-200 ${
-                        selectedMediaIndex === index ? 'ring-2 ring-primary' : 'hover:opacity-80'
-                      }`}
-                      onClick={() => setSelectedMediaIndex(index)}
-                    >
-                      {media.type === 'image' ? (
-                        <img
-                          src={media.src}
-                          alt={`${property.title} - ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="relative w-full h-full">
-                          <video
+                <ScrollArea className="h-full">
+                  <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 lg:h-[28rem]">
+                    {allMedia.map((media, index) => (
+                      <div
+                        key={index}
+                        className={`aspect-video rounded cursor-pointer overflow-hidden transition-all duration-200 ${
+                          selectedMediaIndex === index ? 'ring-2 ring-primary' : 'hover:opacity-80'
+                        }`}
+                        onClick={() => setSelectedMediaIndex(index)}
+                      >
+                        {media.type === 'image' ? (
+                          <img
                             src={media.src}
+                            alt={`${property.title} - ${index + 1}`}
                             className="w-full h-full object-cover"
-                            muted
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white" fill="currentColor" />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={media.src}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                              <Play className="w-6 h-6 text-white" fill="currentColor" />
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           ) : (
@@ -233,9 +236,9 @@ const PropertyDetails = () => {
             {property.amenities && property.amenities.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {property.amenities.map((amenity, index) => (
-                    <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
+                    <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
                       <span className="text-sm">{amenity}</span>
                     </div>
                   ))}

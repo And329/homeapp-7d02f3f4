@@ -90,6 +90,11 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
   const removeVideo = (index: number) => {
     const newVideos = videos.filter((_, i) => i !== index);
     onVideosChange(newVideos);
+    
+    toast({
+      title: "Video removed",
+      description: "Video has been removed successfully.",
+    });
   };
 
   return (
@@ -105,11 +110,12 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
               src={video}
               className="w-full h-32 object-cover rounded-lg border border-gray-200"
               controls
+              preload="metadata"
             />
             <button
               type="button"
               onClick={() => removeVideo(index)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
             >
               <X className="h-4 w-4" />
             </button>
