@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import PropertyMap from '@/components/PropertyMap';
 import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
@@ -19,8 +20,6 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showContactForm, setShowContactForm] = useState(false);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -92,43 +91,55 @@ const PropertyDetails = () => {
     });
   };
 
+  // Combine images and videos for the carousel
+  const allMedia = [
+    ...(property.images || []).map(img => ({ type: 'image', src: img })),
+    ...(property.videos || []).map(vid => ({ type: 'video', src: vid }))
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Property Images */}
+        {/* Property Media Carousel */}
         <div className="mb-8">
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
-            <img
-              src={property.images[selectedImageIndex]}
-              alt={property.title}
-              className="w-full h-full object-cover"
-            />
-            {property.images.length > 1 && (
-              <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                {selectedImageIndex + 1} / {property.images.length}
-              </div>
-            )}
-          </div>
-          
-          {property.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto">
-              {property.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Property ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+          {allMedia.length > 0 ? (
+            <Carousel className="w-full">
+              <CarouselContent>
+                {allMedia.map((media, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative aspect-video rounded-lg overflow-hidden">
+                      {media.type === 'image' ? (
+                        <img
+                          src={media.src}
+                          alt={`${property.title} - ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={media.src}
+                          className="w-full h-full object-cover"
+                          controls
+                        />
+                      )}
+                      <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        {index + 1} / {allMedia.length}
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {allMedia.length > 1 && (
+                <>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </>
+              )}
+            </Carousel>
+          ) : (
+            <div className="aspect-video rounded-lg bg-gray-200 flex items-center justify-center">
+              <Camera className="h-12 w-12 text-gray-400" />
             </div>
           )}
         </div>
@@ -230,23 +241,16 @@ const PropertyDetails = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
-              {/* Contact Card */}
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Contact Property Owner</h3>
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full"
-                    onClick={() => setShowContactForm(true)}
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call Now
-                  </Button>
-                </div>
-              </div>
+              {/* Contact Information */}
+              <ContactPropertyOwner
+                propertyId={property.id}
+                ownerId={property.owner_id || ''}
+                propertyTitle={property.title}
+                contactName={property.contact_name || 'Property Owner'}
+                contactEmail={property.contact_email || 'owner@example.com'}
+                contactPhone={property.contact_phone}
+                ownerProfilePicture={property.owner_profile_picture}
+              />
 
               {/* Property Details */}
               <div className="bg-white border rounded-lg p-6 shadow-sm">
@@ -293,18 +297,6 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
-
-      {/* Contact Form Modal */}
-      {showContactForm && (
-        <ContactPropertyOwner
-          propertyId={property.id}
-          ownerId={property.owner_id || ''}
-          propertyTitle={property.title}
-          contactName="Property Owner"
-          contactEmail="owner@example.com"
-          contactPhone="N/A"
-        />
-      )}
 
       <Footer />
     </div>
