@@ -20,13 +20,30 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
   const { data: propertyRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ['admin-property-requests'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('property_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('property_requests')
+          .select('*, qr_code')
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          // If qr_code column doesn't exist yet, try without it
+          if (error.message?.includes('qr_code')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('property_requests')
+              .select('*')
+              .order('created_at', { ascending: false });
+            
+            if (fallbackError) throw fallbackError;
+            return (fallbackData || []).map(request => ({ ...request, qr_code: null }));
+          }
+          throw error;
+        }
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching property requests:', error);
+        return [];
+      }
     },
   });
 
@@ -114,14 +131,32 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
     queryFn: async () => {
       if (!selectedChatUserId) return [];
       
-      const { data, error } = await supabase
-        .from('property_requests')
-        .select('*')
-        .eq('user_id', selectedChatUserId)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('property_requests')
+          .select('*, qr_code')
+          .eq('user_id', selectedChatUserId)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          // If qr_code column doesn't exist yet, try without it
+          if (error.message?.includes('qr_code')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('property_requests')
+              .select('*')
+              .eq('user_id', selectedChatUserId)
+              .order('created_at', { ascending: false });
+            
+            if (fallbackError) throw fallbackError;
+            return (fallbackData || []).map(request => ({ ...request, qr_code: null }));
+          }
+          throw error;
+        }
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching user requests:', error);
+        return [];
+      }
     },
     enabled: !!selectedChatUserId,
   });

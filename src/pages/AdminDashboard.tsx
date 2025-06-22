@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,7 +78,7 @@ const AdminDashboard = () => {
     images: Array.isArray(property.images) ? property.images as string[] : []
   }));
 
-  // Transform property requests to match expected types
+  // Transform property requests to match expected types - now with qr_code
   const propertyRequests = rawPropertyRequests.map(request => ({
     ...request,
     type: (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent' as 'rent' | 'sale',
@@ -88,7 +89,8 @@ const AdminDashboard = () => {
       : 'pending' as 'pending' | 'approved' | 'rejected' | 'deletion_requested',
     submitter_type: (request.submitter_type && ['owner', 'broker', 'referral'].includes(request.submitter_type)) 
       ? request.submitter_type as 'owner' | 'broker' | 'referral' 
-      : 'owner' as 'owner' | 'broker' | 'referral'
+      : 'owner' as 'owner' | 'broker' | 'referral',
+    qr_code: request.qr_code || null
   }));
 
   const mutations = useAdminMutations(profile, propertyRequests);
