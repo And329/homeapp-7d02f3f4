@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -14,8 +13,7 @@ import {
   Waves, 
   Shield, 
   Archive, 
-  BookOpen, 
-  Closet 
+  BookOpen 
 } from 'lucide-react';
 
 interface PropertyAmenitiesProps {
@@ -37,7 +35,7 @@ const AMENITIES_LIST = [
   { name: 'Security', icon: Shield },
   { name: 'Storage Room', icon: Archive },
   { name: 'Study Room', icon: BookOpen },
-  { name: 'Walk-in Closet', icon: Closet },
+  { name: 'Walk-in Closet', icon: Archive },
 ];
 
 const PropertyAmenities: React.FC<PropertyAmenitiesProps> = ({
