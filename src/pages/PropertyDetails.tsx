@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -224,7 +223,7 @@ const PropertyDetails = () => {
               <div className="h-64 rounded-lg overflow-hidden">
                 <PropertyMap
                   properties={[{
-                    id: property.id,
+                    id: parseInt(property.id) || 0,
                     title: property.title,
                     location: property.location,
                     price: property.price,
