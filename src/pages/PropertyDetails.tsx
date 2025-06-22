@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode, Play } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -105,15 +104,15 @@ const PropertyDetails = () => {
         {/* Property Media Gallery */}
         <div className="mb-8">
           {allMedia.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Main focused media on the left */}
               <div className="lg:col-span-3">
-                <div className="relative aspect-video rounded-lg overflow-hidden">
+                <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg bg-gray-100">
                   {allMedia[selectedMediaIndex]?.type === 'image' ? (
                     <img
                       src={allMedia[selectedMediaIndex].src}
                       alt={`${property.title} - Main`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300"
                     />
                   ) : (
                     <video
@@ -122,7 +121,7 @@ const PropertyDetails = () => {
                       controls
                     />
                   )}
-                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                  <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
                     {selectedMediaIndex + 1} / {allMedia.length}
                   </div>
                 </div>
@@ -130,14 +129,14 @@ const PropertyDetails = () => {
 
               {/* Thumbnail selection on the right */}
               <div className="lg:col-span-1">
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 max-h-[32rem] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                   {allMedia.map((media, index) => (
                     <div
                       key={index}
-                      className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                      className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
                         selectedMediaIndex === index 
-                          ? 'border-primary ring-2 ring-primary ring-opacity-50' 
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'ring-3 ring-primary ring-offset-2 shadow-lg scale-105' 
+                          : 'ring-1 ring-gray-200 hover:ring-gray-300 hover:shadow-md'
                       }`}
                       onClick={() => setSelectedMediaIndex(index)}
                     >
@@ -145,21 +144,26 @@ const PropertyDetails = () => {
                         <img
                           src={media.src}
                           alt={`${property.title} - ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-all duration-300"
                         />
                       ) : (
-                        <div className="relative w-full h-full bg-gray-200 flex items-center justify-center">
+                        <div className="relative w-full h-full bg-gray-200 flex items-center justify-center group">
                           <video
                             src={media.src}
                             className="w-full h-full object-cover"
                             muted
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                            <div className="w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
-                              <div className="w-0 h-0 border-l-[6px] border-l-gray-700 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-1"></div>
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-300 group-hover:bg-black/50">
+                            <div className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
+                              <Play className="w-5 h-5 text-gray-700 ml-0.5" fill="currentColor" />
                             </div>
                           </div>
                         </div>
+                      )}
+                      
+                      {/* Overlay for non-selected items */}
+                      {selectedMediaIndex !== index && (
+                        <div className="absolute inset-0 bg-black/20 transition-opacity duration-300 hover:bg-black/10" />
                       )}
                     </div>
                   ))}
@@ -167,8 +171,11 @@ const PropertyDetails = () => {
               </div>
             </div>
           ) : (
-            <div className="aspect-video rounded-lg bg-gray-200 flex items-center justify-center">
-              <Camera className="h-12 w-12 text-gray-400" />
+            <div className="aspect-video rounded-xl bg-gray-100 flex items-center justify-center shadow-lg">
+              <div className="text-center">
+                <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No media available</p>
+              </div>
             </div>
           )}
         </div>
