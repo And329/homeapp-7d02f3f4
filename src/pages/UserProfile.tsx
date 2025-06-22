@@ -60,6 +60,9 @@ const UserProfile = () => {
           images: Array.isArray(request.images) ? request.images.filter((img): img is string => typeof img === 'string') : [],
           videos: Array.isArray(request.videos) ? request.videos.filter((video): video is string => typeof video === 'string') : [],
           amenities: Array.isArray(request.amenities) ? request.amenities.filter((amenity): amenity is string => typeof amenity === 'string') : null,
+          submitter_type: (request.submitter_type && ['owner', 'broker', 'referral'].includes(request.submitter_type)) 
+            ? request.submitter_type as 'owner' | 'broker' | 'referral' 
+            : 'owner' as 'owner' | 'broker' | 'referral'
         } as PropertyRequest;
       });
     },
