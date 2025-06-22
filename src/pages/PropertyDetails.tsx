@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -97,50 +98,39 @@ const PropertyDetails = () => {
       
       <div className="container mx-auto px-4 py-8">
         {/* Property Images */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-          <div className="lg:col-span-2">
-            <div className="relative aspect-video rounded-lg overflow-hidden">
-              <img
-                src={property.images[selectedImageIndex]}
-                alt={property.title}
-                className="w-full h-full object-cover"
-              />
-              {property.images.length > 1 && (
-                <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                  {selectedImageIndex + 1} / {property.images.length}
-                </div>
-              )}
-            </div>
-            
+        <div className="mb-8">
+          <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+            <img
+              src={property.images[selectedImageIndex]}
+              alt={property.title}
+              className="w-full h-full object-cover"
+            />
             {property.images.length > 1 && (
-              <div className="flex gap-2 mt-4 overflow-x-auto">
-                {property.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`Property ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                {selectedImageIndex + 1} / {property.images.length}
               </div>
             )}
           </div>
-
-          {/* QR Code Section */}
-          <div className="lg:col-span-1">
-            <PropertyQRCode
-              qrCode={property.qr_code}
-              propertyTitle={property.title}
-              className="h-full"
-            />
-          </div>
+          
+          {property.images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto">
+              {property.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                    selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Property ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -239,9 +229,9 @@ const PropertyDetails = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8">
+            <div className="sticky top-8 space-y-6">
               {/* Contact Card */}
-              <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
+              <div className="bg-white border rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Contact Property Owner</h3>
                 <div className="space-y-3">
                   <Button 
@@ -284,6 +274,21 @@ const PropertyDetails = () => {
                   )}
                 </div>
               </div>
+
+              {/* QR Code - Small and unobtrusive */}
+              {property.qr_code && (
+                <div className="bg-gray-50 border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">Legal Documentation</span>
+                    <QrCode className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <PropertyQRCode
+                    qrCode={property.qr_code}
+                    propertyTitle={property.title}
+                    className="max-w-24"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

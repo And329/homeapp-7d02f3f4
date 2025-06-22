@@ -15,15 +15,12 @@ const PropertyQRCode: React.FC<PropertyQRCodeProps> = ({
 }) => {
   if (!qrCode) {
     return (
-      <div className={`bg-gray-50 p-6 rounded-lg text-center ${className}`}>
-        <div className="text-gray-400 mb-2">
-          <QrCode className="h-16 w-16 mx-auto" />
+      <div className={`text-center ${className}`}>
+        <div className="text-gray-400 mb-1">
+          <QrCode className="h-8 w-8 mx-auto" />
         </div>
-        <p className="text-sm text-gray-600">
-          No QR code available for this property
-        </p>
-        <p className="text-xs text-gray-500 mt-1">
-          QR codes are generated when properties are officially approved
+        <p className="text-xs text-gray-500">
+          No QR code available
         </p>
       </div>
     );
@@ -39,26 +36,24 @@ const PropertyQRCode: React.FC<PropertyQRCodeProps> = ({
   };
 
   return (
-    <div className={`bg-gray-50 p-6 rounded-lg ${className}`}>
-      <div className="text-center">
-        <img
-          src={qrCode}
-          alt={`QR Code for ${propertyTitle}`}
-          className="w-48 h-48 object-contain mx-auto border rounded-lg bg-white shadow-sm"
-          onError={handleImageError}
-        />
-        <div className="hidden text-center">
-          <div className="text-gray-400 mb-2">
-            <QrCode className="h-16 w-16 mx-auto" />
-          </div>
-          <p className="text-sm text-gray-600">
-            QR code could not be loaded
-          </p>
+    <div className={`text-center ${className}`}>
+      <img
+        src={qrCode}
+        alt={`QR Code for ${propertyTitle}`}
+        className="w-16 h-16 object-contain mx-auto border rounded bg-white shadow-sm"
+        onError={handleImageError}
+      />
+      <div className="hidden text-center">
+        <div className="text-gray-400 mb-1">
+          <QrCode className="h-8 w-8 mx-auto" />
         </div>
-        <p className="text-sm text-gray-600 mt-3">
-          Scan this QR code for legal property information and documentation
+        <p className="text-xs text-gray-500">
+          QR code could not be loaded
         </p>
       </div>
+      <p className="text-xs text-gray-500 mt-1">
+        Property documentation
+      </p>
     </div>
   );
 };
