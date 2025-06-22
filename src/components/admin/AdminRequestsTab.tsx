@@ -46,6 +46,15 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     }
   };
 
+  const getSubmitterTypeLabel = (type: string) => {
+    switch (type) {
+      case 'owner': return 'Property Owner';
+      case 'broker': return 'Real Estate Broker';
+      case 'referral': return 'Referral Agent';
+      default: return 'Owner';
+    }
+  };
+
   if (requestsLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -75,6 +84,9 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                 <CardTitle className="text-lg">{request.title}</CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
                   Submitted by: {request.contact_name} ({request.contact_email})
+                </p>
+                <p className="text-sm text-gray-500">
+                  Submitter: {getSubmitterTypeLabel(request.submitter_type || 'owner')}
                 </p>
                 <p className="text-sm text-gray-500">
                   {new Date(request.created_at).toLocaleDateString()}

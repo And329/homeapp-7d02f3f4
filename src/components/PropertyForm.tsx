@@ -31,6 +31,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     is_hot_deal: false,
     amenities: [] as string[],
     images: [] as string[],
+    qr_code: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -52,6 +53,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || false,
         amenities: property.amenities || [],
         images: property.images || [],
+        qr_code: property.qr_code || '',
       };
       console.log('PropertyForm: Setting form data from property, images:', newFormData.images);
       setFormData(newFormData);
@@ -70,7 +72,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         description: '',
         is_hot_deal: false,
         amenities: [] as string[],
-        images: [] as string[], // Make sure this is always empty for new properties
+        images: [] as string[],
+        qr_code: '',
       };
       console.log('PropertyForm: Resetting form data for new property');
       setFormData(resetFormData);
@@ -99,6 +102,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
+        qr_code: formData.qr_code,
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -270,6 +274,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
                 step="0.5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                QR Code (Required by Law)
+              </label>
+              <input
+                type="text"
+                name="qr_code"
+                value={formData.qr_code}
+                onChange={handleChange}
+                placeholder="Enter QR code for legal compliance"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>

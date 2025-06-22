@@ -33,6 +33,7 @@ const propertyRequestSchema = z.object({
   contactName: z.string().min(1, 'Contact name is required'),
   contactEmail: z.string().email('Valid email is required'),
   contactPhone: z.string().optional(),
+  submitterType: z.enum(['owner', 'broker', 'referral']),
 });
 
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
@@ -64,6 +65,7 @@ const ListProperty = () => {
       contactName: '',
       contactEmail: user?.email || '',
       contactPhone: '',
+      submitterType: 'owner',
     },
   });
 
@@ -113,6 +115,7 @@ const ListProperty = () => {
           contact_name: data.contactName,
           contact_email: data.contactEmail,
           contact_phone: data.contactPhone || null,
+          submitter_type: data.submitterType,
         });
 
       if (error) throw error;
@@ -351,7 +354,7 @@ const ListProperty = () => {
                 {/* Contact Information */}
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormField
                       control={form.control}
                       name="contactName"
@@ -388,6 +391,24 @@ const ListProperty = () => {
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
                             <Input type="tel" placeholder="+971 50 123 4567" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="submitterType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>I am the *</FormLabel>
+                          <FormControl>
+                            <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
+                              <option value="owner">Property Owner</option>
+                              <option value="broker">Real Estate Broker</option>
+                              <option value="referral">Referral Agent</option>
+                            </select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

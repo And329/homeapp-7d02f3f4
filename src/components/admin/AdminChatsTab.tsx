@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, User, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminQueries } from '@/hooks/useAdminQueries';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
@@ -25,12 +26,57 @@ const AdminChatsTab: React.FC = () => {
     state
   );
 
-  const {
-    conversations,
-    messages,
-  } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
+  // Fetch all conversations for admin
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+    queryKey: ['admin-conversations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('conversation_details')
+        .select('*')
+        .order('last_message_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching admin conversations:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!profile?.role && profile.role === 'admin',
+  });
+
+  // Fetch messages for selected conversation
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    queryKey: ['admin-messages', state.selectedConversation],
+    queryFn: async () => {
+      if (!state.selectedConversation) return [];
+
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', state.selectedConversation)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!state.selectedConversation,
+  });
 
   const selectedConv = conversations.find(c => c.id === state.selectedConversation);
+
+  if (conversationsLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-gray-600">Loading conversations...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -65,10 +111,10 @@ const AdminChatsTab: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
-                            {conversation.subject}
+                            {conversation.subject || 'Support'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Participants: {conversation.participant_1_id.slice(0, 8)}... & {conversation.participant_2_id.slice(0, 8)}...
+                            {conversation.participant_1_role === 'admin' ? conversation.participant_2_name : conversation.participant_1_name}
                           </p>
                           <p className="text-xs text-gray-400">
                             {new Date(conversation.last_message_at).toLocaleDateString()}
@@ -92,7 +138,12 @@ const AdminChatsTab: React.FC = () => {
                   </div>
                   
                   <div className="flex-1 overflow-y-auto space-y-3 mb-4 p-2 border rounded-lg bg-gray-50">
-                    {messages.length === 0 ? (
+                    {messagesLoading ? (
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                        <p>Loading messages...</p>
+                      </div>
+                    ) : messages.length === 0 ? (
                       <div className="text-center text-gray-500 py-8">
                         <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No messages in this conversation yet</p>
