@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -104,15 +105,15 @@ const PropertyDetails = () => {
         {/* Property Media Gallery */}
         <div className="mb-8">
           {allMedia.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Main focused media on the left */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Main Image */}
               <div className="lg:col-span-3">
-                <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg bg-gray-100">
+                <div className="aspect-video rounded-lg overflow-hidden">
                   {allMedia[selectedMediaIndex]?.type === 'image' ? (
                     <img
                       src={allMedia[selectedMediaIndex].src}
                       alt={`${property.title} - Main`}
-                      className="w-full h-full object-cover transition-opacity duration-300"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <video
@@ -121,22 +122,17 @@ const PropertyDetails = () => {
                       controls
                     />
                   )}
-                  <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
-                    {selectedMediaIndex + 1} / {allMedia.length}
-                  </div>
                 </div>
               </div>
 
-              {/* Thumbnail selection on the right */}
+              {/* Thumbnails */}
               <div className="lg:col-span-1">
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 max-h-[32rem] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
                   {allMedia.map((media, index) => (
                     <div
                       key={index}
-                      className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 ${
-                        selectedMediaIndex === index 
-                          ? 'ring-3 ring-primary ring-offset-2 shadow-lg scale-105' 
-                          : 'ring-1 ring-gray-200 hover:ring-gray-300 hover:shadow-md'
+                      className={`aspect-video rounded cursor-pointer overflow-hidden ${
+                        selectedMediaIndex === index ? 'ring-2 ring-primary' : ''
                       }`}
                       onClick={() => setSelectedMediaIndex(index)}
                     >
@@ -144,26 +140,19 @@ const PropertyDetails = () => {
                         <img
                           src={media.src}
                           alt={`${property.title} - ${index + 1}`}
-                          className="w-full h-full object-cover transition-all duration-300"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="relative w-full h-full bg-gray-200 flex items-center justify-center group">
+                        <div className="relative w-full h-full">
                           <video
                             src={media.src}
                             className="w-full h-full object-cover"
                             muted
                           />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-300 group-hover:bg-black/50">
-                            <div className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
-                              <Play className="w-5 h-5 text-gray-700 ml-0.5" fill="currentColor" />
-                            </div>
+                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <Play className="w-8 h-8 text-white" fill="currentColor" />
                           </div>
                         </div>
-                      )}
-                      
-                      {/* Overlay for non-selected items */}
-                      {selectedMediaIndex !== index && (
-                        <div className="absolute inset-0 bg-black/20 transition-opacity duration-300 hover:bg-black/10" />
                       )}
                     </div>
                   ))}
@@ -171,7 +160,7 @@ const PropertyDetails = () => {
               </div>
             </div>
           ) : (
-            <div className="aspect-video rounded-xl bg-gray-100 flex items-center justify-center shadow-lg">
+            <div className="aspect-video rounded-lg bg-gray-100 flex items-center justify-center">
               <div className="text-center">
                 <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No media available</p>
