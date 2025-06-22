@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X, Paperclip, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -450,11 +451,11 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message input area - FIXED AND ALWAYS VISIBLE */}
+        {/* Message input area - ALWAYS VISIBLE WITH PROMINENT BUTTONS */}
         <div className="flex-shrink-0 border-t bg-white p-4">
-          <div className="space-y-3">
-            {/* File attachment buttons row - ALWAYS VISIBLE */}
-            <div className="flex gap-2">
+          <div className="space-y-4">
+            {/* File attachment buttons - ALWAYS VISIBLE AND PROMINENT */}
+            <div className="flex justify-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <input
                 ref={photoInputRef}
                 type="file"
@@ -465,12 +466,12 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={() => photoInputRef.current?.click()}
-                className="flex items-center gap-2 bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700 px-3 py-2"
+                className="flex items-center gap-2 bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-700 px-6 py-3 text-base font-medium"
               >
-                <Image className="h-4 w-4" />
-                <span className="text-sm">Photo</span>
+                <Image className="h-5 w-5" />
+                <span>Add Photo</span>
               </Button>
               
               <input
@@ -482,32 +483,32 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 bg-green-50 border-green-200 hover:bg-green-100 text-green-700 px-3 py-2"
+                className="flex items-center gap-2 bg-green-50 border-green-300 hover:bg-green-100 text-green-700 px-6 py-3 text-base font-medium"
               >
-                <Paperclip className="h-4 w-4" />
-                <span className="text-sm">File</span>
+                <Paperclip className="h-5 w-5" />
+                <span>Add File</span>
               </Button>
             </div>
             
             {/* Message input row */}
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-3 items-end">
               <Input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type your message..."
                 onKeyPress={handleKeyPress}
                 disabled={isSendingMessage}
-                className="flex-1"
+                className="flex-1 text-base py-3"
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || isSendingMessage}
-                size="sm"
-                className="px-4"
+                size="default"
+                className="px-6 py-3"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               </Button>
             </div>
           </div>
