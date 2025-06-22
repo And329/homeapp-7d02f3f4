@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, QrCode } from 'lucide-react';
+import { X, QrCode, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
@@ -31,7 +31,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     description: request.description || '',
     amenities: request.amenities || [],
     images: request.images || [],
-    qrCode: '', // Add QR code field
+    qrCodeImage: '', // Changed to qrCodeImage for photo
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -53,7 +53,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         description: formData.description,
         amenities: formData.amenities,
         images: formData.images,
-        qrCode: formData.qrCode,
+        qrCode: formData.qrCodeImage, // Send as qrCode for backend compatibility
       };
 
       console.log('Submitting approval with data:', updatedData);
@@ -87,6 +87,15 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
 
   const handleImagesChange = (images: string[]) => {
     setFormData(prev => ({ ...prev, images }));
+  };
+
+  const handleQrCodeImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create a URL for the uploaded image
+      const imageUrl = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, qrCodeImage: imageUrl }));
+    }
   };
 
   return (
@@ -193,16 +202,33 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <QrCode className="h-4 w-4 inline mr-2" />
-                QR Code
+                QR Code Image
               </label>
-              <input
-                type="text"
-                name="qrCode"
-                value={formData.qrCode}
-                onChange={handleChange}
-                placeholder="Enter QR code data or URL"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleQrCodeImageUpload}
+                  className="hidden"
+                  id="qrCodeImageUpload"
+                />
+                <label
+                  htmlFor="qrCodeImageUpload"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload QR Code Image
+                </label>
+                {formData.qrCodeImage && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.qrCodeImage}
+                      alt="QR Code Preview"
+                      className="w-32 h-32 object-contain border rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
