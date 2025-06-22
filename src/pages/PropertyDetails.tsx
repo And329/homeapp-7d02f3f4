@@ -71,7 +71,7 @@ const PropertyDetails = () => {
     enabled: !!property?.owner_id,
   });
 
-  // Fetch QR code for the property - Updated query to be more flexible
+  // Fetch QR code for the property - Updated query to handle missing column gracefully
   const { data: propertyRequest, isLoading: qrLoading } = useQuery({
     queryKey: ['property-qr', property?.id, property?.title],
     queryFn: async () => {
@@ -79,43 +79,48 @@ const PropertyDetails = () => {
       
       console.log('PropertyDetails: Fetching QR code for property:', property.title);
       
-      // Try multiple approaches to find the property request
-      let { data, error } = await supabase
-        .from('property_requests')
-        .select('qr_code, id')
-        .eq('title', property.title)
-        .eq('status', 'approved')
-        .maybeSingle();
-
-      // If not found by title, try by similar price range
-      if (!data && property.price) {
-        const priceRange = property.price * 0.1; // 10% tolerance
-        const { data: dataByPrice, error: priceError } = await supabase
+      try {
+        // Try to fetch QR code, but handle case where column might not exist yet
+        const { data, error } = await supabase
           .from('property_requests')
           .select('qr_code, id, title, price')
-          .gte('price', property.price - priceRange)
-          .lte('price', property.price + priceRange)
+          .eq('title', property.title)
           .eq('status', 'approved')
-          .limit(5);
+          .maybeSingle();
 
-        if (dataByPrice && dataByPrice.length > 0) {
-          // Find the best match by title similarity
-          const bestMatch = dataByPrice.find(req => 
-            req.title.toLowerCase().includes(property.title.toLowerCase()) ||
-            property.title.toLowerCase().includes(req.title.toLowerCase())
-          ) || dataByPrice[0];
-          
-          data = bestMatch;
+        if (error) {
+          console.error('Error fetching QR code:', error);
+          return null;
         }
-      }
+        
+        // If not found by title, try by similar price range
+        if (!data && property.price) {
+          const priceRange = property.price * 0.1; // 10% tolerance
+          const { data: dataByPrice, error: priceError } = await supabase
+            .from('property_requests')
+            .select('qr_code, id, title, price')
+            .gte('price', property.price - priceRange)
+            .lte('price', property.price + priceRange)
+            .eq('status', 'approved')
+            .limit(5);
 
-      if (error && !data) {
-        console.error('Error fetching QR code:', error);
+          if (dataByPrice && dataByPrice.length > 0) {
+            // Find the best match by title similarity
+            const bestMatch = dataByPrice.find(req => 
+              req.title?.toLowerCase().includes(property.title.toLowerCase()) ||
+              property.title.toLowerCase().includes(req.title?.toLowerCase() || '')
+            ) || dataByPrice[0];
+            
+            return bestMatch;
+          }
+        }
+        
+        console.log('PropertyDetails: QR code data:', data);
+        return data;
+      } catch (error) {
+        console.error('PropertyDetails: Error in QR code query:', error);
         return null;
       }
-      
-      console.log('PropertyDetails: QR code data:', data);
-      return data;
     },
     enabled: !!property,
   });
@@ -355,7 +360,7 @@ const PropertyDetails = () => {
                 <p className="text-gray-700 leading-relaxed">{property.description}</p>
               </div>
 
-              {/* QR Code Section - Enhanced display */}
+              {/* QR Code Section - Enhanced display with better error handling */}
               {qrLoading ? (
                 <div className="border-t pt-6 mt-6">
                   <div className="flex items-center mb-4">

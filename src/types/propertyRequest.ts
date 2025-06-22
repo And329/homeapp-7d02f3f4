@@ -24,4 +24,5 @@ export interface PropertyRequest {
   updated_at: string | null;
   approved_by: string | null;
   approved_at: string | null;
+  qr_code: string | null;
 }
