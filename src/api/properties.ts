@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -8,7 +7,15 @@ export const getProperties = async (): Promise<Property[]> => {
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*, owner_id')
+    .select(`
+      *, 
+      owner_id,
+      profiles!properties_owner_id_fkey (
+        full_name,
+        email,
+        profile_picture
+      )
+    `)
     .eq('is_approved', true);
 
   if (error) {
@@ -21,7 +28,17 @@ export const getProperties = async (): Promise<Property[]> => {
     return [];
   }
 
-  const transformedProperties: Property[] = data.map(transformDatabaseProperty);
+  const transformedProperties: Property[] = data.map(prop => {
+    const transformed = transformDatabaseProperty(prop);
+    // Add owner profile data if available
+    if (prop.profiles) {
+      transformed.contact_name = prop.profiles.full_name || 'Property Owner';
+      transformed.contact_email = prop.profiles.email || '';
+      transformed.owner_profile_picture = prop.profiles.profile_picture || '';
+    }
+    return transformed;
+  });
+  
   console.log('API: Transformed properties:', transformedProperties);
   return transformedProperties;
 };
@@ -31,7 +48,15 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*, owner_id')
+    .select(`
+      *, 
+      owner_id,
+      profiles!properties_owner_id_fkey (
+        full_name,
+        email,
+        profile_picture
+      )
+    `)
     .eq('id', id)
     .maybeSingle();
 
@@ -46,7 +71,16 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   }
 
   console.log('API: Found property:', data);
-  return transformDatabaseProperty(data);
+  const transformed = transformDatabaseProperty(data);
+  
+  // Add owner profile data if available
+  if (data.profiles) {
+    transformed.contact_name = data.profiles.full_name || 'Property Owner';
+    transformed.contact_email = data.profiles.email || '';
+    transformed.owner_profile_picture = data.profiles.profile_picture || '';
+  }
+  
+  return transformed;
 };
 
 export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Property[]> => {
