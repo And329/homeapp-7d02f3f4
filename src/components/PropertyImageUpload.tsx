@@ -14,6 +14,7 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
   onImagesChange,
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +105,13 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
     const newImages = images.filter((_, i) => i !== index);
     console.log('Images after removal:', newImages.length);
     onImagesChange(newImages);
+    
+    // Adjust selected index if needed
+    if (selectedImageIndex >= newImages.length && newImages.length > 0) {
+      setSelectedImageIndex(newImages.length - 1);
+    } else if (newImages.length === 0) {
+      setSelectedImageIndex(0);
+    }
   };
 
   console.log('PropertyImageUpload render - Current images:', images.length);
@@ -114,31 +122,67 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
         Property Images
       </label>
       
-      {/* Images Grid */}
+      {/* Main Image Display */}
       {images.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+        <div className="mb-6">
+          <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
+            <img
+              src={images[selectedImageIndex]}
+              alt={`Property ${selectedImageIndex + 1}`}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image failed to load at index:', selectedImageIndex);
+                // Remove the broken image
+                removeImage(selectedImageIndex);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => removeImage(selectedImageIndex)}
+              className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg hover:scale-110 transition-all duration-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="absolute bottom-3 left-3 bg-black bg-opacity-50 text-white text-sm px-3 py-1 rounded">
+              {selectedImageIndex + 1} of {images.length}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Thumbnail Images Grid */}
+      {images.length > 1 && (
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mb-4">
           {images.map((image, index) => (
-            <div key={index} className="relative group aspect-square">
+            <div 
+              key={index} 
+              className={`relative group aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                selectedImageIndex === index 
+                  ? 'border-primary ring-2 ring-primary ring-opacity-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setSelectedImageIndex(index)}
+            >
               <img
                 src={image}
                 alt={`Property ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm group-hover:shadow-md transition-shadow"
+                className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error('Image failed to load at index:', index);
+                  console.error('Thumbnail failed to load at index:', index);
                   // Remove the broken image
                   removeImage(index);
                 }}
               />
               <button
                 type="button"
-                onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage(index);
+                }}
+                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
               >
                 <X className="h-3 w-3" />
               </button>
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Image {index + 1}
-              </div>
             </div>
           ))}
         </div>
