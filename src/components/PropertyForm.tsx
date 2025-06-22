@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
+import QRCodeUpload from '@/components/QRCodeUpload';
 import { createProperty } from '@/api/properties';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -170,6 +170,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, emirate }));
   };
 
+  const handleQRCodeChange = (qrCode: string) => {
+    setFormData(prev => ({ ...prev, qr_code: qrCode }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -276,20 +280,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
                 required
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                QR Code (Required by Law)
-              </label>
-              <input
-                type="text"
-                name="qr_code"
-                value={formData.qr_code}
-                onChange={handleChange}
-                placeholder="Enter QR code for legal compliance"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-            </div>
           </div>
 
           <div>
@@ -309,6 +299,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
           <PropertyImageUpload
             images={formData.images}
             onImagesChange={handleImagesChange}
+          />
+
+          <QRCodeUpload
+            qrCode={formData.qr_code}
+            onQRCodeChange={handleQRCodeChange}
           />
 
           <PropertyAmenities

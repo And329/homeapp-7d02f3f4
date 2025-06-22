@@ -194,18 +194,27 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    console.log('EnhancedChatWindow: Starting file upload:', file.name, file.type, file.size);
+
     try {
       // Create unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      console.log('EnhancedChatWindow: Uploading to path:', filePath);
+
       // Upload file to Supabase storage
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('EnhancedChatWindow: Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('EnhancedChatWindow: File uploaded successfully:', data);
 
       // Send message with file metadata
       await sendMessage({
@@ -216,8 +225,15 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
         file_size: file.size
       });
 
+      console.log('EnhancedChatWindow: Message with file sent successfully');
+
+      toast({
+        title: "File uploaded",
+        description: "File attached to message successfully.",
+      });
+
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('EnhancedChatWindow: Error uploading file:', error);
       toast({
         title: "Error",
         description: "Failed to upload file. Please try again.",
@@ -245,18 +261,27 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
       return;
     }
 
+    console.log('EnhancedChatWindow: Starting photo upload:', file.name, file.type, file.size);
+
     try {
       // Create unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      console.log('EnhancedChatWindow: Uploading photo to path:', filePath);
+
       // Upload file to Supabase storage
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('EnhancedChatWindow: Photo upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('EnhancedChatWindow: Photo uploaded successfully:', data);
 
       // Send message with image metadata
       await sendMessage({
@@ -267,8 +292,15 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
         file_size: file.size
       });
 
+      console.log('EnhancedChatWindow: Message with photo sent successfully');
+
+      toast({
+        title: "Photo uploaded",
+        description: "Photo attached to message successfully.",
+      });
+
     } catch (error) {
-      console.error('Error uploading photo:', error);
+      console.error('EnhancedChatWindow: Error uploading photo:', error);
       toast({
         title: "Error",
         description: "Failed to upload photo. Please try again.",
