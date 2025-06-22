@@ -59,12 +59,13 @@
     "fileShared": "File shared",
     "downloading": "Downloading...",
     "download": "Download",
-    "administrator": "Administrator",
+    "support": "Support",
     "you": "You",
     "selectConversation": "Select a conversation to start messaging",
     "loadingMessages": "Loading messages...",
     "noMessages": "No messages yet",
-    "startConversation": "Start the conversation by sending a message below"
+    "startConversation": "Start the conversation by sending a message below",
+    "propertySupport": "Property Support"
   },
   "admin": {
     "contactInquiries": "Contact Inquiries",

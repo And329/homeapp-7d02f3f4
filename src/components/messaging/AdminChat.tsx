@@ -18,11 +18,11 @@ const AdminChat: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <span>Administrator</span>
+            <span>Support</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600 mb-4">Please sign in to view your admin support conversations.</p>
+          <p className="text-gray-600 mb-4">Please sign in to view your support conversations.</p>
         </CardContent>
       </Card>
     );
@@ -36,12 +36,12 @@ const AdminChat: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageCircle className="h-6 w-6 text-primary" />
-              <span>Admin Support Dashboard</span>
+              <span>Support Dashboard</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 font-medium mb-2">Administrator View</p>
+              <p className="text-blue-800 font-medium mb-2">Support Staff View</p>
               <p className="text-blue-700 text-sm">
                 You can view and respond to user conversations below. Users contact you through property request replies.
               </p>
@@ -60,13 +60,13 @@ const AdminChat: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <span>Admin Support</span>
+            <span>Support</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="bg-blue-50 rounded-lg p-4">
             <p className="text-gray-700">
-              Your conversations with admin support. Admin may contact you regarding your property requests.
+              Your conversations with support team. Support may contact you regarding your property requests.
             </p>
           </div>
         </CardContent>

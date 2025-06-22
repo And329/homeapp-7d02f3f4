@@ -23,7 +23,7 @@ export const useAdminConversations = () => {
         throw new Error('Only administrators can create conversations');
       }
 
-      console.log('useAdminConversations: Creating admin conversation for request:', requestId, 'with user:', userId);
+      console.log('useAdminConversations: Creating support conversation for request:', requestId, 'with user:', userId);
 
       // Use the create_admin_conversation function
       const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
@@ -34,11 +34,11 @@ export const useAdminConversations = () => {
       });
 
       if (error) {
-        console.error('useAdminConversations: Error creating admin conversation:', error);
+        console.error('useAdminConversations: Error creating support conversation:', error);
         throw error;
       }
 
-      console.log('useAdminConversations: Created admin conversation:', conversationId);
+      console.log('useAdminConversations: Created support conversation:', conversationId);
       return conversationId;
     },
     onSuccess: () => {
@@ -46,7 +46,7 @@ export const useAdminConversations = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-conversations'] });
     },
     onError: (error) => {
-      console.error('useAdminConversations: Failed to create admin conversation:', error);
+      console.error('useAdminConversations: Failed to create support conversation:', error);
       toast({
         title: "Error",
         description: "Failed to start conversation. Please try again.",

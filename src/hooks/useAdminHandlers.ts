@@ -39,6 +39,7 @@ export const useAdminHandlers = (
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-property-requests'] });
     } catch (error: any) {
       console.error('useAdminHandlers: Failed to approve request:', error);
       toast({
@@ -71,6 +72,7 @@ export const useAdminHandlers = (
       });
 
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-property-requests'] });
     } catch (error: any) {
       console.error('useAdminHandlers: Failed to reject request:', error);
       toast({
@@ -133,8 +135,24 @@ export const useAdminHandlers = (
     
     try {
       await approveDeletion(requestId);
+      
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      
+      toast({
+        title: "Deletion approved",
+        description: "The property deletion has been approved and processed.",
+      });
     } catch (error: any) {
       console.error('useAdminHandlers: Failed to approve deletion:', error);
+      toast({
+        title: "Error",
+        description: `Failed to approve deletion: ${error.message || 'Please try again.'}`,
+        variant: "destructive",
+      });
     }
   };
 

@@ -21,7 +21,7 @@ const MessagingInterface: React.FC = () => {
   };
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
-  const otherUserName = selectedConversationData ? 'Administrator' : '';
+  const otherUserName = selectedConversationData ? 'Support' : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[70vh] min-h-[500px] max-h-[800px]">
