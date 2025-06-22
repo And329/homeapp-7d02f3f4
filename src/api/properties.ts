@@ -9,8 +9,7 @@ export const getProperties = async (): Promise<Property[]> => {
     .from('properties')
     .select(`
       *, 
-      owner_id,
-      profiles!properties_owner_id_fkey (
+      profiles (
         full_name,
         email,
         profile_picture
@@ -50,8 +49,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
     .from('properties')
     .select(`
       *, 
-      owner_id,
-      profiles!properties_owner_id_fkey (
+      profiles (
         full_name,
         email,
         profile_picture
