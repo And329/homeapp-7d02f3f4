@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -109,6 +110,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     description: propertyData.description,
     price: propertyData.price,
     location: propertyData.location,
+    emirate: propertyData.emirate,
     latitude: propertyData.latitude,
     longitude: propertyData.longitude,
     bedrooms: propertyData.bedrooms,

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, X, Paperclip, Image } from 'lucide-react';
+import { Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import FileAttachment from '../FileAttachment';
+import DragDropFileUpload from '../DragDropFileUpload';
 
 interface EnhancedChatWindowProps {
   conversationId: string;
@@ -30,8 +30,6 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [newMessage, setNewMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
 
@@ -191,157 +189,57 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    console.log('EnhancedChatWindow: Starting file upload:', file.name, file.type, file.size);
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "File must be smaller than 10MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleFileUploaded = async (fileData: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }) => {
     try {
-      // Create unique file path
-      const fileExt = file.name.split('.').pop() || 'file';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      console.log('EnhancedChatWindow: Uploading to path:', filePath);
-
-      // Upload file to Supabase storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('chat-attachments')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('EnhancedChatWindow: Upload error:', uploadError);
-        toast({
-          title: "Upload failed",
-          description: `Failed to upload file: ${uploadError.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('EnhancedChatWindow: File uploaded successfully:', data);
-
-      // Send message with file metadata
       await sendMessage({
-        content: `📎 ${file.name}`,
-        file_url: filePath,
-        file_name: file.name,
-        file_type: file.type,
-        file_size: file.size
+        content: `📎 ${fileData.name}`,
+        file_url: fileData.url,
+        file_name: fileData.name,
+        file_type: fileData.type,
+        file_size: fileData.size
       });
 
       console.log('EnhancedChatWindow: Message with file sent successfully');
 
-      toast({
-        title: "File uploaded",
-        description: "File attached to message successfully.",
-      });
-
     } catch (error) {
-      console.error('EnhancedChatWindow: Error uploading file:', error);
+      console.error('EnhancedChatWindow: Error sending file message:', error);
       toast({
         title: "Error",
-        description: "Failed to upload file. Please try again.",
+        description: "Failed to send file. Please try again.",
         variant: "destructive",
       });
-    }
-
-    // Reset file input
-    if (event.target) {
-      event.target.value = '';
     }
   };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate that it's an image
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Error",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('EnhancedChatWindow: Starting photo upload:', file.name, file.type, file.size);
-
-    // Validate file size (max 5MB for images)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Image must be smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleImageUploaded = async (fileData: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }) => {
     try {
-      // Create unique file path
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      console.log('EnhancedChatWindow: Uploading photo to path:', filePath);
-
-      // Upload file to Supabase storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('chat-attachments')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('EnhancedChatWindow: Photo upload error:', uploadError);
-        toast({
-          title: "Upload failed",
-          description: `Failed to upload photo: ${uploadError.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('EnhancedChatWindow: Photo uploaded successfully:', data);
-
-      // Send message with image metadata
       await sendMessage({
-        content: `📷 ${file.name}`,
-        file_url: filePath,
-        file_name: file.name,
-        file_type: file.type,
-        file_size: file.size
+        content: `📷 ${fileData.name}`,
+        file_url: fileData.url,
+        file_name: fileData.name,
+        file_type: fileData.type,
+        file_size: fileData.size
       });
 
-      console.log('EnhancedChatWindow: Message with photo sent successfully');
-
-      toast({
-        title: "Photo uploaded",
-        description: "Photo attached to message successfully.",
-      });
+      console.log('EnhancedChatWindow: Message with image sent successfully');
 
     } catch (error) {
-      console.error('EnhancedChatWindow: Error uploading photo:', error);
+      console.error('EnhancedChatWindow: Error sending image message:', error);
       toast({
         title: "Error",
-        description: "Failed to upload photo. Please try again.",
+        description: "Failed to send image. Please try again.",
         variant: "destructive",
       });
-    }
-
-    // Reset file input
-    if (event.target) {
-      event.target.value = '';
     }
   };
 
@@ -451,45 +349,23 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message input area - ALWAYS VISIBLE WITH PROMINENT BUTTONS */}
+        {/* Message input area with drag-and-drop */}
         <div className="flex-shrink-0 border-t bg-white p-4">
           <div className="space-y-4">
-            {/* File attachment buttons - ALWAYS VISIBLE AND PROMINENT */}
-            <div className="flex justify-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
+            {/* Drag and drop file upload areas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DragDropFileUpload
+                onFileUploaded={handleImageUploaded}
+                acceptedTypes="image/*"
+                maxSize={5 * 1024 * 1024} // 5MB for images
+                uploadType="image"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={() => photoInputRef.current?.click()}
-                className="flex items-center gap-2 bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-700 px-6 py-3 text-base font-medium"
-              >
-                <Image className="h-5 w-5" />
-                <span>Add Photo</span>
-              </Button>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
+              <DragDropFileUpload
+                onFileUploaded={handleFileUploaded}
+                acceptedTypes="*/*"
+                maxSize={10 * 1024 * 1024} // 10MB for files
+                uploadType="file"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 bg-green-50 border-green-300 hover:bg-green-100 text-green-700 px-6 py-3 text-base font-medium"
-              >
-                <Paperclip className="h-5 w-5" />
-                <span>Add File</span>
-              </Button>
             </div>
             
             {/* Message input row */}

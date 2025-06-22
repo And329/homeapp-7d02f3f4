@@ -60,6 +60,8 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     parking: dbProperty.parking,
     owner_id: dbProperty.owner_id,
     is_approved: dbProperty.is_approved,
-    created_at: dbProperty.created_at
+    created_at: dbProperty.created_at,
+    emirate: dbProperty.emirate || '',
+    qr_code: dbProperty.qr_code || ''
   };
 };

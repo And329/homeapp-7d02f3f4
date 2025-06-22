@@ -43,19 +43,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         title: property.title || '',
         price: property.price?.toString() || '',
         location: property.location || '',
-        emirate: property.emirate || '',
-        latitude: property.latitude || null,
-        longitude: property.longitude || null,
+        emirate: property.emirate || '', // Fix: properly map emirate field
+        latitude: property.latitude || property.coordinates?.lat || null,
+        longitude: property.longitude || property.coordinates?.lng || null,
         bedrooms: property.bedrooms?.toString() || '',
         bathrooms: property.bathrooms?.toString() || '',
         type: property.type || 'rent',
         description: property.description || '',
-        is_hot_deal: property.is_hot_deal || false,
+        is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
         amenities: property.amenities || [],
         images: property.images || [],
-        qr_code: property.qr_code || '',
+        qr_code: property.qr_code || '', // Fix: properly map QR code field
       };
-      console.log('PropertyForm: Setting form data from property, images:', newFormData.images);
+      console.log('PropertyForm: Setting form data from property:', newFormData);
       setFormData(newFormData);
     } else {
       // Reset form for new property
@@ -129,16 +129,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
-        // Validate property ID is a valid UUID
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(property.id.toString())) {
-          throw new Error('Invalid property ID format');
-        }
+        // Convert property ID to string to ensure compatibility
+        const propertyId = String(property.id);
+        console.log('PropertyForm: Using property ID as string:', propertyId);
 
         const { error } = await supabase
           .from('properties')
           .update(dataToSubmit)
-          .eq('id', property.id);
+          .eq('id', propertyId);
 
         if (error) {
           console.error('PropertyForm: Database update error:', error);

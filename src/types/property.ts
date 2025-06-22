@@ -23,4 +23,6 @@ export interface Property {
   owner_id?: string;
   is_approved?: boolean;
   created_at?: string;
+  emirate?: string;
+  qr_code?: string;
 }

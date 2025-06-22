@@ -85,15 +85,9 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('Only administrators can delete properties');
       }
 
-      // Convert to string if it's a number to ensure UUID compatibility
-      const propertyId = typeof id === 'number' ? id.toString() : id;
-      
-      // Validate that the ID looks like a UUID (basic check)
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(propertyId)) {
-        console.error('Admin: Invalid UUID format for property ID:', propertyId);
-        throw new Error('Invalid property ID format');
-      }
+      // Convert to string to ensure consistency
+      const propertyId = String(id);
+      console.log('Admin: Using property ID as string:', propertyId);
 
       const { error } = await supabase
         .from('properties')
