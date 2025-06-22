@@ -466,6 +466,7 @@ export type Database = {
           price: number
           property_type: string | null
           status: string | null
+          submitter_type: string
           title: string
           type: string
           updated_at: string | null
@@ -493,6 +494,7 @@ export type Database = {
           price: number
           property_type?: string | null
           status?: string | null
+          submitter_type?: string
           title: string
           type: string
           updated_at?: string | null
@@ -520,6 +522,7 @@ export type Database = {
           price?: number
           property_type?: string | null
           status?: string | null
+          submitter_type?: string
           title?: string
           type?: string
           updated_at?: string | null
