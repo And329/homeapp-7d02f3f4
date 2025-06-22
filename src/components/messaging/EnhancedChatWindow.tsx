@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X, Paperclip, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -390,9 +391,9 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
 
         {/* Message input with file upload */}
         <div className="flex-shrink-0 p-4 border-t bg-gray-50">
-          <div className="flex gap-2 items-end">
-            {/* File attachment buttons */}
-            <div className="flex gap-1">
+          <div className="flex gap-2 items-center">
+            {/* File attachment buttons - Make them more visible */}
+            <div className="flex gap-1 mr-2">
               <input
                 ref={photoInputRef}
                 type="file"
@@ -405,10 +406,10 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => photoInputRef.current?.click()}
-                className="h-10 w-10 p-0 flex-shrink-0"
+                className="h-10 w-10 p-0 bg-white border-2 border-blue-300 hover:border-blue-500 hover:bg-blue-50"
                 title="Upload Photo"
               >
-                <Image className="h-4 w-4" />
+                <Image className="h-5 w-5 text-blue-600" />
               </Button>
               
               <input
@@ -422,10 +423,10 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="h-10 w-10 p-0 flex-shrink-0"
+                className="h-10 w-10 p-0 bg-white border-2 border-green-300 hover:border-green-500 hover:bg-green-50"
                 title="Upload File"
               >
-                <Paperclip className="h-4 w-4" />
+                <Paperclip className="h-5 w-5 text-green-600" />
               </Button>
             </div>
             

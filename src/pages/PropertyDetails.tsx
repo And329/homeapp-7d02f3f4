@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Car, Heart, Share2, MessageCircle, QrCode } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -69,6 +69,30 @@ const PropertyDetails = () => {
       return data;
     },
     enabled: !!property?.owner_id,
+  });
+
+  // Fetch QR code for the property
+  const { data: propertyRequest } = useQuery({
+    queryKey: ['property-qr', property?.id],
+    queryFn: async () => {
+      if (!property?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('property_requests')
+        .select('qr_code')
+        .eq('title', property.title)
+        .eq('price', property.price)
+        .eq('status', 'approved')
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching QR code:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!property,
   });
 
   const handleShare = async () => {
@@ -305,6 +329,26 @@ const PropertyDetails = () => {
                 <h2 className="text-xl font-semibold mb-3">Description</h2>
                 <p className="text-gray-700 leading-relaxed">{property.description}</p>
               </div>
+
+              {/* QR Code Section */}
+              {propertyRequest?.qr_code && (
+                <div className="border-t pt-6 mt-6">
+                  <div className="flex items-center mb-4">
+                    <QrCode className="h-6 w-6 text-primary mr-2" />
+                    <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <img
+                      src={propertyRequest.qr_code}
+                      alt="Property Legal Information QR Code"
+                      className="w-48 h-48 object-contain mx-auto border rounded-lg bg-white"
+                    />
+                    <p className="text-sm text-gray-600 text-center mt-2">
+                      Scan this QR code for legal property information and documentation
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
