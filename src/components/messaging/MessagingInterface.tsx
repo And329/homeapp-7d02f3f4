@@ -1,15 +1,67 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ConversationsList from './ConversationsList';
 import ChatWindow from './ChatWindow';
 import { useConversations } from '@/hooks/useConversations';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const MessagingInterface: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { conversations } = useConversations();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
+  const [conversationTitles, setConversationTitles] = useState<Record<string, string>>({});
+
+  // Fetch conversation titles and other participant info
+  useEffect(() => {
+    const fetchConversationTitles = async () => {
+      if (!conversations.length || !user) return;
+      
+      const titles: Record<string, string> = {};
+      
+      for (const conversation of conversations) {
+        try {
+          // Determine the other participant
+          const otherParticipantId = conversation.participant_1_id === user.id 
+            ? conversation.participant_2_id 
+            : conversation.participant_1_id;
+
+          // Get the other participant's profile
+          const { data: otherProfile, error } = await supabase
+            .from('profiles')
+            .select('full_name, email, role')
+            .eq('id', otherParticipantId)
+            .single();
+
+          if (error) {
+            console.error('Error fetching participant profile:', error);
+            titles[conversation.id] = conversation.subject || 'Support';
+            continue;
+          }
+
+          // Set display name based on role and profile info
+          if (otherProfile?.role === 'admin') {
+            titles[conversation.id] = 'Support';
+          } else if (profile?.role === 'admin') {
+            // Admin viewing user conversation - show user info and subject
+            const userName = otherProfile?.full_name || otherProfile?.email || 'User';
+            titles[conversation.id] = `${userName}`;
+          } else {
+            // Regular user viewing admin conversation
+            titles[conversation.id] = 'Support';
+          }
+        } catch (error) {
+          console.error('Error processing conversation:', error);
+          titles[conversation.id] = conversation.subject || 'Support';
+        }
+      }
+      
+      setConversationTitles(titles);
+    };
+
+    fetchConversationTitles();
+  }, [conversations, user, profile]);
 
   const handleConversationSelect = (conversation: any) => {
     setSelectedConversation(conversation.id);
@@ -21,14 +73,19 @@ const MessagingInterface: React.FC = () => {
   };
 
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
-  const otherUserName = selectedConversationData ? 'Support' : '';
+  const otherUserName = selectedConversationData 
+    ? conversationTitles[selectedConversationData.id] || 'Support'
+    : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[70vh] min-h-[500px] max-h-[800px]">
       {/* Conversations List */}
       <div className="w-full lg:w-1/3 flex-shrink-0">
         <ConversationsList
-          conversations={conversations}
+          conversations={conversations.map(conv => ({
+            ...conv,
+            displayTitle: conversationTitles[conv.id] || conv.subject || 'Support'
+          }))}
           selectedConversation={selectedConversation}
           onConversationSelect={handleConversationSelect}
           currentUserId={user?.id || ''}

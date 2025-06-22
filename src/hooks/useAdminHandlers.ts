@@ -130,11 +130,11 @@ export const useAdminHandlers = (
     }
   };
 
-  const handleApproveDeletion = async (requestId: string) => {
-    console.log('useAdminHandlers: Approving deletion for request:', requestId);
+  const handleApproveDeletion = async (request: PropertyRequest) => {
+    console.log('useAdminHandlers: Approving deletion for request:', request.id, request.title);
     
     try {
-      await approveDeletion(requestId);
+      await approveDeletion(request.id);
       
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });

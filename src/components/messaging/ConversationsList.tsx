@@ -1,15 +1,25 @@
 
 import React from 'react';
-import { MessageCircle, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { MessageCircle, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+interface Conversation {
+  id: string;
+  participant_1_id: string;
+  participant_2_id: string;
+  subject: string;
+  created_at: string;
+  last_message_at: string;
+  is_admin_support: boolean;
+  displayTitle?: string;
+}
 
 interface ConversationsListProps {
-  conversations: any[];
+  conversations: Conversation[];
   selectedConversation: string | null;
-  onConversationSelect: (conversation: any) => void;
+  onConversationSelect: (conversation: Conversation) => void;
   currentUserId: string;
 }
 
@@ -19,109 +29,94 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   onConversationSelect,
   currentUserId,
 }) => {
-  // Fetch profiles for all conversation participants
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['conversation-profiles'],
-    queryFn: async () => {
-      const participantIds = conversations.flatMap(conv => [
-        conv.participant_1_id,
-        conv.participant_2_id
-      ]).filter(Boolean);
-
-      if (participantIds.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .in('id', participantIds);
-
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        return [];
-      }
-
-      return data || [];
-    },
-    enabled: conversations.length > 0,
-  });
-
-  const getOtherParticipantName = (conversation: any) => {
-    const otherParticipantId = conversation.participant_1_id === currentUserId 
-      ? conversation.participant_2_id 
-      : conversation.participant_1_id;
-    
-    const profile = profiles.find(p => p.id === otherParticipantId);
-    
-    if (profile) {
-      return profile.full_name || profile.email || 'Unknown User';
-    }
-    
-    return 'Loading...';
-  };
+  const { t } = useTranslation();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Today';
+    } else if (diffDays === 2) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays - 1} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
   if (conversations.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500">
-        <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-        <p>No conversations yet</p>
-      </div>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageCircle className="h-5 w-5" />
+            <span>Conversations</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="text-gray-300 mb-3">
+              <MessageCircle className="w-12 h-12 mx-auto" />
+            </div>
+            <p className="text-gray-500 font-medium">No conversations yet</p>
+            <p className="text-gray-400 text-sm">Your conversations will appear here</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-2 p-2">
-        {conversations.map((conversation) => {
-          const isSelected = selectedConversation === conversation.id;
-          const otherParticipantName = getOtherParticipantName(conversation);
-          
-          return (
-            <Button
-              key={conversation.id}
-              variant={isSelected ? "secondary" : "ghost"}
-              className={`w-full p-3 h-auto text-left justify-start ${
-                isSelected ? 'bg-primary/10 border-primary/20' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => onConversationSelect(conversation)}
-            >
-              <div className="flex items-center space-x-3 w-full">
-                <div className="flex-shrink-0">
-                  <User className="h-8 w-8 text-gray-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {otherParticipantName}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(conversation.last_message_at)}
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <MessageCircle className="h-5 w-5" />
+          <span>Conversations</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[calc(100%-120px)]">
+          <div className="space-y-2 p-4">
+            {conversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => onConversationSelect(conversation)}
+                className={`p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
+                  selectedConversation === conversation.id
+                    ? 'bg-primary/10 border-primary'
+                    : 'bg-background border-border'
+                }`}
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-foreground truncate">
+                        {conversation.displayTitle || conversation.subject || 'Support'}
+                      </h4>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(conversation.last_message_at)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {conversation.subject && conversation.subject !== (conversation.displayTitle || '')} 
                     </p>
                   </div>
-                  <p className="text-xs text-gray-600 truncate">
-                    {conversation.subject}
-                  </p>
-                  {conversation.is_admin_support && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 mt-1">
-                      Admin Support
-                    </span>
-                  )}
                 </div>
               </div>
-            </Button>
-          );
-        })}
-      </div>
-    </ScrollArea>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };
 

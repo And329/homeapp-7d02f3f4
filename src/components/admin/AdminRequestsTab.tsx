@@ -1,8 +1,11 @@
+
 import React from 'react';
-import { CheckCircle, XCircle, Clock, MessageCircle, Edit, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { PropertyRequest } from '@/types/propertyRequest';
+import { Eye, CheckCircle, XCircle, MessageSquare, Trash2 } from 'lucide-react';
 
 interface AdminRequestsTabProps {
   propertyRequests: PropertyRequest[];
@@ -15,8 +18,8 @@ interface AdminRequestsTabProps {
   onApproveRequest: (request: PropertyRequest) => void;
   onRejectRequest: (requestId: string) => void;
   onSendReply: (requestId: string) => void;
-  onReviewRequest?: (request: PropertyRequest) => void;
-  onApproveDeletion?: (requestId: string) => void;
+  onReviewRequest: (request: PropertyRequest) => void;
+  onApproveDeletion?: (request: PropertyRequest) => void;
 }
 
 const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
@@ -33,260 +36,163 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
   onReviewRequest,
   onApproveDeletion,
 }) => {
-  const formatPrice = (price: number, type: string) => {
-    if (type === 'rent') {
-      return `AED ${price.toLocaleString()}/month`;
-    }
-    return `AED ${price.toLocaleString()}`;
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending</span>;
-      case 'approved':
-        return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</span>;
-      case 'rejected':
-        return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Rejected</span>;
-      case 'deletion_requested':
-        return <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><Trash2 className="w-3 h-3 mr-1" />Deletion Requested</span>;
-      default:
-        return null;
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'deletion_requested': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const handleSendReply = async (requestId: string) => {
-    console.log('AdminRequestsTab: Sending reply for request:', requestId);
-    console.log('AdminRequestsTab: Reply message:', replyMessage);
-    
-    if (!replyMessage.trim()) {
-      console.log('AdminRequestsTab: Reply message is empty');
-      return;
-    }
-    
-    try {
-      await onSendReply(requestId);
-    } catch (error) {
-      console.error('AdminRequestsTab: Failed to send reply:', error);
-    }
-  };
-
-  const handleApproveRequest = (request: PropertyRequest) => {
-    console.log('AdminRequestsTab: Approving request:', request.id);
-    console.log('AdminRequestsTab: Original requester user_id:', request.user_id);
-    onApproveRequest(request);
-  };
-
-  const handleApproveDeletion = async (requestId: string) => {
-    if (window.confirm('Are you sure you want to approve this deletion request? This will remove the property from the catalog.')) {
-      console.log('AdminRequestsTab: Approving deletion for request:', requestId);
-      if (onApproveDeletion) {
-        onApproveDeletion(requestId);
-      }
-    }
-  };
-
-  // Separate requests by status for better organization
-  const pendingRequests = propertyRequests.filter(req => req.status === 'pending');
-  const deletionRequests = propertyRequests.filter(req => req.status === 'deletion_requested');
-  const otherRequests = propertyRequests.filter(req => !['pending', 'deletion_requested'].includes(req.status));
-
-  const renderRequestCard = (request: PropertyRequest) => (
-    <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
-          <p className="text-gray-600">{request.location}</p>
-          <p className="text-primary font-bold">{formatPrice(request.price, request.type)}</p>
-          <div className="mt-2">
-            {getStatusBadge(request.status)}
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-gray-500">
-            Submitted: {new Date(request.created_at).toLocaleDateString()}
-          </p>
-          <p className="text-sm text-gray-500">
-            Contact: {request.contact_name} ({request.contact_email})
-          </p>
-          {request.user_id && (
-            <p className="text-xs text-gray-400">
-              User ID: {request.user_id}
-            </p>
-          )}
-        </div>
-      </div>
-      
-      {request.description && (
-        <div className="mb-4">
-          <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-          <p className="text-gray-700 text-sm">{request.description}</p>
-        </div>
-      )}
-
-      {request.status === 'pending' && (
-        <div className="flex items-center gap-2 pt-4 border-t flex-wrap">
-          <Button
-            onClick={() => handleApproveRequest(request)}
-            className="text-green-600 hover:text-green-800"
-            variant="outline"
-            size="sm"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Quick Approve
-          </Button>
-          {onReviewRequest && (
-            <Button
-              onClick={() => onReviewRequest(request)}
-              variant="outline"
-              size="sm"
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Review & Edit
-            </Button>
-          )}
-          <Button
-            onClick={() => onRejectRequest(request.id)}
-            className="text-red-600 hover:text-red-800"
-            variant="outline"
-            size="sm"
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Reject
-          </Button>
-          <Button
-            onClick={() => setReplyingToRequest(request.id)}
-            variant="outline"
-            size="sm"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Send Reply
-          </Button>
-        </div>
-      )}
-
-      {request.status === 'deletion_requested' && (
-        <div className="flex items-center gap-2 pt-4 border-t flex-wrap">
-          <Button
-            onClick={() => handleApproveDeletion(request.id)}
-            className="text-red-600 hover:text-red-800"
-            variant="outline"
-            size="sm"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Approve Deletion
-          </Button>
-          <Button
-            onClick={() => onRejectRequest(request.id)}
-            variant="outline"
-            size="sm"
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Deny Deletion
-          </Button>
-          <Button
-            onClick={() => setReplyingToRequest(request.id)}
-            variant="outline"
-            size="sm"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Send Reply
-          </Button>
-        </div>
-      )}
-
-      {request.status === 'rejected' && (
-        <div className="pt-4 border-t">
-          <Button
-            onClick={() => setReplyingToRequest(request.id)}
-            variant="outline"
-            size="sm"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Add Reply
-          </Button>
-        </div>
-      )}
-
-      {replyingToRequest === request.id && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium mb-2">Send Reply to User</h4>
-          <Textarea
-            placeholder="Type your reply here..."
-            value={replyMessage}
-            onChange={(e) => setReplyMessage(e.target.value)}
-            rows={3}
-          />
-          <div className="flex gap-2 mt-2">
-            <Button
-              onClick={() => handleSendReply(request.id)}
-              disabled={!replyMessage.trim() || sendReplyMutation.isPending}
-              size="sm"
-            >
-              {sendReplyMutation.isPending ? 'Sending...' : 'Send Reply'}
-            </Button>
-            <Button
-              onClick={() => {
-                setReplyingToRequest(null);
-                setReplyMessage('');
-              }}
-              variant="outline"
-              size="sm"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   if (requestsLoading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading property requests...</p>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-gray-600">Loading requests...</span>
       </div>
+    );
+  }
+
+  if (propertyRequests.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-8">
+          <p className="text-gray-500">No property requests found.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Pending Requests Section */}
-      {pendingRequests.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">Pending Requests ({pendingRequests.length})</h3>
-          <div className="grid gap-4">
-            {pendingRequests.map(renderRequestCard)}
-          </div>
-        </div>
-      )}
+      {propertyRequests.map((request) => (
+        <Card key={request.id}>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-lg">{request.title}</CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Submitted by: {request.contact_name} ({request.contact_email})
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date(request.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <Badge className={getStatusColor(request.status)}>
+                {request.status.replace('_', ' ').toUpperCase()}
+              </Badge>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p><strong>Price:</strong> AED {request.price?.toLocaleString()}</p>
+                <p><strong>Location:</strong> {request.location}</p>
+                <p><strong>Type:</strong> {request.type}</p>
+              </div>
+              <div>
+                <p><strong>Bedrooms:</strong> {request.bedrooms}</p>
+                <p><strong>Bathrooms:</strong> {request.bathrooms}</p>
+                <p><strong>Contact:</strong> {request.contact_phone}</p>
+              </div>
+            </div>
+            
+            {request.description && (
+              <div className="mb-4">
+                <p><strong>Description:</strong></p>
+                <p className="text-gray-700 mt-1">{request.description}</p>
+              </div>
+            )}
 
-      {/* Deletion Requests Section */}
-      {deletionRequests.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-orange-700">Deletion Requests ({deletionRequests.length})</h3>
-          <div className="grid gap-4">
-            {deletionRequests.map(renderRequestCard)}
-          </div>
-        </div>
-      )}
+            {request.status === 'deletion_requested' && onApproveDeletion && (
+              <div className="flex items-center gap-2 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <Trash2 className="h-5 w-5 text-orange-600" />
+                <span className="text-orange-800 font-medium">Deletion requested for this property</span>
+                <Button
+                  onClick={() => onApproveDeletion(request)}
+                  variant="destructive"
+                  size="sm"
+                  className="ml-auto"
+                >
+                  Approve Deletion
+                </Button>
+              </div>
+            )}
 
-      {/* Other Requests Section */}
-      {otherRequests.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Other Requests ({otherRequests.length})</h3>
-          <div className="grid gap-4">
-            {otherRequests.map(renderRequestCard)}
-          </div>
-        </div>
-      )}
+            <div className="flex items-center gap-2 pt-4 border-t">
+              {request.status === 'pending' && (
+                <>
+                  <Button
+                    onClick={() => onReviewRequest(request)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Review & Approve
+                  </Button>
+                  <Button
+                    onClick={() => onRejectRequest(request.id)}
+                    variant="destructive"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject
+                  </Button>
+                </>
+              )}
+              
+              <Button
+                onClick={() => setReplyingToRequest(
+                  replyingToRequest === request.id ? null : request.id
+                )}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {replyingToRequest === request.id ? 'Cancel Reply' : 'Send Message'}
+              </Button>
+            </div>
 
-      {propertyRequests.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No property requests found.</p>
-        </div>
-      )}
+            {replyingToRequest === request.id && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <h4 className="font-medium mb-2">Send message to {request.contact_name}</h4>
+                <Textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  className="mb-3"
+                  rows={3}
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => onSendReply(request.id)}
+                    disabled={!replyMessage.trim() || sendReplyMutation.isPending}
+                    size="sm"
+                  >
+                    {sendReplyMutation.isPending ? 'Sending...' : 'Send Message'}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setReplyingToRequest(null);
+                      setReplyMessage('');
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

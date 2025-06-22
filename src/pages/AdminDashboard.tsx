@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -196,6 +195,7 @@ const AdminDashboard = () => {
             onRejectRequest={handlers.handleRejectRequest}
             onSendReply={handlers.handleSendReply}
             onReviewRequest={handlers.handleReviewRequest}
+            onApproveDeletion={handlers.handleApproveDeletion}
           />
         )}
 
