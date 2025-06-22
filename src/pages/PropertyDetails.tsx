@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyMap from '../components/PropertyMap';
 import ContactPropertyOwner from '../components/ContactPropertyOwner';
+import PropertyQRCode from '../components/PropertyQRCode';
 import { getPropertyById } from '../data/properties';
 import { updatePropertyOwner } from '../api/properties';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,7 +15,7 @@ import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MapProperty {
-  id: number; // PropertyMap expects number IDs
+  id: number;
   title: string;
   location: string;
   price: number;
@@ -71,59 +72,6 @@ const PropertyDetails = () => {
     enabled: !!property?.owner_id,
   });
 
-  // Fetch QR code for the property - Updated query with better error handling
-  const { data: propertyRequest, isLoading: qrLoading } = useQuery({
-    queryKey: ['property-qr', property?.id, property?.title],
-    queryFn: async () => {
-      if (!property?.id || !property?.title) return null;
-      
-      console.log('PropertyDetails: Fetching QR code for property:', property.title);
-      
-      const { data, error } = await supabase
-        .from('property_requests')
-        .select('qr_code, id, title, price')
-        .eq('title', property.title)
-        .eq('status', 'approved')
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching QR code:', error);
-        return null;
-      }
-      
-      // If not found by title, try by similar price range
-      if (!data && property.price) {
-        const priceRange = property.price * 0.1; // 10% tolerance
-        const { data: dataByPrice, error: priceError } = await supabase
-          .from('property_requests')
-          .select('qr_code, id, title, price')
-          .gte('price', property.price - priceRange)
-          .lte('price', property.price + priceRange)
-          .eq('status', 'approved')
-          .limit(5);
-
-        if (priceError) {
-          console.error('Error fetching QR code by price:', priceError);
-          return null;
-        }
-
-        if (dataByPrice && dataByPrice.length > 0) {
-          // Find the best match by title similarity
-          const bestMatch = dataByPrice.find(req => 
-            req.title?.toLowerCase().includes(property.title.toLowerCase()) ||
-            property.title.toLowerCase().includes(req.title?.toLowerCase() || '')
-          ) || dataByPrice[0];
-          
-          return bestMatch;
-        }
-      }
-      
-      console.log('PropertyDetails: QR code data:', data);
-      return data;
-    },
-    enabled: !!property,
-  });
-
   const handleShare = async () => {
     const url = window.location.href;
     const title = property?.title || 'Property';
@@ -142,7 +90,6 @@ const PropertyDetails = () => {
         });
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
-          // Fallback to clipboard
           await navigator.clipboard.writeText(url);
           toast({
             title: "Link copied",
@@ -151,7 +98,6 @@ const PropertyDetails = () => {
         }
       }
     } else {
-      // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(url);
         toast({
@@ -251,7 +197,7 @@ const PropertyDetails = () => {
 
   const coords = getCoordinates();
   const mapProperties: MapProperty[] = coords ? [{
-    id: parseInt(property.id) || 0, // Convert string ID to number for PropertyMap
+    id: parseInt(property.id) || 0,
     title: property.title,
     location: property.location,
     price: property.price,
@@ -359,65 +305,17 @@ const PropertyDetails = () => {
                 <p className="text-gray-700 leading-relaxed">{property.description}</p>
               </div>
 
-              {/* QR Code Section - Enhanced display with better error handling */}
-              {qrLoading ? (
-                <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center mb-4">
-                    <QrCode className="h-6 w-6 text-primary mr-2" />
-                    <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="animate-pulse flex space-x-4">
-                      <div className="w-48 h-48 bg-gray-300 rounded-lg mx-auto"></div>
-                    </div>
-                    <p className="text-sm text-gray-600 text-center mt-2">Loading QR code...</p>
-                  </div>
+              {/* QR Code Section - Simplified and using the new component */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center mb-4">
+                  <QrCode className="h-6 w-6 text-primary mr-2" />
+                  <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
                 </div>
-              ) : propertyRequest?.qr_code ? (
-                <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center mb-4">
-                    <QrCode className="h-6 w-6 text-primary mr-2" />
-                    <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
-                  </div>
-                  <div className="bg-gray-50 p-6 rounded-lg">
-                    <div className="text-center">
-                      <img
-                        src={propertyRequest.qr_code}
-                        alt="Property Legal Information QR Code"
-                        className="w-48 h-48 object-contain mx-auto border rounded-lg bg-white shadow-sm"
-                        onError={(e) => {
-                          console.error('QR code image failed to load:', propertyRequest.qr_code);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <p className="text-sm text-gray-600 mt-3">
-                        Scan this QR code for legal property information and documentation
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Property Request ID: {propertyRequest.id}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center mb-4">
-                    <QrCode className="h-6 w-6 text-gray-400 mr-2" />
-                    <h2 className="text-xl font-semibold text-gray-500">Legal Information QR Code</h2>
-                  </div>
-                  <div className="bg-gray-50 p-6 rounded-lg text-center">
-                    <div className="text-gray-400 mb-2">
-                      <QrCode className="h-16 w-16 mx-auto" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      No QR code available for this property
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      QR codes are generated when properties are officially approved through our system
-                    </p>
-                  </div>
-                </div>
-              )}
+                <PropertyQRCode 
+                  qrCode={property.qr_code} 
+                  propertyTitle={property.title}
+                />
+              </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -474,68 +372,66 @@ const PropertyDetails = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-1">
-            {user && property.owner_id ? (
-              property.owner_id === user.id ? (
-                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                  <h3 className="text-xl font-semibold mb-4">Your Property</h3>
-                  <p className="text-gray-600">This is your own property listing.</p>
-                </div>
-              ) : (
-                <ContactPropertyOwner
-                  propertyId={property.id}
-                  ownerId={property.owner_id}
-                  propertyTitle={property.title}
-                  contactName={ownerProfile?.full_name || 'Property Owner'}
-                  contactEmail={ownerProfile?.email || ''}
-                  ownerProfilePicture={ownerProfile?.profile_picture}
-                />
-              )
-            ) : !user ? (
+          {user && property.owner_id ? (
+            property.owner_id === user.id ? (
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
-                <p className="text-gray-600 mb-4">Please sign in to contact the property owner.</p>
-                <button 
-                  onClick={() => window.location.href = '/auth'}
-                  className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Sign In to Message
-                </button>
+                <h3 className="text-xl font-semibold mb-4">Your Property</h3>
+                <p className="text-gray-600">This is your own property listing.</p>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <h3 className="text-xl font-semibold mb-2 text-red-800">Property Owner Missing</h3>
-                  <p className="text-red-700 text-sm mb-2">
-                    This property doesn't have an owner assigned. This is a data issue that needs to be fixed.
-                  </p>
-                  <p className="text-sm text-red-600">
-                    Property ID: {property.id} | Owner ID: {property.owner_id || 'NULL'}
-                  </p>
-                  {user && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          console.log('Attempting to fix owner_id for property:', property.id);
-                          await updatePropertyOwner(property.id, user.id);
-                          window.location.reload();
-                        } catch (error) {
-                          console.error('Failed to fix owner_id:', error);
-                        }
-                      }}
-                      className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                    >
-                      Fix Owner Assignment
-                    </button>
-                  )}
-                </div>
-                <p className="text-gray-600">
-                  Unable to display contact information because this property doesn't have an owner assigned in the database.
+              <ContactPropertyOwner
+                propertyId={property.id}
+                ownerId={property.owner_id}
+                propertyTitle={property.title}
+                contactName={ownerProfile?.full_name || 'Property Owner'}
+                contactEmail={ownerProfile?.email || ''}
+                ownerProfilePicture={ownerProfile?.profile_picture}
+              />
+            )
+          ) : !user ? (
+            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+              <h3 className="text-xl font-semibold mb-4">Interested in this property?</h3>
+              <p className="text-gray-600 mb-4">Please sign in to contact the property owner.</p>
+              <button 
+                onClick={() => window.location.href = '/auth'}
+                className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Sign In to Message
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <h3 className="text-xl font-semibold mb-2 text-red-800">Property Owner Missing</h3>
+                <p className="text-red-700 text-sm mb-2">
+                  This property doesn't have an owner assigned. This is a data issue that needs to be fixed.
                 </p>
+                <p className="text-sm text-red-600">
+                  Property ID: {property.id} | Owner ID: {property.owner_id || 'NULL'}
+                </p>
+                {user && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('Attempting to fix owner_id for property:', property.id);
+                        await updatePropertyOwner(property.id, user.id);
+                        window.location.reload();
+                      } catch (error) {
+                        console.error('Failed to fix owner_id:', error);
+                      }
+                    }}
+                    className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                  >
+                    Fix Owner Assignment
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+              <p className="text-gray-600">
+                Unable to display contact information because this property doesn't have an owner assigned in the database.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

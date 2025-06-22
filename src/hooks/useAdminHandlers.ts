@@ -199,7 +199,7 @@ export const useAdminHandlers = (
           description: updatedData.description,
           amenities: updatedData.amenities,
           images: updatedData.images,
-          // Store QR code in a field if needed
+          qr_code: updatedData.qr_code, // Store QR code in property request
         })
         .eq('id', requestId);
 
@@ -208,7 +208,7 @@ export const useAdminHandlers = (
         throw updateError;
       }
 
-      // Then approve the request
+      // Then approve the request using the RPC function
       const { data, error } = await supabase.rpc('approve_property_request', {
         request_id: requestId
       });
@@ -220,9 +220,24 @@ export const useAdminHandlers = (
 
       console.log('Request approved successfully, created property ID:', data);
 
+      // Update the created property with the QR code
+      if (data && updatedData.qr_code) {
+        const { error: qrUpdateError } = await supabase
+          .from('properties')
+          .update({ qr_code: updatedData.qr_code })
+          .eq('id', data);
+
+        if (qrUpdateError) {
+          console.error('Error updating property QR code:', qrUpdateError);
+          // Don't throw here as the property was created successfully
+        } else {
+          console.log('QR code updated successfully for property:', data);
+        }
+      }
+
       toast({
         title: "Request approved",
-        description: "The property request has been approved and the property has been created.",
+        description: "The property request has been approved and the property has been created with QR code.",
       });
 
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
