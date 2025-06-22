@@ -182,6 +182,65 @@ export const useAdminHandlers = (
 
   const handleApprovalSubmit = async (requestId: string, updatedData: any) => {
     console.log('Handling approval submit:', { requestId, updatedData });
+    
+    try {
+      // First update the property request with the new data
+      const { error: updateError } = await supabase
+        .from('property_requests')
+        .update({
+          title: updatedData.title,
+          price: updatedData.price,
+          location: updatedData.location,
+          latitude: updatedData.latitude,
+          longitude: updatedData.longitude,
+          bedrooms: updatedData.bedrooms,
+          bathrooms: updatedData.bathrooms,
+          type: updatedData.type,
+          description: updatedData.description,
+          amenities: updatedData.amenities,
+          images: updatedData.images,
+          // Store QR code in a field if needed
+        })
+        .eq('id', requestId);
+
+      if (updateError) {
+        console.error('Error updating request:', updateError);
+        throw updateError;
+      }
+
+      // Then approve the request
+      const { data, error } = await supabase.rpc('approve_property_request', {
+        request_id: requestId
+      });
+
+      if (error) {
+        console.error('Error approving request:', error);
+        throw error;
+      }
+
+      console.log('Request approved successfully, created property ID:', data);
+
+      toast({
+        title: "Request approved",
+        description: "The property request has been approved and the property has been created.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-property-requests'] });
+      
+      // Close the approval form
+      state.setIsApprovalFormOpen(false);
+      state.setApprovingRequest(null);
+    } catch (error: any) {
+      console.error('Failed to approve request:', error);
+      toast({
+        title: "Error",
+        description: `Failed to approve request: ${error.message || 'Please try again.'}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReviewRequest = (request: PropertyRequest) => {

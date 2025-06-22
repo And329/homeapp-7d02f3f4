@@ -391,6 +391,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
         {/* Message input with file upload */}
         <div className="flex-shrink-0 p-4 border-t bg-gray-50">
           <div className="flex gap-2 items-end">
+            {/* File attachment buttons */}
             <div className="flex gap-1">
               <input
                 ref={photoInputRef}
@@ -404,8 +405,8 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => photoInputRef.current?.click()}
-                className="p-2"
-                title={t('chat.uploadPhoto')}
+                className="h-10 w-10 p-0 flex-shrink-0"
+                title="Upload Photo"
               >
                 <Image className="h-4 w-4" />
               </Button>
@@ -421,8 +422,8 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2"
-                title={t('chat.uploadFile')}
+                className="h-10 w-10 p-0 flex-shrink-0"
+                title="Upload File"
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -431,7 +432,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={t('chat.typeMessage')}
+              placeholder="Type your message..."
               onKeyPress={handleKeyPress}
               disabled={isSendingMessage}
               className="text-sm flex-1"
@@ -440,6 +441,7 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || isSendingMessage}
               size="sm"
+              className="h-10 flex-shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>
