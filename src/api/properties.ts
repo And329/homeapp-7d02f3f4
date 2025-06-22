@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from '@/types/property';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
@@ -117,6 +116,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     type: propertyData.type,
     amenities: propertyData.amenities,
     images: propertyData.images,
+    qr_code: propertyData.qr_code,
     is_hot_deal: propertyData.is_hot_deal || false,
     owner_id: user.id,
     is_approved: false,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -122,13 +121,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
-        qr_code: formData.qr_code.trim(),
+        qr_code: formData.qr_code.trim() || null,
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
 
-      if (property) {
-        console.log('PropertyForm: Updating existing property');
+      if (property && property.id) {
+        console.log('PropertyForm: Updating existing property with ID:', property.id);
+        
+        // Validate property ID is a valid UUID
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(property.id.toString())) {
+          throw new Error('Invalid property ID format');
+        }
+
         const { error } = await supabase
           .from('properties')
           .update(dataToSubmit)
