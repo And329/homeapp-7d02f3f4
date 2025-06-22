@@ -43,10 +43,14 @@
       "error": "Failed to send message. Please try again."
     },
     "info": {
+      "title": "Get in Touch",
+      "description": "We're here to help you with all your real estate needs in the UAE. Contact us through any of the methods below.",
       "office": "Visit Our Office",
       "officeAddress": "Marina Plaza, Level 25\nDubai Marina, Dubai, UAE",
       "call": "Call Us",
+      "phone": "Phone",
       "email": "Email Us",
+      "address": "Address",
       "hours": "Business Hours",
       "hoursText": "Monday - Friday: 9:00 AM - 7:00 PM\nSaturday: 9:00 AM - 5:00 PM\nSunday: By Appointment"
     }
@@ -65,7 +69,8 @@
     "loadingMessages": "Loading messages...",
     "noMessages": "No messages yet",
     "startConversation": "Start the conversation by sending a message below",
-    "propertySupport": "Property Support"
+    "propertySupport": "Property Support",
+    "administrator": "Administrator"
   },
   "admin": {
     "contactInquiries": "Contact Inquiries",

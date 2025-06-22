@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
@@ -30,6 +31,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     description: request.description || '',
     amenities: request.amenities || [],
     images: request.images || [],
+    qrCode: '', // Add QR code field
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -51,6 +53,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         description: formData.description,
         amenities: formData.amenities,
         images: formData.images,
+        qrCode: formData.qrCode,
       };
 
       console.log('Submitting approval with data:', updatedData);
@@ -184,6 +187,21 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
                 step="0.5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <QrCode className="h-4 w-4 inline mr-2" />
+                QR Code
+              </label>
+              <input
+                type="text"
+                name="qrCode"
+                value={formData.qrCode}
+                onChange={handleChange}
+                placeholder="Enter QR code data or URL"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>
