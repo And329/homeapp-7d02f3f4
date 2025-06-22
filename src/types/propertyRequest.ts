@@ -19,6 +19,7 @@ export interface PropertyRequest {
   contact_email: string;
   contact_phone: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'deletion_requested';
+  submitter_type: 'owner' | 'broker' | 'referral';
   created_at: string;
   updated_at: string | null;
   approved_by: string | null;
