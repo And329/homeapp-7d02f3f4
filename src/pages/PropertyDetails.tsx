@@ -293,8 +293,12 @@ const PropertyDetails = () => {
       {/* Contact Form Modal */}
       {showContactForm && (
         <ContactPropertyOwner
-          property={property}
-          onClose={() => setShowContactForm(false)}
+          propertyId={property.id}
+          ownerId={property.owner_id || ''}
+          propertyTitle={property.title}
+          contactName="Property Owner"
+          contactEmail="owner@example.com"
+          contactPhone="N/A"
         />
       )}
 
