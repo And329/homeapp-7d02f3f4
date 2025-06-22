@@ -117,22 +117,21 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
   console.log('PropertyImageUpload render - Current images:', images.length);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <label className="block text-sm font-medium text-gray-700 mb-2">
         Property Images
       </label>
       
-      {/* Main Image Display */}
+      {/* Main Large Image Display */}
       {images.length > 0 && (
-        <div className="mb-6">
-          <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
+        <div className="w-full">
+          <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
             <img
               src={images[selectedImageIndex]}
               alt={`Property ${selectedImageIndex + 1}`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 console.error('Image failed to load at index:', selectedImageIndex);
-                // Remove the broken image
                 removeImage(selectedImageIndex);
               }}
             />
@@ -143,48 +142,50 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
             >
               <X className="h-4 w-4" />
             </button>
-            <div className="absolute bottom-3 left-3 bg-black bg-opacity-50 text-white text-sm px-3 py-1 rounded">
+            <div className="absolute bottom-3 left-3 bg-black bg-opacity-70 text-white text-sm px-3 py-1 rounded">
               {selectedImageIndex + 1} of {images.length}
             </div>
           </div>
         </div>
       )}
       
-      {/* Thumbnail Images Grid */}
-      {images.length > 1 && (
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 mb-4">
-          {images.map((image, index) => (
-            <div 
-              key={index} 
-              className={`relative group aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                selectedImageIndex === index 
-                  ? 'border-primary ring-2 ring-primary ring-opacity-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => setSelectedImageIndex(index)}
-            >
-              <img
-                src={image}
-                alt={`Property ${index + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error('Thumbnail failed to load at index:', index);
-                  // Remove the broken image
-                  removeImage(index);
-                }}
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeImage(index);
-                }}
-                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
+      {/* All Images Thumbnails Grid - Show all images as thumbnails */}
+      {images.length > 0 && (
+        <div className="w-full">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">All Images ({images.length})</h4>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            {images.map((image, index) => (
+              <div 
+                key={index} 
+                className={`relative group aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                  selectedImageIndex === index 
+                    ? 'border-blue-500 ring-2 ring-blue-200' 
+                    : 'border-gray-200 hover:border-gray-400'
+                }`}
+                onClick={() => setSelectedImageIndex(index)}
               >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
+                <img
+                  src={image}
+                  alt={`Property ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Thumbnail failed to load at index:', index);
+                    removeImage(index);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                  }}
+                  className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       
