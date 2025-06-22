@@ -40,6 +40,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   useEffect(() => {
     console.log('PropertyForm: useEffect triggered with property:', property);
     if (property) {
+      // Handle different property data structures (from admin vs regular API)
       const newFormData = {
         title: property.title || '',
         price: property.price?.toString() || '',
@@ -52,8 +53,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         type: property.type || 'rent',
         description: property.description || '',
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
-        amenities: property.amenities || [],
-        images: property.images || [],
+        amenities: Array.isArray(property.amenities) ? property.amenities : [],
+        images: Array.isArray(property.images) && property.images.length > 0 ? property.images : [],
         qr_code: property.qr_code || '',
       };
       console.log('PropertyForm: Setting form data from property:', newFormData);
@@ -133,8 +134,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
-        const propertyId = String(property.id);
-        console.log('PropertyForm: Using property ID as string:', propertyId);
+        // Ensure we have a valid UUID string
+        let propertyId: string;
+        if (typeof property.id === 'number') {
+          // This shouldn't happen for real UUIDs, but handle the case
+          throw new Error('Invalid property ID: expected UUID string, got number');
+        } else {
+          propertyId = String(property.id);
+        }
+        
+        console.log('PropertyForm: Using property ID:', propertyId);
+
+        // Validate that it looks like a UUID
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(propertyId)) {
+          throw new Error('Invalid property ID format. Expected UUID.');
+        }
 
         const { error } = await supabase
           .from('properties')
