@@ -127,12 +127,12 @@ const PropertyDetails = () => {
 
               {/* Thumbnails */}
               <div className="lg:col-span-1">
-                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 max-h-96 overflow-y-auto">
                   {allMedia.map((media, index) => (
                     <div
                       key={index}
-                      className={`aspect-video rounded cursor-pointer overflow-hidden ${
-                        selectedMediaIndex === index ? 'ring-2 ring-primary' : ''
+                      className={`aspect-video rounded cursor-pointer overflow-hidden transition-all duration-200 ${
+                        selectedMediaIndex === index ? 'ring-2 ring-primary' : 'hover:opacity-80'
                       }`}
                       onClick={() => setSelectedMediaIndex(index)}
                     >
@@ -150,7 +150,7 @@ const PropertyDetails = () => {
                             muted
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                            <Play className="w-8 h-8 text-white" fill="currentColor" />
+                            <Play className="w-6 h-6 text-white" fill="currentColor" />
                           </div>
                         </div>
                       )}
@@ -265,7 +265,7 @@ const PropertyDetails = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+            <div className="space-y-6">
               {/* Contact Information */}
               <ContactPropertyOwner
                 propertyId={property.id}

@@ -22,7 +22,7 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
   ownerProfilePicture
 }) => {
   return (
-    <Card className="sticky top-24 shadow-lg">
+    <Card className="shadow-lg">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center space-x-3">
           <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden shadow-sm">
