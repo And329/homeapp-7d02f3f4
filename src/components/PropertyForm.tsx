@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import PropertyAmenities from '@/components/PropertyAmenities';
-import PropertyImageUpload from '@/components/PropertyImageUpload';
-import PropertyVideoUpload from '@/components/PropertyVideoUpload';
-import PropertyLocationPicker from '@/components/PropertyLocationPicker';
-import EmiratesSelector from '@/components/EmiratesSelector';
-import QRCodeUpload from '@/components/QRCodeUpload';
+import PropertyBasicInfo from '@/components/PropertyBasicInfo';
+import PropertyContactInfo from '@/components/PropertyContactInfo';
+import PropertyMediaSection from '@/components/PropertyMediaSection';
+import PropertyFormActions from '@/components/PropertyFormActions';
 import { createProperty } from '@/api/properties';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -239,6 +236,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, qr_code: qrCode }));
   };
 
+  const handleAmenitiesChange = (amenities: string[]) => {
+    setFormData(prev => ({ ...prev, amenities }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
@@ -255,218 +256,31 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              />
-            </div>
+          <PropertyBasicInfo
+            formData={formData}
+            handleChange={handleChange}
+            handleLocationChange={handleLocationChange}
+            handleEmirateChange={handleEmirateChange}
+          />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (AED) *
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              />
-            </div>
+          <PropertyContactInfo
+            formData={formData}
+            handleChange={handleChange}
+          />
 
-            <EmiratesSelector
-              value={formData.emirate}
-              onChange={handleEmirateChange}
-              required
-            />
-
-            <div className="md:col-span-1">
-              <PropertyLocationPicker
-                location={formData.location}
-                latitude={formData.latitude || undefined}
-                longitude={formData.longitude || undefined}
-                onLocationChange={handleLocationChange}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type *
-              </label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              >
-                <option value="rent">For Rent</option>
-                <option value="sale">For Sale</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bedrooms *
-              </label>
-              <input
-                type="number"
-                name="bedrooms"
-                value={formData.bedrooms}
-                onChange={handleChange}
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bathrooms *
-              </label>
-              <input
-                type="number"
-                name="bathrooms"
-                value={formData.bathrooms}
-                onChange={handleChange}
-                min="0"
-                step="0.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Contact Information Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-medium mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Name
-                </label>
-                <input
-                  type="text"
-                  name="contact_name"
-                  value={formData.contact_name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Property owner name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Email
-                </label>
-                <input
-                  type="email"
-                  name="contact_email"
-                  value={formData.contact_email}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="contact@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Phone
-                </label>
-                <input
-                  type="tel"
-                  name="contact_phone"
-                  value={formData.contact_phone}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="+971 XX XXX XXXX"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Enter property description..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PropertyImageUpload
-              images={formData.images}
-              onImagesChange={handleImagesChange}
-            />
-
-            <PropertyVideoUpload
-              videos={formData.videos}
-              onVideosChange={handleVideosChange}
-            />
-          </div>
-
-          <QRCodeUpload
-            qrCode={formData.qr_code}
+          <PropertyMediaSection
+            formData={formData}
+            onImagesChange={handleImagesChange}
+            onVideosChange={handleVideosChange}
             onQRCodeChange={handleQRCodeChange}
-            required
+            onAmenitiesChange={handleAmenitiesChange}
           />
 
-          <PropertyAmenities
-            selectedAmenities={formData.amenities}
-            onAmenitiesChange={(amenities) => setFormData(prev => ({ ...prev, amenities }))}
+          <PropertyFormActions
+            loading={loading}
+            isEditing={!!property}
+            onCancel={onClose}
           />
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="is_hot_deal"
-              checked={formData.is_hot_deal}
-              onChange={handleChange}
-              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <label className="ml-2 block text-sm text-gray-700">
-              Mark as Hot Deal
-            </label>
-          </div>
-
-          <div className="flex items-center justify-end space-x-4 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {property ? 'Updating...' : 'Creating...'}
-                </div>
-              ) : (
-                property ? 'Update Property' : 'Create Property'
-              )}
-            </Button>
-          </div>
         </form>
       </div>
     </div>
