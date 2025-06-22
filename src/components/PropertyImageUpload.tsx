@@ -118,11 +118,7 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
   console.log('PropertyImageUpload render - Current images:', images.length);
 
   return (
-    <div className="space-y-6">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Property Images
-      </label>
-      
+    <div className="space-y-8">      
       {/* Main Image Display */}
       <PropertyMainImageDisplay
         images={images}
@@ -131,7 +127,7 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
         onRemoveImage={removeImage}
       />
       
-      {/* Thumbnails Grid */}
+      {/* Thumbnails */}
       <PropertyImageThumbnails
         images={images}
         selectedIndex={selectedImageIndex}
@@ -144,13 +140,6 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
         onFileUpload={handleFileUpload}
         uploading={uploading}
       />
-      
-      <div className="text-xs text-gray-500 space-y-1">
-        <p>• Upload up to 10 high-quality images</p>
-        <p>• Maximum file size: 5MB per image</p>
-        <p>• Supported formats: JPG, PNG, WebP</p>
-        <p>• First image will be used as the main property photo</p>
-      </div>
     </div>
   );
 };

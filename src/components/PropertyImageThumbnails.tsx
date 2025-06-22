@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Camera } from 'lucide-react';
 
 interface PropertyImageThumbnailsProps {
   images: string[];
@@ -18,34 +18,51 @@ const PropertyImageThumbnails: React.FC<PropertyImageThumbnailsProps> = ({
   if (!images || images.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium text-gray-700">
-        All Images ({images.length})
-      </h4>
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-lg font-semibold text-gray-800 flex items-center">
+          <Camera className="h-5 w-5 mr-2 text-primary" />
+          Images ({images.length})
+        </h4>
+      </div>
+      
+      <div className="flex gap-3 overflow-x-auto pb-2">
         {images.map((image, index) => (
           <div
             key={index}
-            className={`relative group aspect-square cursor-pointer rounded-md overflow-hidden border-2 transition-all duration-200 ${
+            className={`relative group flex-shrink-0 cursor-pointer transition-all duration-300 ${
               selectedIndex === index
-                ? 'border-blue-500 ring-2 ring-blue-200'
-                : 'border-gray-200 hover:border-gray-400'
+                ? 'ring-3 ring-primary ring-offset-2 scale-105'
+                : 'hover:scale-105 hover:shadow-lg'
             }`}
             onClick={() => onIndexChange(index)}
           >
-            <img
-              src={image}
-              alt={`Thumbnail ${index + 1}`}
-              className="w-full h-full object-cover"
-              onError={() => onRemoveImage(index)}
-            />
+            <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+              <img
+                src={image}
+                alt={`Thumbnail ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={() => onRemoveImage(index)}
+              />
+            </div>
+            
+            {/* Selection Overlay */}
+            {selectedIndex === index && (
+              <div className="absolute inset-0 bg-primary/20 rounded-xl flex items-center justify-center">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full" />
+                </div>
+              </div>
+            )}
+            
+            {/* Remove Button */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveImage(index);
               }}
-              className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg transform hover:scale-110"
             >
               <X className="h-3 w-3" />
             </button>
