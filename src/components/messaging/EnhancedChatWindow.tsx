@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, X, Paperclip, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -389,11 +388,11 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message input with file upload */}
-        <div className="flex-shrink-0 p-4 border-t bg-gray-50">
-          <div className="flex gap-2 items-center">
-            {/* File attachment buttons - Make them more visible */}
-            <div className="flex gap-1 mr-2">
+        {/* Message input with enhanced file upload buttons */}
+        <div className="flex-shrink-0 p-4 border-t bg-gradient-to-r from-blue-50 to-green-50">
+          <div className="bg-white rounded-lg p-3 shadow-sm border">
+            {/* File attachment buttons row - More prominent */}
+            <div className="flex gap-3 mb-3 pb-3 border-b border-gray-100">
               <input
                 ref={photoInputRef}
                 type="file"
@@ -406,10 +405,11 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => photoInputRef.current?.click()}
-                className="h-10 w-10 p-0 bg-white border-2 border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+                className="flex-1 h-12 bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 text-blue-700 font-medium transition-all duration-200 shadow-sm"
                 title="Upload Photo"
               >
-                <Image className="h-5 w-5 text-blue-600" />
+                <Image className="h-5 w-5 mr-2" />
+                Add Photo
               </Button>
               
               <input
@@ -423,29 +423,33 @@ const EnhancedChatWindow: React.FC<EnhancedChatWindowProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="h-10 w-10 p-0 bg-white border-2 border-green-300 hover:border-green-500 hover:bg-green-50"
-                title="Upload File"
+                className="flex-1 h-12 bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 text-green-700 font-medium transition-all duration-200 shadow-sm"
+                title="Upload Document"
               >
-                <Paperclip className="h-5 w-5 text-green-600" />
+                <Paperclip className="h-5 w-5 mr-2" />
+                Add Document
               </Button>
             </div>
             
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              onKeyPress={handleKeyPress}
-              disabled={isSendingMessage}
-              className="text-sm flex-1"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isSendingMessage}
-              size="sm"
-              className="h-10 flex-shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            {/* Message input row */}
+            <div className="flex gap-2 items-center">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+                onKeyPress={handleKeyPress}
+                disabled={isSendingMessage}
+                className="text-sm flex-1 border-gray-200 focus:border-primary focus:ring-primary"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || isSendingMessage}
+                size="sm"
+                className="h-10 px-4 bg-primary hover:bg-primary/90 text-white font-medium"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

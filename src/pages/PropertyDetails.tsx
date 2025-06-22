@@ -71,25 +71,50 @@ const PropertyDetails = () => {
     enabled: !!property?.owner_id,
   });
 
-  // Fetch QR code for the property
-  const { data: propertyRequest } = useQuery({
-    queryKey: ['property-qr', property?.id],
+  // Fetch QR code for the property - Updated query to be more flexible
+  const { data: propertyRequest, isLoading: qrLoading } = useQuery({
+    queryKey: ['property-qr', property?.id, property?.title],
     queryFn: async () => {
-      if (!property?.id) return null;
+      if (!property?.id || !property?.title) return null;
       
-      const { data, error } = await supabase
+      console.log('PropertyDetails: Fetching QR code for property:', property.title);
+      
+      // Try multiple approaches to find the property request
+      let { data, error } = await supabase
         .from('property_requests')
-        .select('qr_code')
+        .select('qr_code, id')
         .eq('title', property.title)
-        .eq('price', property.price)
         .eq('status', 'approved')
         .maybeSingle();
 
-      if (error) {
+      // If not found by title, try by similar price range
+      if (!data && property.price) {
+        const priceRange = property.price * 0.1; // 10% tolerance
+        const { data: dataByPrice, error: priceError } = await supabase
+          .from('property_requests')
+          .select('qr_code, id, title, price')
+          .gte('price', property.price - priceRange)
+          .lte('price', property.price + priceRange)
+          .eq('status', 'approved')
+          .limit(5);
+
+        if (dataByPrice && dataByPrice.length > 0) {
+          // Find the best match by title similarity
+          const bestMatch = dataByPrice.find(req => 
+            req.title.toLowerCase().includes(property.title.toLowerCase()) ||
+            property.title.toLowerCase().includes(req.title.toLowerCase())
+          ) || dataByPrice[0];
+          
+          data = bestMatch;
+        }
+      }
+
+      if (error && !data) {
         console.error('Error fetching QR code:', error);
         return null;
       }
       
+      console.log('PropertyDetails: QR code data:', data);
       return data;
     },
     enabled: !!property,
@@ -330,21 +355,61 @@ const PropertyDetails = () => {
                 <p className="text-gray-700 leading-relaxed">{property.description}</p>
               </div>
 
-              {/* QR Code Section */}
-              {propertyRequest?.qr_code && (
+              {/* QR Code Section - Enhanced display */}
+              {qrLoading ? (
                 <div className="border-t pt-6 mt-6">
                   <div className="flex items-center mb-4">
                     <QrCode className="h-6 w-6 text-primary mr-2" />
                     <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <img
-                      src={propertyRequest.qr_code}
-                      alt="Property Legal Information QR Code"
-                      className="w-48 h-48 object-contain mx-auto border rounded-lg bg-white"
-                    />
-                    <p className="text-sm text-gray-600 text-center mt-2">
-                      Scan this QR code for legal property information and documentation
+                    <div className="animate-pulse flex space-x-4">
+                      <div className="w-48 h-48 bg-gray-300 rounded-lg mx-auto"></div>
+                    </div>
+                    <p className="text-sm text-gray-600 text-center mt-2">Loading QR code...</p>
+                  </div>
+                </div>
+              ) : propertyRequest?.qr_code ? (
+                <div className="border-t pt-6 mt-6">
+                  <div className="flex items-center mb-4">
+                    <QrCode className="h-6 w-6 text-primary mr-2" />
+                    <h2 className="text-xl font-semibold">Legal Information QR Code</h2>
+                  </div>
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <div className="text-center">
+                      <img
+                        src={propertyRequest.qr_code}
+                        alt="Property Legal Information QR Code"
+                        className="w-48 h-48 object-contain mx-auto border rounded-lg bg-white shadow-sm"
+                        onError={(e) => {
+                          console.error('QR code image failed to load:', propertyRequest.qr_code);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <p className="text-sm text-gray-600 mt-3">
+                        Scan this QR code for legal property information and documentation
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Property Request ID: {propertyRequest.id}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t pt-6 mt-6">
+                  <div className="flex items-center mb-4">
+                    <QrCode className="h-6 w-6 text-gray-400 mr-2" />
+                    <h2 className="text-xl font-semibold text-gray-500">Legal Information QR Code</h2>
+                  </div>
+                  <div className="bg-gray-50 p-6 rounded-lg text-center">
+                    <div className="text-gray-400 mb-2">
+                      <QrCode className="h-16 w-16 mx-auto" />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      No QR code available for this property
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      QR codes are generated when properties are officially approved through our system
                     </p>
                   </div>
                 </div>
