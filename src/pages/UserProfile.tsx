@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings } from 'lucide-react';
@@ -43,47 +44,32 @@ const UserProfile = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      try {
-        const { data, error } = await supabase
-          .from('property_requests')
-          .select('*, qr_code')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('property_requests')
+        .select('*, qr_code')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          // If qr_code column doesn't exist yet, try without it
-          if (error.message?.includes('qr_code')) {
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from('property_requests')
-              .select('*')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false });
-            
-            if (fallbackError) throw fallbackError;
-            return (fallbackData || []).map(request => ({ ...request, qr_code: null }));
-          }
-          throw error;
-        }
-
-        return (data || []).map(request => {
-          const type = (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent';
-          
-          return {
-            ...request,
-            type: type as 'rent' | 'sale',
-            images: Array.isArray(request.images) ? request.images.filter((img): img is string => typeof img === 'string') : [],
-            videos: Array.isArray(request.videos) ? request.videos.filter((video): video is string => typeof video === 'string') : [],
-            amenities: Array.isArray(request.amenities) ? request.amenities.filter((amenity): amenity is string => typeof amenity === 'string') : null,
-            submitter_type: (request.submitter_type && ['owner', 'broker', 'referral'].includes(request.submitter_type)) 
-              ? request.submitter_type as 'owner' | 'broker' | 'referral' 
-              : 'owner' as 'owner' | 'broker' | 'referral',
-            qr_code: request.qr_code || null
-          } as PropertyRequest;
-        });
-      } catch (error) {
+      if (error) {
         console.error('Error fetching user requests:', error);
-        return [];
+        throw error;
       }
+
+      return (data || []).map(request => {
+        const type = (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent';
+        
+        return {
+          ...request,
+          type: type as 'rent' | 'sale',
+          images: Array.isArray(request.images) ? request.images.filter((img): img is string => typeof img === 'string') : [],
+          videos: Array.isArray(request.videos) ? request.videos.filter((video): video is string => typeof video === 'string') : [],
+          amenities: Array.isArray(request.amenities) ? request.amenities.filter((amenity): amenity is string => typeof amenity === 'string') : null,
+          submitter_type: (request.submitter_type && ['owner', 'broker', 'referral'].includes(request.submitter_type)) 
+            ? request.submitter_type as 'owner' | 'broker' | 'referral' 
+            : 'owner' as 'owner' | 'broker' | 'referral',
+          qr_code: request.qr_code || null
+        } as PropertyRequest;
+      });
     },
     enabled: !!user,
   });

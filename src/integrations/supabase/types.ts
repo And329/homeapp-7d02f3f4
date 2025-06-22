@@ -465,6 +465,7 @@ export type Database = {
           longitude: number | null
           price: number
           property_type: string | null
+          qr_code: string | null
           status: string | null
           submitter_type: string
           title: string
@@ -493,6 +494,7 @@ export type Database = {
           longitude?: number | null
           price: number
           property_type?: string | null
+          qr_code?: string | null
           status?: string | null
           submitter_type?: string
           title: string
@@ -521,6 +523,7 @@ export type Database = {
           longitude?: number | null
           price?: number
           property_type?: string | null
+          qr_code?: string | null
           status?: string | null
           submitter_type?: string
           title?: string
