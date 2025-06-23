@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -157,17 +157,29 @@ const PropertyDetails = () => {
         {/* Videos Section */}
         {property.videos && property.videos.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Property Videos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 mb-6">
+              <Play className="h-5 w-5 text-primary" />
+              <h2 className="text-2xl font-bold text-gray-900">Property Videos</h2>
+              <Badge variant="outline" className="ml-2">
+                {property.videos.length} {property.videos.length === 1 ? 'video' : 'videos'}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {property.videos.map((video, index) => (
-                <div key={index} className="aspect-video rounded-lg overflow-hidden">
-                  <video
-                    controls
-                    className="w-full h-full object-cover"
-                    src={video}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
+                <div key={index} className="group relative">
+                  <div className="aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-gray-50">
+                    <video
+                      controls
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      src={video}
+                      poster="/placeholder.svg"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded-lg text-xs font-medium">
+                    Video {index + 1}
+                  </div>
                 </div>
               ))}
             </div>
