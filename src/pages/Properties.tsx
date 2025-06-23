@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
 import { Property } from '@/types/property';
@@ -15,11 +15,20 @@ import { Button } from '@/components/ui/button';
 import { Map, Grid } from 'lucide-react';
 
 const Properties = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>('all');
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>(
+    (searchParams.get('type') as 'rent' | 'sale') || 'all'
+  );
   const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMap, setShowMap] = useState(false);
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState(
+    searchParams.get('propertyType') || 'all'
+  );
+  const [bedroomsFilter, setBedroomsFilter] = useState('all');
+  const [emirateFilter, setEmirateFilter] = useState('all');
+  
   const navigate = useNavigate();
 
   const { data: rawProperties = [], isLoading } = useQuery({
@@ -56,7 +65,18 @@ const Properties = () => {
       (priceRange === 'mid' && property.price >= 100000 && property.price < 500000) ||
       (priceRange === 'high' && property.price >= 500000);
 
-    return matchesSearch && matchesType && matchesPrice;
+    const matchesPropertyType = propertyTypeFilter === 'all' || 
+      property.propertyType === propertyTypeFilter;
+
+    const matchesBedrooms = bedroomsFilter === 'all' || 
+      (bedroomsFilter === 'studio' && property.bedrooms === 0) ||
+      (bedroomsFilter === '4' && property.bedrooms >= 4) ||
+      property.bedrooms.toString() === bedroomsFilter;
+
+    const matchesEmirate = emirateFilter === 'all' || 
+      property.location.toLowerCase().includes(emirateFilter.toLowerCase());
+
+    return matchesSearch && matchesType && matchesPrice && matchesPropertyType && matchesBedrooms && matchesEmirate;
   });
 
   const transformProperty = (property: Property) => property;
@@ -96,6 +116,12 @@ const Properties = () => {
           viewMode={viewMode}
           setViewMode={setViewMode}
           resultsCount={filteredProperties.length}
+          propertyTypeFilter={propertyTypeFilter}
+          setPropertyTypeFilter={setPropertyTypeFilter}
+          bedroomsFilter={bedroomsFilter}
+          setBedroomsFilter={setBedroomsFilter}
+          emirateFilter={emirateFilter}
+          setEmirateFilter={setEmirateFilter}
         />
 
         <div className="mb-4 flex justify-between items-center">
