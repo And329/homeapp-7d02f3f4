@@ -1,7 +1,13 @@
 
-import React from 'react';
-import { Plus, Map, Edit, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Map, Edit, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyMap from '@/components/PropertyMap';
 import { Property } from '@/types/property';
@@ -33,6 +39,138 @@ interface AdminPropertiesTabProps {
   onDeleteProperty: (id: number) => void;
 }
 
+interface ContactEditDialogProps {
+  propertyId: number;
+  ownerId: string | null;
+}
+
+const ContactEditDialog: React.FC<ContactEditDialogProps> = ({ propertyId, ownerId }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [contactData, setContactData] = useState({
+    full_name: '',
+    email: '',
+    phone: ''
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch owner profile data
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['owner-profile', ownerId],
+    queryFn: async () => {
+      if (!ownerId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', ownerId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!ownerId && isOpen,
+  });
+
+  // Update contact mutation
+  const updateContactMutation = useMutation({
+    mutationFn: async (newContactData: { full_name: string; email: string; phone: string }) => {
+      if (!ownerId) throw new Error('Owner ID not found');
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(newContactData)
+        .eq('id', ownerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner-profile', ownerId] });
+      setIsOpen(false);
+      toast({
+        title: "Contact updated",
+        description: "Owner contact information has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to update contact: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  React.useEffect(() => {
+    if (ownerProfile && isOpen) {
+      setContactData({
+        full_name: ownerProfile.full_name || '',
+        email: ownerProfile.email || '',
+        phone: ownerProfile.phone || ''
+      });
+    }
+  }, [ownerProfile, isOpen]);
+
+  const handleSave = () => {
+    updateContactMutation.mutate(contactData);
+  };
+
+  if (!ownerId) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="bg-white/90 backdrop-blur-sm">
+          <User className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Contact Information</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="full_name">Full Name</Label>
+            <Input
+              id="full_name"
+              value={contactData.full_name}
+              onChange={(e) => setContactData(prev => ({ ...prev, full_name: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={contactData.email}
+              onChange={(e) => setContactData(prev => ({ ...prev, email: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              value={contactData.phone}
+              onChange={(e) => setContactData(prev => ({ ...prev, phone: e.target.value }))}
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={updateContactMutation.isPending}
+            >
+              {updateContactMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   properties,
   propertiesLoading,
@@ -42,6 +180,25 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   onEditProperty,
   onDeleteProperty,
 }) => {
+  // Get properties with owner IDs for contact editing
+  const { data: propertiesWithOwners } = useQuery({
+    queryKey: ['admin-properties-with-owners'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, owner_id')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getOwnerIdForProperty = (propertyId: number) => {
+    const property = propertiesWithOwners?.find(p => parseInt(p.id) === propertyId);
+    return property?.owner_id || null;
+  };
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
@@ -114,10 +271,16 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               created_at: property.created_at,
             };
 
+            const ownerId = getOwnerIdForProperty(property.id);
+
             return (
               <div key={property.id} className="relative">
                 <PropertyCard property={transformedProperty} />
                 <div className="absolute top-4 right-4 z-10 flex gap-2">
+                  <ContactEditDialog 
+                    propertyId={property.id} 
+                    ownerId={ownerId}
+                  />
                   <Button
                     variant="outline"
                     size="sm"

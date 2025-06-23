@@ -46,18 +46,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           For {property.type}
         </Badge>
         
-        {/* Favorite Button */}
+        {/* Favorite Button with red color when favorited */}
         <Button
           onClick={handleFavoriteClick}
           variant="ghost"
           size="sm"
-          className={`absolute bottom-2 right-2 h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full bg-white/90 hover:bg-white ${
-            isPropertyFavorited ? 'text-red-500' : 'text-gray-600'
+          className={`absolute bottom-2 right-2 h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full bg-white/90 hover:bg-white transition-colors ${
+            isPropertyFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-gray-800'
           }`}
           disabled={isToggling}
         >
           <Heart 
-            className={`h-3 w-3 sm:h-4 sm:w-4 ${isPropertyFavorited ? 'fill-current' : ''}`} 
+            className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+              isPropertyFavorited ? 'fill-red-500 text-red-500' : ''
+            }`} 
           />
         </Button>
       </div>
