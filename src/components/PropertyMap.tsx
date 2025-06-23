@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -123,156 +122,101 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             return;
           }
 
-          // Add markers for each property
+          // Add markers for each property using Mapbox tools
           validProperties.forEach((property) => {
             try {
-              // Create compact marker element
+              // Create a simple marker element
               const markerEl = document.createElement('div');
-              markerEl.className = 'property-marker';
+              markerEl.className = 'mapbox-marker';
               markerEl.style.cssText = `
-                width: 120px;
-                background: white;
-                border-radius: 6px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-                overflow: hidden;
-                border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+                width: 40px;
+                height: 40px;
+                background-color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+                border: 3px solid white;
+                border-radius: 50%;
                 cursor: pointer;
-                transform: translate(-50%, -100%);
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                transition: all 0.2s ease-in-out;
-                z-index: 1;
-              `;
-
-              // Create image element
-              const imageEl = document.createElement('img');
-              imageEl.src = property.image || '/placeholder.svg';
-              imageEl.style.cssText = `
-                width: 100%;
-                height: 50px;
-                object-fit: cover;
-                display: block;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                color: white;
+                font-size: 12px;
+                transition: transform 0.2s ease;
               `;
               
-              // Handle image load errors
-              imageEl.onerror = () => {
-                imageEl.src = '/placeholder.svg';
-              };
+              // Add price indicator
+              const priceText = property.price > 1000000 
+                ? `${Math.round(property.price / 1000000)}M` 
+                : property.price > 1000 
+                ? `${Math.round(property.price / 1000)}K` 
+                : property.price.toString();
+              
+              markerEl.textContent = priceText;
 
-              // Create info container
-              const infoEl = document.createElement('div');
-              infoEl.style.cssText = `
-                padding: 6px;
-                background: white;
-              `;
-
-              // Create price (main display)
-              const priceEl = document.createElement('div');
-              priceEl.textContent = `AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}`;
-              priceEl.style.cssText = `
-                font-size: 10px;
-                font-weight: 700;
-                color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                text-align: center;
-              `;
-
-              // Create expanded content (hidden by default)
-              const expandedEl = document.createElement('div');
-              expandedEl.className = 'expanded-content';
-              expandedEl.style.cssText = `
-                display: none;
-                margin-top: 4px;
-                padding-top: 4px;
-                border-top: 1px solid #e5e7eb;
-              `;
-
-              // Create title for expanded view
-              const titleEl = document.createElement('div');
-              titleEl.textContent = property.title.length > 25 ? property.title.substring(0, 25) + '...' : property.title;
-              titleEl.style.cssText = `
-                font-size: 10px;
-                font-weight: 600;
-                color: #1f2937;
-                margin-bottom: 3px;
-                line-height: 1.2;
-              `;
-
-              // Create type badge for expanded view
-              const typeEl = document.createElement('div');
-              typeEl.textContent = property.type === 'rent' ? 'For Rent' : 'For Sale';
-              typeEl.style.cssText = `
-                font-size: 8px;
-                font-weight: 500;
-                color: white;
-                background: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                padding: 2px 4px;
-                border-radius: 3px;
-                display: inline-block;
-                text-align: center;
-                width: 100%;
-                box-sizing: border-box;
-              `;
-
-              // Assemble expanded content
-              expandedEl.appendChild(titleEl);
-              expandedEl.appendChild(typeEl);
-
-              // Assemble the marker
-              infoEl.appendChild(priceEl);
-              infoEl.appendChild(expandedEl);
-              markerEl.appendChild(imageEl);
-              markerEl.appendChild(infoEl);
-
-              // Add hover effects for expansion
+              // Add hover effect
               markerEl.addEventListener('mouseenter', () => {
-                markerEl.style.cssText = `
-                  width: 160px;
-                  background: white;
-                  border-radius: 8px;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-                  overflow: hidden;
-                  border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                  cursor: pointer;
-                  transform: translate(-50%, -100%) scale(1.05);
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  transition: all 0.2s ease-in-out;
-                  z-index: 1000;
-                `;
-                
-                // Update image size for expanded view
-                imageEl.style.height = '70px';
-                
-                // Show expanded content
-                expandedEl.style.display = 'block';
+                markerEl.style.transform = 'scale(1.2)';
               });
-
+              
               markerEl.addEventListener('mouseleave', () => {
-                markerEl.style.cssText = `
-                  width: 120px;
-                  background: white;
-                  border-radius: 6px;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-                  overflow: hidden;
-                  border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                  cursor: pointer;
-                  transform: translate(-50%, -100%);
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  transition: all 0.2s ease-in-out;
-                  z-index: 1;
-                `;
-                
-                // Reset image size
-                imageEl.style.height = '50px';
-                
-                // Hide expanded content
-                expandedEl.style.display = 'none';
+                markerEl.style.transform = 'scale(1)';
               });
 
-              // Create marker
+              // Create popup content
+              const popupContent = `
+                <div style="max-width: 280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                  <img 
+                    src="${property.image || '/placeholder.svg'}" 
+                    alt="${property.title}"
+                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;"
+                    onerror="this.src='/placeholder.svg'"
+                  />
+                  <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.3;">
+                    ${property.title}
+                  </h3>
+                  <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; display: flex; align-items: center;">
+                    📍 ${property.location}
+                  </p>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <span style="font-size: 18px; font-weight: 700; color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};">
+                        AED ${property.price.toLocaleString()}
+                      </span>
+                      <span style="font-size: 12px; color: #6b7280;">
+                        ${property.type === 'rent' ? '/month' : ''}
+                      </span>
+                    </div>
+                    <span style="
+                      background: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+                      color: white;
+                      padding: 4px 8px;
+                      border-radius: 4px;
+                      font-size: 11px;
+                      font-weight: 500;
+                      text-transform: uppercase;
+                    ">
+                      For ${property.type}
+                    </span>
+                  </div>
+                </div>
+              `;
+
+              // Create popup
+              const popup = new mapboxgl.default.Popup({
+                offset: 25,
+                closeButton: true,
+                closeOnClick: false,
+                maxWidth: '300px'
+              }).setHTML(popupContent);
+
+              // Create marker with popup
               const marker = new mapboxgl.default.Marker(markerEl)
                 .setLngLat([property.longitude, property.latitude])
+                .setPopup(popup)
                 .addTo(newMap);
 
-              // Add click handler
+              // Add click handler for property navigation
               if (onPropertyClick) {
                 markerEl.addEventListener('click', (e) => {
                   e.stopPropagation();
@@ -280,7 +224,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 });
               }
 
-              console.log(`Added compact marker for property: ${property.title}`);
+              console.log(`Added Mapbox marker for property: ${property.title}`);
             } catch (error) {
               console.error(`Error creating marker for property ${property.id}:`, error);
             }
@@ -294,7 +238,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 bounds.extend([property.longitude, property.latitude]);
               }
             });
-            newMap.fitBounds(bounds, { padding: 80 });
+            newMap.fitBounds(bounds, { padding: 50 });
           } else if (validProperties.length === 1) {
             const property = validProperties[0];
             if (property.latitude && property.longitude) {
