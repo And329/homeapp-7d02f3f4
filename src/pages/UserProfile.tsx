@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { PropertyRequest } from '@/types/propertyRequest';
+import { Property } from '@/types/property';
 import PropertyCard from '@/components/PropertyCard';
 import FavoritesList from '@/components/FavoritesList';
 import MessagingInterface from '@/components/messaging/MessagingInterface';
@@ -259,28 +260,30 @@ const UserProfile = () => {
                 ) : (
                   <div className="space-y-4">
                     {userRequests.map((request) => {
-                      const transformedProperty = {
+                      const transformedProperty: Property = {
                         id: request.id,
                         title: request.title,
                         price: request.price,
                         location: request.location,
+                        emirate: request.emirate || '',
+                        latitude: request.latitude,
+                        longitude: request.longitude,
                         bedrooms: request.bedrooms,
                         bathrooms: request.bathrooms,
-                        area: 1000,
-                        image: Array.isArray(request.images) && request.images.length > 0 
-                          ? request.images[0] 
-                          : '/placeholder.svg',
-                        images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
+                        area: request.area,
+                        property_type: request.property_type || 'Apartment',
+                        year_built: null,
+                        parking: null,
                         type: request.type,
-                        isHotDeal: false,
                         description: request.description,
+                        is_hot_deal: false,
                         amenities: Array.isArray(request.amenities) ? request.amenities : [],
-                        coordinates: {
-                          lat: request.latitude || 0,
-                          lng: request.longitude || 0
-                        },
-                        propertyType: request.property_type || 'Apartment',
-                        owner_id: request.user_id
+                        images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
+                        videos: Array.isArray(request.videos) ? request.videos : [],
+                        qr_code: request.qr_code || '',
+                        owner_id: request.user_id,
+                        is_approved: request.status === 'approved',
+                        created_at: request.created_at,
                       };
                       
                       return (

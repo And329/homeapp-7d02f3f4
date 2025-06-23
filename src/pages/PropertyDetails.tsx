@@ -204,7 +204,7 @@ const PropertyDetails = () => {
                   AED {property.price.toLocaleString()}
                   {property.type === 'rent' && '/month'}
                 </span>
-                {property.isHotDeal && (
+                {property.is_hot_deal && (
                   <Badge variant="destructive">Hot Deal</Badge>
                 )}
                 <Badge variant="outline">
@@ -259,8 +259,8 @@ const PropertyDetails = () => {
                     location: property.location,
                     price: property.price,
                     type: property.type,
-                    latitude: property.coordinates.lat,
-                    longitude: property.coordinates.lng,
+                    latitude: property.latitude || 0,
+                    longitude: property.longitude || 0,
                   }]}
                   height="256px"
                 />
@@ -316,16 +316,16 @@ const PropertyDetails = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Property Type</span>
-                    <span className="font-medium">{property.propertyType}</span>
+                    <span className="font-medium">{property.property_type}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Listing Type</span>
                     <span className="font-medium capitalize">{property.type}</span>
                   </div>
-                  {property.yearBuilt && (
+                  {property.year_built && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Year Built</span>
-                      <span className="font-medium">{property.yearBuilt}</span>
+                      <span className="font-medium">{property.year_built}</span>
                     </div>
                   )}
                   {property.parking && (

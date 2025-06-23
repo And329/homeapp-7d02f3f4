@@ -59,26 +59,7 @@ const Properties = () => {
     return matchesSearch && matchesType && matchesPrice;
   });
 
-  const transformProperty = (property: Property) => ({
-    id: property.id,
-    title: property.title || 'Untitled Property',
-    price: property.price || 0,
-    location: property.location || 'Location not specified',
-    bedrooms: property.bedrooms || 0,
-    bathrooms: property.bathrooms || 0,
-    area: property.area || 1000,
-    image: property.images && property.images.length > 0 
-      ? property.images[0] 
-      : '/placeholder.svg',
-    images: property.images || ['/placeholder.svg'],
-    type: property.type || 'rent',
-    isHotDeal: property.isHotDeal || false,
-    description: property.description || '',
-    amenities: property.amenities || [],
-    coordinates: property.coordinates || { lat: 0, lng: 0 },
-    propertyType: property.propertyType || 'Apartment',
-    owner_id: property.owner_id
-  });
+  const transformProperty = (property: Property) => property;
 
   const handlePropertyClick = (property: Property) => {
     navigate(`/properties/${property.id}`);
@@ -91,8 +72,8 @@ const Properties = () => {
     location: p.location,
     price: p.price,
     type: p.type,
-    latitude: p.coordinates.lat,
-    longitude: p.coordinates.lng,
+    latitude: p.latitude || 0,
+    longitude: p.longitude || 0,
   }));
 
   return (

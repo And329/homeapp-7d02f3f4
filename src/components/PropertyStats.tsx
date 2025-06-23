@@ -14,7 +14,7 @@ const PropertyStats: React.FC<PropertyStatsProps> = ({ properties }) => {
   return (
     <div className="flex gap-2">
       <Badge variant="secondary">
-        {safeProperties.filter(p => p.isHotDeal).length} Hot Deals
+        {safeProperties.filter(p => p.is_hot_deal).length} Hot Deals
       </Badge>
       <Badge variant="outline">
         {safeProperties.filter(p => p.type === 'rent').length} For Rent

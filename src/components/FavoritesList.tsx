@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFavorites } from '@/hooks/useFavorites';
 import PropertyCard from './PropertyCard';
 import { useNavigate } from 'react-router-dom';
+import { Property } from '@/types/property';
 
 const FavoritesList = () => {
   const { favorites, isLoading } = useFavorites();
@@ -59,8 +60,6 @@ const FavoritesList = () => {
                 ? favorite.properties.images 
                 : ['/placeholder.svg'];
               
-              const firstImage = imagesArray.length > 0 ? imagesArray[0] : '/placeholder.svg';
-              
               // Handle amenities conversion from Json[] to string[]
               const amenitiesArray = Array.isArray(favorite.properties.amenities) 
                 ? favorite.properties.amenities
@@ -68,26 +67,30 @@ const FavoritesList = () => {
                     .map(item => item as string)
                 : [];
               
-              const property = {
+              const property: Property = {
                 id: favorite.properties.id,
                 title: favorite.properties.title,
                 price: favorite.properties.price,
                 location: favorite.properties.location,
+                emirate: favorite.properties.emirate || '',
+                latitude: favorite.properties.latitude,
+                longitude: favorite.properties.longitude,
                 bedrooms: favorite.properties.bedrooms,
                 bathrooms: favorite.properties.bathrooms,
-                area: 1000,
-                image: typeof firstImage === 'string' ? firstImage : '/placeholder.svg',
-                images: imagesArray.map(img => typeof img === 'string' ? img : '/placeholder.svg'),
+                area: favorite.properties.area,
+                property_type: favorite.properties.property_type || 'Apartment',
+                year_built: favorite.properties.year_built,
+                parking: favorite.properties.parking,
                 type: favorite.properties.type as 'rent' | 'sale',
-                isHotDeal: false,
                 description: favorite.properties.description || '',
+                is_hot_deal: favorite.properties.is_hot_deal || false,
                 amenities: amenitiesArray,
-                coordinates: { 
-                  lat: favorite.properties.latitude || 0, 
-                  lng: favorite.properties.longitude || 0 
-                },
-                propertyType: 'Apartment',
-                owner_id: favorite.properties.owner_id
+                images: imagesArray.map(img => typeof img === 'string' ? img : '/placeholder.svg'),
+                videos: Array.isArray(favorite.properties.videos) ? favorite.properties.videos : [],
+                qr_code: favorite.properties.qr_code || '',
+                owner_id: favorite.properties.owner_id,
+                is_approved: favorite.properties.is_approved,
+                created_at: favorite.properties.created_at,
               };
               
               return (

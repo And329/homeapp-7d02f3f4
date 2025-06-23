@@ -17,7 +17,7 @@ interface PropertyCardProps {
 const PropertyCard: React.FC<PropertyCardProps> = ({ 
   property, 
   onClick, 
-  showContactButton = false // Changed default to false since we removed chat functionality
+  showContactButton = false
 }) => {
   const { user } = useAuth();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
@@ -37,7 +37,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           alt={property.title}
           className="w-full h-36 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        {property.isHotDeal && (
+        {property.is_hot_deal && (
           <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs">
             Hot Deal
           </Badge>

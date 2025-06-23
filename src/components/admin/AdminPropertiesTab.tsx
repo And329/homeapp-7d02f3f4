@@ -4,8 +4,9 @@ import { Plus, Map, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyMap from '@/components/PropertyMap';
+import { Property } from '@/types/property';
 
-interface Property {
+interface AdminProperty {
   id: number;
   title: string;
   price: number;
@@ -23,12 +24,12 @@ interface Property {
 }
 
 interface AdminPropertiesTabProps {
-  properties: Property[];
+  properties: AdminProperty[];
   propertiesLoading: boolean;
   showMap: boolean;
   setShowMap: (show: boolean) => void;
   onAddProperty: () => void;
-  onEditProperty: (property: Property) => void;
+  onEditProperty: (property: AdminProperty) => void;
   onDeleteProperty: (id: number) => void;
 }
 
@@ -87,27 +88,30 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
       ) : (
         <div className="grid gap-4">
           {properties.map((property) => {
-            const transformedProperty = {
+            const transformedProperty: Property = {
               id: property.id.toString(),
               title: property.title || 'Untitled Property',
               price: property.price || 0,
               location: property.location || 'Unknown Location',
+              emirate: '',
+              latitude: property.latitude,
+              longitude: property.longitude,
               bedrooms: property.bedrooms || 0,
               bathrooms: property.bathrooms || 0,
               area: 1000,
-              image: Array.isArray(property.images) && property.images.length > 0 
-                ? property.images[0] 
-                : '/placeholder.svg',
-              images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
+              property_type: 'Apartment',
+              year_built: null,
+              parking: null,
               type: (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent' as 'rent' | 'sale',
-              isHotDeal: property.is_hot_deal || false,
               description: property.description || '',
+              is_hot_deal: property.is_hot_deal || false,
               amenities: Array.isArray(property.amenities) ? property.amenities : [],
-              coordinates: {
-                lat: property.latitude || 0,
-                lng: property.longitude || 0
-              },
-              propertyType: 'Apartment'
+              images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
+              videos: [],
+              qr_code: '',
+              owner_id: undefined,
+              is_approved: true,
+              created_at: property.created_at,
             };
 
             return (

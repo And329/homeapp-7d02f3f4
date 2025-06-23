@@ -2,16 +2,6 @@
 import { Property } from '@/types/property';
 
 export const transformDatabaseProperty = (dbProperty: any): Property => {
-  // Handle coordinates - they might be stored as JSON string or object
-  let coordinates = { lat: 0, lng: 0 };
-  
-  if (dbProperty.latitude && dbProperty.longitude) {
-    coordinates = {
-      lat: dbProperty.latitude,
-      lng: dbProperty.longitude
-    };
-  }
-
   // Handle images - they might be stored as JSON string or array
   let images: string[] = [];
   if (dbProperty.images) {
@@ -59,24 +49,24 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     title: dbProperty.title || '',
     price: dbProperty.price || 0,
     location: dbProperty.location || '',
+    emirate: dbProperty.emirate || '',
+    latitude: dbProperty.latitude,
+    longitude: dbProperty.longitude,
     bedrooms: dbProperty.bedrooms || 0,
     bathrooms: dbProperty.bathrooms || 0,
-    area: dbProperty.area || 0,
-    image: images[0] || '/placeholder.svg',
+    area: dbProperty.area,
+    property_type: dbProperty.property_type || 'Apartment',
+    year_built: dbProperty.year_built,
+    parking: dbProperty.parking,
+    type: dbProperty.type as 'rent' | 'sale',
+    description: dbProperty.description || '',
+    is_hot_deal: dbProperty.is_hot_deal || false,
+    amenities,
     images: images.length > 0 ? images : ['/placeholder.svg'],
     videos: videos || [],
-    type: dbProperty.type as 'rent' | 'sale',
-    isHotDeal: dbProperty.is_hot_deal || false,
-    description: dbProperty.description || '',
-    amenities,
-    coordinates,
-    propertyType: dbProperty.property_type || 'Apartment',
-    yearBuilt: dbProperty.year_built,
-    parking: dbProperty.parking,
+    qr_code: dbProperty.qr_code || '',
     owner_id: dbProperty.owner_id,
     is_approved: dbProperty.is_approved,
     created_at: dbProperty.created_at,
-    emirate: dbProperty.emirate || '',
-    qr_code: dbProperty.qr_code || ''
   };
 };
