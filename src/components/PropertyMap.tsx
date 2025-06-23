@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -237,14 +238,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           const popup = new mapboxgl.default.Popup({
             closeButton: false, // We'll create our own close button
             closeOnClick: false,
-            maxWidth: '380px',
+            maxWidth: '190px', // Reduced from 380px
             className: 'property-popup',
             anchor: 'bottom'
           });
 
           // Click event for individual properties
           newMap.on('click', 'unclustered-point', (e) => {
-            const coordinates = (e.features![0].geometry as any).coordinates.slice();
+            const coordinates = ((e.features![0].geometry as any) as { coordinates: [number, number] }).coordinates.slice();
             const properties = e.features![0].properties;
 
             // Ensure that if the map is zoomed out such that multiple
@@ -256,33 +257,33 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
             const imageUrl = properties.image && properties.image !== '/placeholder.svg' 
               ? properties.image 
-              : 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=200&fit=crop';
+              : '/placeholder.svg';
 
             const popupContent = `
               <div style="
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 background: white;
-                border-radius: 16px;
+                border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
                 border: 1px solid #e5e7eb;
                 position: relative;
-                max-width: 380px;
+                max-width: 190px;
               ">
                 <!-- Custom Close Button -->
                 <button 
                   onclick="document.querySelector('.mapboxgl-popup-close-button').click()" 
                   style="
                     position: absolute;
-                    top: 12px;
-                    right: 12px;
+                    top: 8px;
+                    right: 8px;
                     z-index: 10;
-                    background: rgba(0, 0, 0, 0.7);
+                    background: rgba(0, 0, 0, 0.8);
                     color: white;
                     border: none;
                     border-radius: 50%;
-                    width: 32px;
-                    height: 32px;
+                    width: 24px;
+                    height: 24px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -291,9 +292,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                     font-weight: bold;
                     transition: all 0.2s ease;
                     backdrop-filter: blur(4px);
+                    line-height: 1;
                   "
                   onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'; this.style.transform='scale(1.1)';"
-                  onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.transform='scale(1)';"
+                  onmouseout="this.style.background='rgba(0, 0, 0, 0.8)'; this.style.transform='scale(1)';"
                 >
                   ×
                 </button>
@@ -304,40 +306,37 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                     alt="${properties.title}"
                     style="
                       width: 100%; 
-                      height: 200px; 
+                      height: 100px; 
                       object-fit: cover; 
                       display: block;
                       border: none;
                     "
-                    onload="this.style.opacity='1';"
-                    onerror="this.src='https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=200&fit=crop'; this.style.opacity='1';"
-                    style="opacity: 0; transition: opacity 0.3s ease;"
                   />
                   
                   <!-- Status Badge -->
                   <div style="
                     position: absolute;
-                    top: 16px;
-                    left: 16px;
+                    top: 8px;
+                    left: 8px;
                     background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                     color: white;
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-size: 12px;
+                    padding: 3px 6px;
+                    border-radius: 10px;
+                    font-size: 9px;
                     font-weight: 600;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    letter-spacing: 0.3px;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
                     backdrop-filter: blur(4px);
                   ">
                     For ${properties.type}
                   </div>
                 </div>
                 
-                <div style="padding: 24px;">
+                <div style="padding: 12px;">
                   <h3 style="
-                    margin: 0 0 12px 0; 
-                    font-size: 20px; 
+                    margin: 0 0 6px 0; 
+                    font-size: 12px; 
                     font-weight: 700; 
                     color: #111827; 
                     line-height: 1.3;
@@ -349,12 +348,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                   <div style="
                     display: flex; 
                     align-items: center; 
-                    margin-bottom: 20px; 
+                    margin-bottom: 10px; 
                     color: #6b7280; 
-                    font-size: 14px;
+                    font-size: 10px;
                     font-weight: 500;
                   ">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; flex-shrink: 0;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; flex-shrink: 0;">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     <span style="line-height: 1.4;">${properties.location}</span>
@@ -364,21 +363,21 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                     display: flex; 
                     justify-content: space-between; 
                     align-items: center;
-                    margin-bottom: ${onPropertyClick ? '24px' : '0'};
+                    margin-bottom: ${onPropertyClick ? '12px' : '0'};
                   ">
                     <div>
                       <div style="
-                        font-size: 28px; 
+                        font-size: 14px; 
                         font-weight: 800; 
                         color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                         line-height: 1.1;
-                        margin-bottom: 4px;
+                        margin-bottom: 2px;
                       ">
                         AED ${parseInt(properties.price).toLocaleString()}
                       </div>
                       ${properties.type === 'rent' ? `
                         <div style="
-                          font-size: 13px; 
+                          font-size: 9px; 
                           color: #6b7280; 
                           font-weight: 500;
                         ">
@@ -393,21 +392,21 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                       onclick="window.handlePropertyClick(${properties.id})" 
                       style="
                         width: 100%;
-                        padding: 14px 24px;
+                        padding: 8px 12px;
                         background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                         color: white;
                         border: none;
-                        border-radius: 12px;
+                        border-radius: 6px;
                         font-weight: 600;
-                        font-size: 15px;
+                        font-size: 10px;
                         cursor: pointer;
                         transition: all 0.2s ease;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                       "
-                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0, 0, 0, 0.15)';"
-                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.1)';"
+                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(0, 0, 0, 0.15)';"
+                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.1)';"
                     >
-                      View Property Details
+                      View Details
                     </button>
                   ` : ''}
                 </div>
@@ -430,7 +429,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 if (err) return;
 
                 newMap.easeTo({
-                  center: (features[0].geometry as any).coordinates,
+                  center: ((features[0].geometry as any) as { coordinates: [number, number] }).coordinates,
                   zoom: zoom
                 });
               }
