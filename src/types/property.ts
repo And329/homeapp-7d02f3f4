@@ -9,7 +9,6 @@ export interface Property {
   area: number;
   image: string;
   images: string[];
-  videos?: string[];
   type: 'rent' | 'sale';
   isHotDeal?: boolean;
   description: string;
@@ -26,8 +25,4 @@ export interface Property {
   created_at?: string;
   emirate?: string;
   qr_code?: string;
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  owner_profile_picture?: string;
 }

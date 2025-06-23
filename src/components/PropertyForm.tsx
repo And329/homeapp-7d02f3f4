@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import PropertyBasicInfo from '@/components/PropertyBasicInfo';
-import PropertyContactInfo from '@/components/PropertyContactInfo';
-import PropertyMediaSection from '@/components/PropertyMediaSection';
-import PropertyFormActions from '@/components/PropertyFormActions';
+import PropertyAmenities from '@/components/PropertyAmenities';
+import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyLocationPicker from '@/components/PropertyLocationPicker';
+import EmiratesSelector from '@/components/EmiratesSelector';
+import QRCodeUpload from '@/components/QRCodeUpload';
 import { createProperty } from '@/api/properties';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -30,11 +32,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     is_hot_deal: false,
     amenities: [] as string[],
     images: [] as string[],
-    videos: [] as string[],
     qr_code: '',
-    contact_name: '',
-    contact_email: '',
-    contact_phone: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -42,7 +40,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   useEffect(() => {
     console.log('PropertyForm: useEffect triggered with property:', property);
     if (property) {
-      // Handle different property data structures (from admin vs regular API)
       const newFormData = {
         title: property.title || '',
         price: property.price?.toString() || '',
@@ -55,13 +52,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         type: property.type || 'rent',
         description: property.description || '',
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
-        amenities: Array.isArray(property.amenities) ? property.amenities : [],
-        images: Array.isArray(property.images) && property.images.length > 0 ? property.images : [],
-        videos: Array.isArray(property.videos) && property.videos.length > 0 ? property.videos : [],
+        amenities: property.amenities || [],
+        images: property.images || [],
         qr_code: property.qr_code || '',
-        contact_name: property.contact_name || '',
-        contact_email: property.contact_email || '',
-        contact_phone: property.contact_phone || '',
       };
       console.log('PropertyForm: Setting form data from property:', newFormData);
       setFormData(newFormData);
@@ -81,11 +74,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: false,
         amenities: [] as string[],
         images: [] as string[],
-        videos: [] as string[],
         qr_code: '',
-        contact_name: '',
-        contact_email: '',
-        contact_phone: '',
       };
       console.log('PropertyForm: Resetting form data for new property');
       setFormData(resetFormData);
@@ -136,11 +125,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
-        videos: formData.videos,
         qr_code: formData.qr_code.trim(),
-        contact_name: formData.contact_name.trim(),
-        contact_email: formData.contact_email.trim(),
-        contact_phone: formData.contact_phone.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -148,22 +133,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
-        // Ensure we have a valid UUID string
-        let propertyId: string;
-        if (typeof property.id === 'number') {
-          // This shouldn't happen for real UUIDs, but handle the case
-          throw new Error('Invalid property ID: expected UUID string, got number');
-        } else {
-          propertyId = String(property.id);
-        }
-        
-        console.log('PropertyForm: Using property ID:', propertyId);
-
-        // Validate that it looks like a UUID
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(propertyId)) {
-          throw new Error('Invalid property ID format. Expected UUID.');
-        }
+        const propertyId = String(property.id);
+        console.log('PropertyForm: Using property ID as string:', propertyId);
 
         const { error } = await supabase
           .from('properties')
@@ -223,11 +194,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, images }));
   };
 
-  const handleVideosChange = (videos: string[]) => {
-    console.log('PropertyForm: Videos changed to:', videos.length, 'videos');
-    setFormData(prev => ({ ...prev, videos }));
-  };
-
   const handleEmirateChange = (emirate: string) => {
     setFormData(prev => ({ ...prev, emirate }));
   };
@@ -236,13 +202,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, qr_code: qrCode }));
   };
 
-  const handleAmenitiesChange = (amenities: string[]) => {
-    setFormData(prev => ({ ...prev, amenities }));
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {property ? 'Edit Property' : 'Add New Property'}
@@ -256,31 +218,163 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <PropertyBasicInfo
-            formData={formData}
-            handleChange={handleChange}
-            handleLocationChange={handleLocationChange}
-            handleEmirateChange={handleEmirateChange}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+            </div>
 
-          <PropertyContactInfo
-            formData={formData}
-            handleChange={handleChange}
-          />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Price (AED) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+            </div>
 
-          <PropertyMediaSection
-            formData={formData}
+            <EmiratesSelector
+              value={formData.emirate}
+              onChange={handleEmirateChange}
+              required
+            />
+
+            <div className="md:col-span-1">
+              <PropertyLocationPicker
+                location={formData.location}
+                latitude={formData.latitude || undefined}
+                longitude={formData.longitude || undefined}
+                onLocationChange={handleLocationChange}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Type *
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              >
+                <option value="rent">For Rent</option>
+                <option value="sale">For Sale</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bedrooms *
+              </label>
+              <input
+                type="number"
+                name="bedrooms"
+                value={formData.bedrooms}
+                onChange={handleChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bathrooms *
+              </label>
+              <input
+                type="number"
+                name="bathrooms"
+                value={formData.bathrooms}
+                onChange={handleChange}
+                min="0"
+                step="0.5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Enter property description..."
+            />
+          </div>
+
+          <PropertyImageUpload
+            images={formData.images}
             onImagesChange={handleImagesChange}
-            onVideosChange={handleVideosChange}
-            onQRCodeChange={handleQRCodeChange}
-            onAmenitiesChange={handleAmenitiesChange}
           />
 
-          <PropertyFormActions
-            loading={loading}
-            isEditing={!!property}
-            onCancel={onClose}
+          <QRCodeUpload
+            qrCode={formData.qr_code}
+            onQRCodeChange={handleQRCodeChange}
+            required
           />
+
+          <PropertyAmenities
+            selectedAmenities={formData.amenities}
+            onAmenitiesChange={(amenities) => setFormData(prev => ({ ...prev, amenities }))}
+          />
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="is_hot_deal"
+              checked={formData.is_hot_deal}
+              onChange={handleChange}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            />
+            <label className="ml-2 block text-sm text-gray-700">
+              Mark as Hot Deal
+            </label>
+          </div>
+
+          <div className="flex items-center justify-end space-x-4 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {property ? 'Updating...' : 'Creating...'}
+                </div>
+              ) : (
+                property ? 'Update Property' : 'Create Property'
+              )}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

@@ -26,20 +26,6 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     }
   }
 
-  // Handle videos - they might be stored as JSON string or array
-  let videos: string[] = [];
-  if (dbProperty.videos) {
-    if (typeof dbProperty.videos === 'string') {
-      try {
-        videos = JSON.parse(dbProperty.videos);
-      } catch {
-        videos = [dbProperty.videos];
-      }
-    } else if (Array.isArray(dbProperty.videos)) {
-      videos = dbProperty.videos;
-    }
-  }
-
   // Handle amenities - they might be stored as JSON string or array
   let amenities: string[] = [];
   if (dbProperty.amenities) {
@@ -64,7 +50,6 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     area: dbProperty.area || 0,
     image: images[0] || '/placeholder.svg',
     images: images.length > 0 ? images : ['/placeholder.svg'],
-    videos: videos,
     type: dbProperty.type as 'rent' | 'sale',
     isHotDeal: dbProperty.is_hot_deal || false,
     description: dbProperty.description || '',
@@ -77,10 +62,6 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     is_approved: dbProperty.is_approved,
     created_at: dbProperty.created_at,
     emirate: dbProperty.emirate || '',
-    qr_code: dbProperty.qr_code || '',
-    contact_name: dbProperty.contact_name,
-    contact_email: dbProperty.contact_email,
-    contact_phone: dbProperty.contact_phone,
-    owner_profile_picture: dbProperty.owner_profile_picture
+    qr_code: dbProperty.qr_code || ''
   };
 };

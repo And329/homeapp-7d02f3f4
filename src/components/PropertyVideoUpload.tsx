@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Video, Play, Film } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { X, Plus, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PropertyVideoUploadProps {
@@ -91,63 +90,33 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
   const removeVideo = (index: number) => {
     const newVideos = videos.filter((_, i) => i !== index);
     onVideosChange(newVideos);
-    
-    toast({
-      title: "Video removed",
-      description: "Video has been removed successfully.",
-    });
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-lg font-semibold text-gray-800 flex items-center">
-          <Film className="h-5 w-5 mr-2 text-primary" />
-          Videos ({videos.length})
-        </h4>
-      </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Property Videos
+      </label>
       
-      {/* Videos Grid */}
-      {videos.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {videos.map((video, index) => (
-            <div key={index} className="relative group bg-black rounded-2xl overflow-hidden shadow-lg">
-              <video
-                src={video}
-                className="w-full h-48 object-cover"
-                controls
-                preload="metadata"
-              />
-              
-              {/* Play Overlay */}
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <Play className="h-8 w-8 text-white" fill="currentColor" />
-                </div>
-              </div>
-              
-              {/* Remove Button */}
-              <button
-                type="button"
-                onClick={() => removeVideo(index)}
-                className="absolute top-3 right-3 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg backdrop-blur-sm"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              
-              {/* Video Number */}
-              <div className="absolute bottom-3 left-3 bg-black/60 text-white text-sm px-2 py-1 rounded-full backdrop-blur-sm">
-                Video {index + 1}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Upload Area */}
-      <div className="border-2 border-dashed border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8 text-center hover:border-purple-400 hover:from-purple-100 hover:to-purple-150 transition-all duration-300">
-        <label className="cursor-pointer block">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {videos.map((video, index) => (
+          <div key={index} className="relative group">
+            <video
+              src={video}
+              className="w-full h-32 object-cover rounded-lg border border-gray-200"
+              controls
+            />
+            <button
+              type="button"
+              onClick={() => removeVideo(index)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+        
+        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors">
           <input
             type="file"
             multiple
@@ -157,58 +126,19 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
             disabled={uploading}
           />
           {uploading ? (
-            <div className="flex flex-col items-center">
-              <div className="relative mb-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-3 border-purple-300 border-t-purple-600"></div>
-                <Video className="h-6 w-6 text-purple-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-              </div>
-              <span className="text-base font-medium text-purple-700">Uploading videos...</span>
-              <span className="text-sm text-gray-500 mt-1">This may take a while</span>
-            </div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           ) : (
-            <div className="flex flex-col items-center">
-              <div className="bg-purple-200 rounded-2xl p-4 mb-4">
-                <Video className="h-10 w-10 text-purple-600" />
-              </div>
-              <span className="text-xl font-semibold text-gray-800 mb-2">Add Property Videos</span>
-              <span className="text-sm text-gray-600 mb-4 max-w-xs">
-                Show your property in motion with high-quality videos
-              </span>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg"
-                className="bg-white hover:bg-purple-600 hover:text-white border-purple-300 hover:border-purple-600 transition-all duration-300"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Choose Videos
-              </Button>
-            </div>
+            <>
+              <Video className="h-6 w-6 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-500">Add Videos</span>
+            </>
           )}
         </label>
       </div>
       
-      {/* Upload Guidelines */}
-      <div className="bg-purple-50 rounded-xl p-4">
-        <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-            Up to 5 videos
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-            Max 50MB each
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-            MP4, WebM, MOV
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-            HD quality preferred
-          </div>
-        </div>
-      </div>
+      <p className="text-xs text-gray-500">
+        Upload up to 5 videos. Max file size: 50MB per video. Supported formats: MP4, WebM, MOV.
+      </p>
     </div>
   );
 };

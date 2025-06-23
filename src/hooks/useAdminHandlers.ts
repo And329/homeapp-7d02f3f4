@@ -155,14 +155,13 @@ export const useAdminHandlers = (
     }
   };
 
-  const handleEdit = (property: any) => {
-    console.log('useAdminHandlers: Setting property for edit:', property);
+  const handleEdit = (property: Property) => {
     state.setEditingProperty(property);
     state.setIsFormOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    console.log('useAdminHandlers: Attempting to delete property with ID:', id, 'Type:', typeof id);
+    console.log('useAdminHandlers: Attempting to delete property with ID:', id);
     
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {

@@ -60,7 +60,7 @@ const AdminDashboard = () => {
     selectedUserRequests,
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
-  // Transform properties to match AdminPropertiesTab expectations (with number IDs for display)
+  // Transform properties to match AdminPropertiesTab expectations (with number IDs)
   const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
     id: parseInt(property.id) || 0,
     title: property.title || 'Untitled Property',
@@ -104,48 +104,36 @@ const AdminDashboard = () => {
   );
 
   const handleEdit = (property: AdminProperty) => {
-    // Find the original property with UUID from rawProperties
-    const originalProperty = rawProperties.find(p => parseInt(p.id) === property.id);
-    
-    if (!originalProperty) {
-      console.error('Could not find original property with UUID');
-      return;
-    }
-    
-    // Create property object for PropertyForm with proper UUID
-    const propertyForEdit = {
-      id: originalProperty.id, // Keep original UUID string
-      title: originalProperty.title,
-      price: originalProperty.price,
-      location: originalProperty.location,
-      emirate: originalProperty.emirate,
-      latitude: originalProperty.latitude,
-      longitude: originalProperty.longitude,
-      bedrooms: originalProperty.bedrooms,
-      bathrooms: originalProperty.bathrooms,
-      type: originalProperty.type,
-      description: originalProperty.description,
-      is_hot_deal: originalProperty.is_hot_deal,
-      amenities: originalProperty.amenities,
-      images: originalProperty.images,
-      qr_code: originalProperty.qr_code,
-      created_at: originalProperty.created_at
+    const propertyForEdit: Property = {
+      id: String(property.id),
+      title: property.title,
+      price: property.price,
+      location: property.location,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: 1000,
+      image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
+      images: property.images || ['/placeholder.svg'],
+      type: property.type,
+      isHotDeal: property.is_hot_deal,
+      description: property.description,
+      amenities: property.amenities || [],
+      coordinates: {
+        lat: property.latitude || 0,
+        lng: property.longitude || 0
+      },
+      propertyType: 'Apartment',
+      yearBuilt: undefined,
+      parking: undefined,
+      owner_id: undefined,
+      is_approved: true,
+      created_at: property.created_at
     };
-    
-    console.log('AdminDashboard: Editing property with data:', propertyForEdit);
     handlers.handleEdit(propertyForEdit);
   };
 
   const handleDelete = async (id: number) => {
-    // Find the original property with UUID from rawProperties
-    const originalProperty = rawProperties.find(p => parseInt(p.id) === id);
-    
-    if (!originalProperty) {
-      console.error('Could not find original property with UUID for deletion');
-      return;
-    }
-    
-    await handlers.handleDelete(originalProperty.id); // Use original UUID string
+    await handlers.handleDelete(String(id));
   };
 
   if (!profile || profile.role !== 'admin') {

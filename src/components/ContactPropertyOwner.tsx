@@ -22,7 +22,7 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
   ownerProfilePicture
 }) => {
   return (
-    <Card className="shadow-lg">
+    <Card className="sticky top-24 shadow-lg">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center space-x-3">
           <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden shadow-sm">
@@ -38,6 +38,7 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
           </div>
           <div className="flex-1">
             <span className="text-lg font-semibold">Contact Owner</span>
+            <p className="text-sm font-normal text-gray-600 mt-0.5">{contactName}</p>
           </div>
         </CardTitle>
       </CardHeader>
@@ -48,10 +49,6 @@ const ContactPropertyOwner: React.FC<ContactPropertyOwnerProps> = ({
             Interested in <span className="font-medium">"{propertyTitle}"</span>?
           </p>
           <div className="space-y-2">
-            <div>
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</span>
-              <p className="text-sm text-gray-700 font-medium">{contactName}</p>
-            </div>
             <div>
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</span>
               <p className="text-sm text-gray-700">{contactEmail}</p>

@@ -1,8 +1,7 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2 } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import PropertyMap from '@/components/PropertyMap';
 import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
-import PropertyMediaGallery from '@/components/PropertyMediaGallery';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +18,8 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showContactForm, setShowContactForm] = useState(false);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -91,20 +91,56 @@ const PropertyDetails = () => {
     });
   };
 
-  // Combine images and videos for the media gallery
-  const allMedia = [
-    ...(property.images || []).map(img => ({ type: 'image' as const, src: img })),
-    ...(property.videos || []).map(vid => ({ type: 'video' as const, src: vid }))
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Property Media Gallery */}
-        <div className="mb-8">
-          <PropertyMediaGallery title={property.title} media={allMedia} />
+        {/* Property Images */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <div className="lg:col-span-2">
+            <div className="relative aspect-video rounded-lg overflow-hidden">
+              <img
+                src={property.images[selectedImageIndex]}
+                alt={property.title}
+                className="w-full h-full object-cover"
+              />
+              {property.images.length > 1 && (
+                <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                  {selectedImageIndex + 1} / {property.images.length}
+                </div>
+              )}
+            </div>
+            
+            {property.images.length > 1 && (
+              <div className="flex gap-2 mt-4 overflow-x-auto">
+                {property.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Property ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* QR Code Section */}
+          <div className="lg:col-span-1">
+            <PropertyQRCode
+              qrCode={property.qr_code}
+              propertyTitle={property.title}
+              className="h-full"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -171,9 +207,9 @@ const PropertyDetails = () => {
             {property.amenities && property.amenities.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {property.amenities.map((amenity, index) => (
-                    <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm">{amenity}</span>
                     </div>
                   ))}
@@ -202,58 +238,68 @@ const PropertyDetails = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Contact Information */}
-            <ContactPropertyOwner
-              propertyId={property.id}
-              ownerId={property.owner_id || ''}
-              propertyTitle={property.title}
-              contactName={property.contact_name || 'Property Owner'}
-              contactEmail={property.contact_email || 'owner@example.com'}
-              contactPhone={property.contact_phone}
-              ownerProfilePicture={property.owner_profile_picture}
-            />
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              {/* Contact Card */}
+              <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
+                <h3 className="text-lg font-semibold mb-4">Contact Property Owner</h3>
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full"
+                    onClick={() => setShowContactForm(true)}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Message
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call Now
+                  </Button>
+                </div>
+              </div>
 
-            {/* Property Details */}
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Property Details</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Property Type</span>
-                  <span className="font-medium">{property.propertyType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Listing Type</span>
-                  <span className="font-medium capitalize">{property.type}</span>
-                </div>
-                {property.yearBuilt && (
+              {/* Property Details */}
+              <div className="bg-white border rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Property Details</h3>
+                <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Year Built</span>
-                    <span className="font-medium">{property.yearBuilt}</span>
+                    <span className="text-gray-600">Property Type</span>
+                    <span className="font-medium">{property.propertyType}</span>
                   </div>
-                )}
-                {property.parking && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Parking</span>
-                    <span className="font-medium">{property.parking} spaces</span>
+                    <span className="text-gray-600">Listing Type</span>
+                    <span className="font-medium capitalize">{property.type}</span>
                   </div>
-                )}
+                  {property.yearBuilt && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Year Built</span>
+                      <span className="font-medium">{property.yearBuilt}</span>
+                    </div>
+                  )}
+                  {property.parking && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Parking</span>
+                      <span className="font-medium">{property.parking} spaces</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* QR Code - Small and unobtrusive */}
-            {property.qr_code && (
-              <div className="bg-gray-50 border rounded-lg p-4">
-                <PropertyQRCode
-                  qrCode={property.qr_code}
-                  propertyTitle={property.title}
-                  className="max-w-20 mx-auto"
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Contact Form Modal */}
+      {showContactForm && (
+        <ContactPropertyOwner
+          propertyId={property.id}
+          ownerId={property.owner_id || ''}
+          propertyTitle={property.title}
+          contactName="Property Owner"
+          contactEmail="owner@example.com"
+          contactPhone="N/A"
+        />
+      )}
 
       <Footer />
     </div>

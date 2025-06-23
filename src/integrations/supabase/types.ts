@@ -445,15 +445,7 @@ export type Database = {
           title?: string | null
           type?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "properties_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       property_requests: {
         Row: {
