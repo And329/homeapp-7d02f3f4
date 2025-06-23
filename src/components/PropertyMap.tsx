@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,7 +24,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [propertiesWithImages, setPropertiesWithImages] = useState<any[]>([]);
 
   useEffect(() => {
     const getMapboxToken = async () => {
@@ -41,50 +41,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
     getMapboxToken();
   }, []);
-
-  useEffect(() => {
-    const fetchPropertyImages = async () => {
-      try {
-        const propertyIds = properties.map(p => p.id.toString());
-        
-        if (propertyIds.length === 0) {
-          setPropertiesWithImages([]);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('properties')
-          .select('id, images')
-          .in('id', propertyIds);
-
-        if (error) {
-          console.error('Error fetching property images:', error);
-          setPropertiesWithImages(properties.map(p => ({ ...p, image: '/placeholder.svg' })));
-          return;
-        }
-
-        const propertiesWithImageData = properties.map(property => {
-          const imageData = data?.find(d => parseInt(d.id) === property.id);
-          const images = imageData?.images as string[] || [];
-          return {
-            ...property,
-            image: images.length > 0 ? images[0] : '/placeholder.svg'
-          };
-        });
-
-        setPropertiesWithImages(propertiesWithImageData);
-      } catch (error) {
-        console.error('Error fetching property images:', error);
-        setPropertiesWithImages(properties.map(p => ({ ...p, image: '/placeholder.svg' })));
-      }
-    };
-
-    if (properties.length > 0) {
-      fetchPropertyImages();
-    } else {
-      setPropertiesWithImages([]);
-    }
-  }, [properties]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -110,7 +66,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           console.log('Map loaded, adding properties to map');
           
           // Filter properties with valid coordinates
-          const validProperties = propertiesWithImages.filter(
+          const validProperties = properties.filter(
             property => property.latitude && property.longitude
           );
 
@@ -136,7 +92,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 location: property.location,
                 price: property.price,
                 type: property.type,
-                image: property.image,
                 priceText: property.price > 1000000 
                   ? `${Math.round(property.price / 1000000)}M` 
                   : property.price > 1000 
@@ -235,7 +190,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
           // Create popup with improved styling
           const popup = new mapboxgl.default.Popup({
-            closeButton: false,
+            closeButton: true,
             closeOnClick: false,
             maxWidth: '190px',
             className: 'property-popup',
@@ -254,12 +209,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
 
-            const imageUrl = properties.image && properties.image !== '/placeholder.svg' 
-              ? properties.image 
-              : '/placeholder.svg';
-
-            console.log('Property image URL:', imageUrl);
-
             const popupContent = `
               <div style="
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -271,149 +220,101 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 position: relative;
                 max-width: 160px;
                 width: 160px;
+                padding: 12px;
               ">
-                <!-- Custom Close Button -->
-                <button 
-                  onclick="document.querySelector('.mapboxgl-popup-close-button').click()" 
-                  style="
-                    position: absolute;
-                    top: 6px;
-                    right: 6px;
-                    z-index: 10;
-                    background: rgba(0, 0, 0, 0.7);
-                    color: white;
-                    border: none;
-                    border-radius: 50%;
-                    width: 28px;
-                    height: 28px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 18px;
-                    font-weight: bold;
-                    transition: all 0.2s ease;
-                    backdrop-filter: blur(4px);
-                    line-height: 1;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                  "
-                  onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'; this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.4)';"
-                  onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.3)';"
-                >
-                  ×
-                </button>
-
-                <div style="position: relative; overflow: hidden;">
-                  <img 
-                    src="${imageUrl}" 
-                    alt="${properties.title}"
-                    style="
-                      width: 100%; 
-                      height: 80px; 
-                      object-fit: cover; 
-                      display: block;
-                      border: none;
-                    "
-                    onerror="this.src='/placeholder.svg'"
-                  />
-                  
-                  <!-- Status Badge -->
-                  <div style="
-                    position: absolute;
-                    top: 6px;
-                    left: 6px;
-                    background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                    color: white;
-                    padding: 2px 5px;
-                    border-radius: 8px;
-                    font-size: 8px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.2px;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-                    backdrop-filter: blur(4px);
-                  ">
-                    For ${properties.type}
+                <!-- Status Badge -->
+                <div style="
+                  background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 8px;
+                  font-size: 10px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 0.2px;
+                  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                  backdrop-filter: blur(4px);
+                  margin-bottom: 8px;
+                  text-align: center;
+                ">
+                  For ${properties.type}
+                </div>
+                
+                <h3 style="
+                  margin: 0 0 4px 0; 
+                  font-size: 12px; 
+                  font-weight: 700; 
+                  color: #111827; 
+                  line-height: 1.2;
+                  letter-spacing: -0.02em;
+                ">
+                  ${properties.title}
+                </h3>
+                
+                <div style="
+                  display: flex; 
+                  align-items: center; 
+                  margin-bottom: 8px; 
+                  color: #6b7280; 
+                  font-size: 9px;
+                  font-weight: 500;
+                ">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; flex-shrink: 0;">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span style="line-height: 1.3;">${properties.location}</span>
+                </div>
+                
+                <div style="
+                  display: flex; 
+                  justify-content: space-between; 
+                  align-items: center;
+                  margin-bottom: ${onPropertyClick ? '10px' : '0'};
+                ">
+                  <div>
+                    <div style="
+                      font-size: 13px; 
+                      font-weight: 800; 
+                      color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                      line-height: 1.1;
+                      margin-bottom: 2px;
+                    ">
+                      AED ${parseInt(properties.price).toLocaleString()}
+                    </div>
+                    ${properties.type === 'rent' ? `
+                      <div style="
+                        font-size: 8px; 
+                        color: #6b7280; 
+                        font-weight: 500;
+                      ">
+                        per month
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
                 
-                <div style="padding: 8px;">
-                  <h3 style="
-                    margin: 0 0 4px 0; 
-                    font-size: 10px; 
-                    font-weight: 700; 
-                    color: #111827; 
-                    line-height: 1.2;
-                    letter-spacing: -0.02em;
-                  ">
-                    ${properties.title}
-                  </h3>
-                  
-                  <div style="
-                    display: flex; 
-                    align-items: center; 
-                    margin-bottom: 6px; 
-                    color: #6b7280; 
-                    font-size: 8px;
-                    font-weight: 500;
-                  ">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 3px; flex-shrink: 0;">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                    </svg>
-                    <span style="line-height: 1.3;">${properties.location}</span>
-                  </div>
-                  
-                  <div style="
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center;
-                    margin-bottom: ${onPropertyClick ? '8px' : '0'};
-                  ">
-                    <div>
-                      <div style="
-                        font-size: 11px; 
-                        font-weight: 800; 
-                        color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                        line-height: 1.1;
-                        margin-bottom: 1px;
-                      ">
-                        AED ${parseInt(properties.price).toLocaleString()}
-                      </div>
-                      ${properties.type === 'rent' ? `
-                        <div style="
-                          font-size: 7px; 
-                          color: #6b7280; 
-                          font-weight: 500;
-                        ">
-                          per month
-                        </div>
-                      ` : ''}
-                    </div>
-                  </div>
-                  
-                  ${onPropertyClick ? `
-                    <button 
-                      onclick="window.handlePropertyClick(${properties.id})" 
-                      style="
-                        width: 100%;
-                        padding: 6px 8px;
-                        background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-weight: 600;
-                        font-size: 8px;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                      "
-                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(0, 0, 0, 0.15)';"
-                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.1)';"
-                    >
-                      View Details
-                    </button>
-                  ` : ''}
-                </div>
+                ${onPropertyClick ? `
+                  <button 
+                    onclick="window.handlePropertyClick(${properties.id})" 
+                    style="
+                      width: 100%;
+                      padding: 8px 10px;
+                      background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                      color: white;
+                      border: none;
+                      border-radius: 6px;
+                      font-weight: 600;
+                      font-size: 10px;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                    "
+                    onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(0, 0, 0, 0.15)';"
+                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.1)';"
+                  >
+                    View Details
+                  </button>
+                ` : ''}
               </div>
             `;
 
@@ -493,7 +394,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     };
 
     // Only initialize if we have properties to show
-    if (propertiesWithImages.length > 0) {
+    if (properties.length > 0) {
       initializeMap();
     }
 
@@ -507,7 +408,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         delete (window as any).handlePropertyClick;
       }
     };
-  }, [mapboxToken, propertiesWithImages, onPropertyClick]);
+  }, [mapboxToken, properties, onPropertyClick]);
 
   if (!mapboxToken) {
     return (
@@ -523,7 +424,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     );
   }
 
-  if (propertiesWithImages.length === 0) {
+  if (properties.length === 0) {
     return (
       <div 
         className="flex items-center justify-center bg-gray-100 rounded-lg"

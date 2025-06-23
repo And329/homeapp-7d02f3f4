@@ -13,6 +13,8 @@ const Index = () => {
   const [searchLocation, setSearchLocation] = useState('');
   const [searchPropertyType, setSearchPropertyType] = useState('');
   const [searchListingType, setSearchListingType] = useState('');
+  const [searchBedrooms, setSearchBedrooms] = useState('');
+  const [searchEmirate, setSearchEmirate] = useState('');
 
   const { data: hotDeals = [], isLoading } = useQuery({
     queryKey: ['hotDeals'],
@@ -34,6 +36,12 @@ const Index = () => {
       } else if (searchListingType === 'For Sale') {
         searchParams.set('type', 'sale');
       }
+    }
+    if (searchBedrooms && searchBedrooms !== 'Bedrooms' && searchBedrooms !== '') {
+      searchParams.set('bedrooms', searchBedrooms);
+    }
+    if (searchEmirate && searchEmirate !== 'Emirate' && searchEmirate !== '') {
+      searchParams.set('emirate', searchEmirate);
     }
 
     navigate(`/properties${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
@@ -87,7 +95,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="bg-gray-50 rounded-2xl p-8 shadow-lg">
             <h2 className="text-2xl font-bold text-center mb-6">Find Your Perfect Property</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
                 <input
                   type="text"
@@ -123,6 +131,36 @@ const Index = () => {
                   <option value="For Sale">For Sale</option>
                 </select>
               </div>
+              <div>
+                <select 
+                  value={searchBedrooms}
+                  onChange={(e) => setSearchBedrooms(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Bedrooms</option>
+                  <option value="studio">Studio</option>
+                  <option value="1">1 Bedroom</option>
+                  <option value="2">2 Bedrooms</option>
+                  <option value="3">3 Bedrooms</option>
+                  <option value="4">4+ Bedrooms</option>
+                </select>
+              </div>
+              <div>
+                <select 
+                  value={searchEmirate}
+                  onChange={(e) => setSearchEmirate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Emirate</option>
+                  <option value="Dubai">Dubai</option>
+                  <option value="Abu Dhabi">Abu Dhabi</option>
+                  <option value="Sharjah">Sharjah</option>
+                  <option value="Ajman">Ajman</option>
+                  <option value="Ras Al Khaimah">Ras Al Khaimah</option>
+                  <option value="Fujairah">Fujairah</option>
+                  <option value="Umm Al Quwain">Umm Al Quwain</option>
+                </select>
+              </div>
               <button 
                 onClick={handleSearch}
                 className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
@@ -153,12 +191,13 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {hotDeals.map((property) => (
-                <PropertyCard 
-                  key={property.id} 
-                  property={property} 
-                  onClick={() => handlePropertyClick(property)}
-                  showContactButton={true}
-                />
+                <div key={property.id} onClick={() => handlePropertyClick(property)} className="cursor-pointer">
+                  <PropertyCard 
+                    property={property} 
+                    onClick={() => handlePropertyClick(property)}
+                    showContactButton={true}
+                  />
+                </div>
               ))}
             </div>
           )}
