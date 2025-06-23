@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -154,9 +153,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
-        // Ensure we're using the correct property ID format
-        const propertyId = String(property.id);
-        console.log('PropertyForm: Using property ID as string:', propertyId);
+        // Use the property ID directly as UUID - don't convert to string
+        const propertyId = property.id;
+        console.log('PropertyForm: Using property ID for update:', propertyId);
 
         const { error } = await supabase
           .from('properties')
