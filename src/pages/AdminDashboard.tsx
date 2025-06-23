@@ -19,7 +19,7 @@ import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
-import { Property } from '@/types/property';
+import { Property, DatabaseProperty } from '@/types/property';
 
 // Define the AdminProperty interface to match AdminPropertiesTab expectations
 interface AdminProperty {
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
     selectedUserRequests,
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
-  // Transform properties to match AdminPropertiesTab expectations (with number IDs)
+  // Transform database properties to AdminProperty format
   const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
     id: parseInt(property.id) || 0,
     title: property.title || 'Untitled Property',
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
     images: Array.isArray(property.images) ? property.images as string[] : []
   }));
 
-  // Transform property requests to match expected types - now with qr_code
+  // Transform property requests to match expected types
   const propertyRequests = rawPropertyRequests.map(request => ({
     ...request,
     type: (request.type === 'rent' || request.type === 'sale') ? request.type : 'rent' as 'rent' | 'sale',
@@ -104,35 +104,42 @@ const AdminDashboard = () => {
   );
 
   const handleEdit = (property: AdminProperty) => {
+    // Find the original database property to get all fields
+    const originalProperty = rawProperties.find(p => parseInt(p.id) === property.id);
+    
+    if (!originalProperty) {
+      console.error('Original property not found for ID:', property.id);
+      return;
+    }
+
     // Create the property object with all the fields that PropertyForm expects
     const propertyForEdit: Property = {
-      id: String(property.id),
-      title: property.title,
-      price: property.price,
-      location: property.location,
-      emirate: rawProperties.find(p => parseInt(p.id) === property.id)?.emirate || '',
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      area: rawProperties.find(p => parseInt(p.id) === property.id)?.area || 1000,
-      propertyType: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
-      yearBuilt: rawProperties.find(p => parseInt(p.id) === property.id)?.year_built,
-      parking: rawProperties.find(p => parseInt(p.id) === property.id)?.parking,
-      image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
-      images: property.images || ['/placeholder.svg'],
-      videos: rawProperties.find(p => parseInt(p.id) === property.id)?.videos as string[] || [],
-      type: property.type,
-      isHotDeal: property.is_hot_deal,
-      description: property.description,
-      amenities: property.amenities || [],
-      coordinates: {
-        lat: property.latitude || 0,
-        lng: property.longitude || 0
-      },
-      owner_id: rawProperties.find(p => parseInt(p.id) === property.id)?.owner_id,
-      qr_code: rawProperties.find(p => parseInt(p.id) === property.id)?.qr_code || '',
-      is_approved: true,
-      created_at: property.created_at
+      id: originalProperty.id,
+      title: originalProperty.title || '',
+      price: originalProperty.price || 0,
+      location: originalProperty.location || '',
+      emirate: originalProperty.emirate || '',
+      latitude: originalProperty.latitude,
+      longitude: originalProperty.longitude,
+      bedrooms: originalProperty.bedrooms || 0,
+      bathrooms: originalProperty.bathrooms || 0,
+      area: originalProperty.area,
+      property_type: originalProperty.property_type || 'Apartment',
+      year_built: originalProperty.year_built,
+      parking: originalProperty.parking,
+      type: (originalProperty.type === 'rent' || originalProperty.type === 'sale') ? originalProperty.type : 'rent',
+      description: originalProperty.description || '',
+      is_hot_deal: originalProperty.is_hot_deal || false,
+      amenities: Array.isArray(originalProperty.amenities) ? originalProperty.amenities as string[] : [],
+      images: Array.isArray(originalProperty.images) ? originalProperty.images as string[] : [],
+      videos: Array.isArray(originalProperty.videos) ? originalProperty.videos as string[] : [],
+      qr_code: originalProperty.qr_code || '',
+      owner_id: originalProperty.owner_id || undefined,
+      is_approved: originalProperty.is_approved || false,
+      created_at: originalProperty.created_at || undefined,
     };
+
+    console.log('AdminDashboard: Setting property for edit:', propertyForEdit);
     handlers.handleEdit(propertyForEdit);
   };
 

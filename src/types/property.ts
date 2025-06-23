@@ -4,26 +4,49 @@ export interface Property {
   title: string;
   price: number;
   location: string;
+  emirate: string;
+  latitude: number | null;
+  longitude: number | null;
   bedrooms: number;
   bathrooms: number;
-  area: number;
-  image: string;
-  images: string[];
-  videos?: string[];
+  area: number | null;
+  property_type: string;
+  year_built: number | null;
+  parking: number | null;
   type: 'rent' | 'sale';
-  isHotDeal?: boolean;
   description: string;
+  is_hot_deal: boolean;
   amenities: string[];
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  propertyType: string;
-  yearBuilt?: number;
-  parking?: number;
+  images: string[];
+  videos: string[];
+  qr_code: string;
   owner_id?: string;
   is_approved?: boolean;
   created_at?: string;
-  emirate?: string;
-  qr_code?: string;
+}
+
+export interface DatabaseProperty {
+  id: string;
+  title: string | null;
+  price: number | null;
+  location: string | null;
+  emirate: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  area: number | null;
+  property_type: string | null;
+  year_built: number | null;
+  parking: number | null;
+  type: string | null;
+  description: string | null;
+  is_hot_deal: boolean | null;
+  amenities: any;
+  images: any;
+  videos: any;
+  qr_code: string | null;
+  owner_id: string | null;
+  is_approved: boolean | null;
+  created_at: string | null;
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,33 +11,56 @@ import EmiratesSelector from '@/components/EmiratesSelector';
 import QRCodeUpload from '@/components/QRCodeUpload';
 import { createProperty } from '@/api/properties';
 import { supabase } from '@/integrations/supabase/client';
+import { Property } from '@/types/property';
 
 interface PropertyFormProps {
-  property?: any;
+  property?: Property | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
+interface FormData {
+  title: string;
+  price: string;
+  location: string;
+  emirate: string;
+  latitude: number | null;
+  longitude: number | null;
+  bedrooms: string;
+  bathrooms: string;
+  area: string;
+  property_type: string;
+  year_built: string;
+  parking: string;
+  type: 'rent' | 'sale';
+  description: string;
+  is_hot_deal: boolean;
+  amenities: string[];
+  images: string[];
+  videos: string[];
+  qr_code: string;
+}
+
 const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     price: '',
     location: '',
     emirate: '',
-    latitude: null as number | null,
-    longitude: null as number | null,
+    latitude: null,
+    longitude: null,
     bedrooms: '',
     bathrooms: '',
     area: '',
     property_type: 'Apartment',
     year_built: '',
     parking: '',
-    type: 'rent' as 'rent' | 'sale',
+    type: 'rent',
     description: '',
     is_hot_deal: false,
-    amenities: [] as string[],
-    images: [] as string[],
-    videos: [] as string[],
+    amenities: [],
+    images: [],
+    videos: [],
     qr_code: '',
   });
   const [loading, setLoading] = useState(false);
@@ -45,54 +69,51 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   useEffect(() => {
     console.log('PropertyForm: useEffect triggered with property:', property);
     if (property) {
-      const newFormData = {
+      console.log('PropertyForm: Setting form data from property:', property);
+      setFormData({
         title: property.title || '',
         price: property.price?.toString() || '',
         location: property.location || '',
         emirate: property.emirate || '',
-        latitude: property.latitude || property.coordinates?.lat || null,
-        longitude: property.longitude || property.coordinates?.lng || null,
+        latitude: property.latitude,
+        longitude: property.longitude,
         bedrooms: property.bedrooms?.toString() || '',
         bathrooms: property.bathrooms?.toString() || '',
         area: property.area?.toString() || '',
-        property_type: property.property_type || property.propertyType || 'Apartment',
-        year_built: property.year_built?.toString() || property.yearBuilt?.toString() || '',
+        property_type: property.property_type || 'Apartment',
+        year_built: property.year_built?.toString() || '',
         parking: property.parking?.toString() || '',
         type: property.type || 'rent',
         description: property.description || '',
-        is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
-        amenities: property.amenities || [],
-        images: property.images || [],
-        videos: property.videos || [],
+        is_hot_deal: property.is_hot_deal || false,
+        amenities: Array.isArray(property.amenities) ? property.amenities : [],
+        images: Array.isArray(property.images) ? property.images : [],
+        videos: Array.isArray(property.videos) ? property.videos : [],
         qr_code: property.qr_code || '',
-      };
-      console.log('PropertyForm: Setting form data from property:', newFormData);
-      setFormData(newFormData);
+      });
     } else {
       // Reset form for new property
-      const resetFormData = {
+      setFormData({
         title: '',
         price: '',
         location: '',
         emirate: '',
-        latitude: null as number | null,
-        longitude: null as number | null,
+        latitude: null,
+        longitude: null,
         bedrooms: '',
         bathrooms: '',
         area: '',
         property_type: 'Apartment',
         year_built: '',
         parking: '',
-        type: 'rent' as 'rent' | 'sale',
+        type: 'rent',
         description: '',
         is_hot_deal: false,
-        amenities: [] as string[],
-        images: [] as string[],
-        videos: [] as string[],
+        amenities: [],
+        images: [],
+        videos: [],
         qr_code: '',
-      };
-      console.log('PropertyForm: Resetting form data for new property');
-      setFormData(resetFormData);
+      });
     }
   }, [property]);
 
@@ -119,7 +140,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (!formData.bedrooms || parseInt(formData.bedrooms) < 0) {
         throw new Error('Valid number of bedrooms is required');
       }
-      if (!formData.bathrooms || parseInt(formData.bathrooms) < 0) {
+      if (!formData.bathrooms || parseFloat(formData.bathrooms) < 0) {
         throw new Error('Valid number of bathrooms is required');
       }
       if (!formData.qr_code.trim()) {
@@ -150,17 +171,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
 
-      if (property && property.id) {
+      if (property?.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
-        
-        // Use the property ID directly as UUID - don't convert to string
-        const propertyId = property.id;
-        console.log('PropertyForm: Using property ID for update:', propertyId);
 
         const { error } = await supabase
           .from('properties')
           .update(dataToSubmit)
-          .eq('id', propertyId);
+          .eq('id', property.id);
 
         if (error) {
           console.error('PropertyForm: Database update error:', error);
