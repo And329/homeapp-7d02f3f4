@@ -10,6 +10,8 @@ export interface PropertyRequest {
   longitude: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
+  area: number | null;
+  emirate: string | null;
   type: 'rent' | 'sale';
   property_type: string | null;
   amenities: string[] | null;
