@@ -24,6 +24,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [propertiesWithImages, setPropertiesWithImages] = useState<any[]>([]);
 
   useEffect(() => {
     const getMapboxToken = async () => {
@@ -42,8 +43,45 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     getMapboxToken();
   }, []);
 
+  // Fetch property images
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    const fetchPropertyImages = async () => {
+      try {
+        const propertyIds = properties.map(p => p.id.toString());
+        
+        const { data, error } = await supabase
+          .from('properties')
+          .select('id, images')
+          .in('id', propertyIds);
+
+        if (error) {
+          console.error('Error fetching property images:', error);
+          return;
+        }
+
+        const propertiesWithImageData = properties.map(property => {
+          const imageData = data?.find(d => parseInt(d.id) === property.id);
+          const images = imageData?.images as string[] || [];
+          return {
+            ...property,
+            image: images.length > 0 ? images[0] : '/placeholder.svg'
+          };
+        });
+
+        setPropertiesWithImages(propertiesWithImageData);
+      } catch (error) {
+        console.error('Error fetching property images:', error);
+        setPropertiesWithImages(properties.map(p => ({ ...p, image: '/placeholder.svg' })));
+      }
+    };
+
+    if (properties.length > 0) {
+      fetchPropertyImages();
+    }
+  }, [properties]);
+
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || propertiesWithImages.length === 0) return;
 
     const initializeMap = async () => {
       const mapboxgl = await import('mapbox-gl');
@@ -63,7 +101,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       // Wait for the map to load
       newMap.on('load', () => {
         // Filter properties with valid coordinates
-        const validProperties = properties.filter(
+        const validProperties = propertiesWithImages.filter(
           property => property.latitude && property.longitude
         );
 
@@ -73,50 +111,115 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         validProperties.forEach((property) => {
           if (!property.latitude || !property.longitude) return;
 
-          // Create a marker element
+          // Create a custom marker element with image and price
           const markerEl = document.createElement('div');
-          markerEl.className = 'property-marker';
+          markerEl.className = 'property-marker-container';
           markerEl.style.cssText = `
-            background-color: #3b82f6;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            position: relative;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
+            transform: translate(-50%, -100%);
           `;
-          
-          // Add property type indicator
-          markerEl.textContent = property.type === 'rent' ? 'R' : 'S';
 
-          // Create popup
-          const popup = new mapboxgl.default.Popup({
-            offset: 25,
-            closeButton: false,
-            className: 'property-popup'
-          }).setHTML(`
-            <div style="padding: 10px; min-width: 200px;">
-              <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">${property.title}</h3>
-              <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">${property.location}</p>
-              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #3b82f6;">
-                AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
-              </p>
-              <p style="margin: 5px 0 0 0; font-size: 11px; color: #888;">
-                Click to view details
-              </p>
-            </div>
-          `);
+          // Create the main marker card
+          const markerCard = document.createElement('div');
+          markerCard.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+            width: 180px;
+            border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+            transition: all 0.2s ease;
+          `;
+
+          // Property image
+          const imageEl = document.createElement('img');
+          imageEl.src = property.image;
+          imageEl.style.cssText = `
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+          `;
+
+          // Property info container
+          const infoEl = document.createElement('div');
+          infoEl.style.cssText = `
+            padding: 8px 10px;
+            background: white;
+          `;
+
+          // Property title
+          const titleEl = document.createElement('div');
+          titleEl.textContent = property.title.length > 25 ? property.title.substring(0, 25) + '...' : property.title;
+          titleEl.style.cssText = `
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.2;
+          `;
+
+          // Property price
+          const priceEl = document.createElement('div');
+          priceEl.textContent = `AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}`;
+          priceEl.style.cssText = `
+            font-size: 11px;
+            font-weight: 700;
+            color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+            margin-bottom: 2px;
+          `;
+
+          // Property type badge
+          const typeEl = document.createElement('div');
+          typeEl.textContent = property.type === 'rent' ? 'For Rent' : 'For Sale';
+          typeEl.style.cssText = `
+            font-size: 9px;
+            font-weight: 500;
+            color: white;
+            background: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+          `;
+
+          // Pointer arrow
+          const arrowEl = document.createElement('div');
+          arrowEl.style.cssText = `
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+          `;
+
+          // Assemble the marker
+          infoEl.appendChild(titleEl);
+          infoEl.appendChild(priceEl);
+          infoEl.appendChild(typeEl);
+          markerCard.appendChild(imageEl);
+          markerCard.appendChild(infoEl);
+          markerEl.appendChild(markerCard);
+          markerEl.appendChild(arrowEl);
+
+          // Add hover effects
+          markerCard.addEventListener('mouseenter', () => {
+            markerCard.style.transform = 'scale(1.05)';
+            markerCard.style.zIndex = '1000';
+          });
+
+          markerCard.addEventListener('mouseleave', () => {
+            markerCard.style.transform = 'scale(1)';
+            markerCard.style.zIndex = 'auto';
+          });
 
           // Create marker
           const marker = new mapboxgl.default.Marker(markerEl)
             .setLngLat([property.longitude, property.latitude])
-            .setPopup(popup)
             .addTo(newMap);
 
           // Add click handler
@@ -135,7 +238,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               bounds.extend([property.longitude, property.latitude]);
             }
           });
-          newMap.fitBounds(bounds, { padding: 50 });
+          newMap.fitBounds(bounds, { padding: 80 });
         } else if (validProperties.length === 1) {
           const property = validProperties[0];
           if (property.latitude && property.longitude) {
@@ -155,7 +258,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         map.current.remove();
       }
     };
-  }, [mapboxToken, properties, onPropertyClick]);
+  }, [mapboxToken, propertiesWithImages, onPropertyClick]);
 
   if (!mapboxToken) {
     return (
