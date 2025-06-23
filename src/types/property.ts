@@ -9,6 +9,7 @@ export interface Property {
   area: number;
   image: string;
   images: string[];
+  videos?: string[];
   type: 'rent' | 'sale';
   isHotDeal?: boolean;
   description: string;

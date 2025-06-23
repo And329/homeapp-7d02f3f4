@@ -26,6 +26,20 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     }
   }
 
+  // Handle videos - they might be stored as JSON string or array
+  let videos: string[] = [];
+  if (dbProperty.videos) {
+    if (typeof dbProperty.videos === 'string') {
+      try {
+        videos = JSON.parse(dbProperty.videos);
+      } catch {
+        videos = [dbProperty.videos];
+      }
+    } else if (Array.isArray(dbProperty.videos)) {
+      videos = dbProperty.videos;
+    }
+  }
+
   // Handle amenities - they might be stored as JSON string or array
   let amenities: string[] = [];
   if (dbProperty.amenities) {
@@ -50,6 +64,7 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     area: dbProperty.area || 0,
     image: images[0] || '/placeholder.svg',
     images: images.length > 0 ? images : ['/placeholder.svg'],
+    videos: videos || [],
     type: dbProperty.type as 'rent' | 'sale',
     isHotDeal: dbProperty.is_hot_deal || false,
     description: dbProperty.description || '',

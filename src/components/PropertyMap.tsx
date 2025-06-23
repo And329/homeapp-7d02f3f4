@@ -1,9 +1,5 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMapProps {
@@ -13,414 +9,158 @@ interface PropertyMapProps {
     location: string;
     price: number;
     type: 'rent' | 'sale';
-    latitude?: number;
-    longitude?: number;
+    latitude: number | null;
+    longitude: number | null;
   }>;
-  selectedPropertyId?: number;
-  onPropertySelect?: (propertyId: number) => void;
   height?: string;
-  enableNavigation?: boolean;
+  onPropertyClick?: (propertyId: number) => void;
 }
 
-const PropertyMap: React.FC<PropertyMapProps> = ({
-  properties,
-  selectedPropertyId,
-  onPropertySelect,
-  height = '400px',
-  enableNavigation = false
+const PropertyMap: React.FC<PropertyMapProps> = ({ 
+  properties, 
+  height = "400px",
+  onPropertyClick 
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
-  // Load Mapbox token from Supabase Edge Function
   useEffect(() => {
-    const loadMapboxToken = async () => {
+    const getMapboxToken = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-
         if (error) {
-          console.error('Error loading mapbox token:', error);
-          setIsLoading(false);
+          console.error('Error fetching Mapbox token:', error);
           return;
         }
-
-        if (data?.token) {
-          setMapboxToken(data.token);
-        }
-        setIsLoading(false);
+        setMapboxToken(data.token);
       } catch (error) {
-        console.error('Error loading mapbox token:', error);
-        setIsLoading(false);
+        console.error('Error fetching Mapbox token:', error);
       }
     };
 
-    loadMapboxToken();
+    getMapboxToken();
   }, []);
 
-  // Filter properties with valid coordinates
-  const validProperties = properties.filter(
-    p => p.latitude && p.longitude && 
-    !isNaN(p.latitude) && !isNaN(p.longitude) &&
-    p.latitude >= -90 && p.latitude <= 90 &&
-    p.longitude >= -180 && p.longitude <= 180
-  );
-
-  console.log('PropertyMap: Valid properties for map display:', validProperties);
-
-  // Initialize Mapbox map and add embedded markers
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || map.current) return;
+    if (!mapContainer.current || !mapboxToken) return;
 
-    console.log('PropertyMap: Initializing Mapbox with', validProperties.length, 'properties');
-
-    mapboxgl.accessToken = mapboxToken;
-    
-    // Calculate bounds for all properties
-    let bounds: mapboxgl.LngLatBounds | null = null;
-    if (validProperties.length > 0) {
-      bounds = new mapboxgl.LngLatBounds();
-      validProperties.forEach(property => {
-        if (property.latitude && property.longitude) {
-          bounds!.extend([property.longitude, property.latitude]);
-        }
-      });
-    }
-
-    // Default center (Dubai)
-    const defaultCenter: [number, number] = [55.2708, 25.2048];
-    const defaultZoom = validProperties.length === 1 ? 14 : 10;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: bounds ? bounds.getCenter() : defaultCenter,
-      zoom: defaultZoom,
-      antialias: true,
-    });
-
-    // Add navigation controls if enabled
-    if (enableNavigation) {
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    }
-
-    map.current.on('load', () => {
-      if (!map.current) return;
-
-      console.log('PropertyMap: Map loaded, adding', validProperties.length, 'properties to source');
-
-      // Add property data as a source
-      map.current.addSource('properties', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: validProperties.map(property => {
-            console.log('PropertyMap: Adding property to map:', property.id, property.title, property.price);
-            return {
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [property.longitude!, property.latitude!]
-              },
-              properties: {
-                id: property.id,
-                title: property.title,
-                location: property.location,
-                price: property.price,
-                type: property.type,
-                isSelected: selectedPropertyId === property.id
-              }
-            };
-          })
-        },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50
+    const initializeMap = async () => {
+      const mapboxgl = await import('mapbox-gl');
+      
+      mapboxgl.default.accessToken = mapboxToken;
+      
+      const newMap = new mapboxgl.default.Map({
+        container: mapContainer.current!,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [55.2708, 25.2048], // Dubai coordinates
+        zoom: 10,
       });
 
-      // Add cluster layer
-      map.current.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'properties',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#3b82f6',
-            100,
-            '#1d4ed8',
-            750,
-            '#1e3a8a'
-          ],
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            20,
-            100,
-            30,
-            750,
-            40
-          ]
-        }
-      });
+      // Add navigation controls
+      newMap.addControl(new mapboxgl.default.NavigationControl());
 
-      // Add cluster count layer
-      map.current.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'properties',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12
-        },
-        paint: {
-          'text-color': '#ffffff'
-        }
-      });
+      // Wait for the map to load
+      newMap.on('load', () => {
+        // Filter properties with valid coordinates
+        const validProperties = properties.filter(
+          property => property.latitude && property.longitude
+        );
 
-      // Add individual property markers - always blue
-      map.current.addLayer({
-        id: 'unclustered-point',
-        type: 'circle',
-        source: 'properties',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': [
-            'case',
-            ['get', 'isSelected'],
-            '#1d4ed8', // Darker blue for selected
-            '#3b82f6'  // Blue for all markers
-          ],
-          'circle-radius': 10,
-          'circle-stroke-width': 3,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
+        if (validProperties.length === 0) return;
 
-      // Add property labels with enhanced cloud-like background
-      map.current.addLayer({
-        id: 'property-labels-bg',
-        type: 'symbol',
-        source: 'properties',
-        filter: ['!', ['has', 'point_count']],
-        layout: {
-          'text-field': [
-            'format',
-            'AED ',
-            { 'font-scale': 0.85 },
-            ['case',
-              ['>=', ['get', 'price'], 1000000],
-              ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
-              ['>=', ['get', 'price'], 1000],
-              ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
-              ['number-format', ['get', 'price'], {}]
-            ],
-            { 'font-scale': 1.0 },
-            ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
-          ],
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12,
-          'text-offset': [0, -3.5],
-          'text-anchor': 'bottom',
-          'text-allow-overlap': true,
-          'text-ignore-placement': true,
-          'text-padding': 3
-        },
-        paint: {
-          'text-color': '#ffffff',
-          'text-halo-color': [
-            'case',
-            ['get', 'isSelected'],
-            '#1d4ed8',
-            '#3b82f6'
-          ],
-          'text-halo-width': 12,
-          'text-halo-blur': 6,
-          'text-opacity': 1
-        }
-      });
+        // Add markers for each property
+        validProperties.forEach((property) => {
+          if (!property.latitude || !property.longitude) return;
 
-      // Add additional background layer for better cloud effect
-      map.current.addLayer({
-        id: 'property-labels-shadow',
-        type: 'symbol',
-        source: 'properties',
-        filter: ['!', ['has', 'point_count']],
-        layout: {
-          'text-field': [
-            'format',
-            'AED ',
-            { 'font-scale': 0.85 },
-            ['case',
-              ['>=', ['get', 'price'], 1000000],
-              ['concat', ['number-format', ['/', ['get', 'price'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
-              ['>=', ['get', 'price'], 1000],
-              ['concat', ['number-format', ['/', ['get', 'price'], 1000], { 'max-fraction-digits': 0 }], 'K'],
-              ['number-format', ['get', 'price'], {}]
-            ],
-            { 'font-scale': 1.0 },
-            ['case', ['==', ['get', 'type'], 'rent'], '/mo', '']
-          ],
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12,
-          'text-offset': [0, -3.4],
-          'text-anchor': 'bottom',
-          'text-allow-overlap': true,
-          'text-ignore-placement': true,
-          'text-padding': 3
-        },
-        paint: {
-          'text-color': 'rgba(0,0,0,0)',
-          'text-halo-color': 'rgba(255,255,255,0.8)',
-          'text-halo-width': 16,
-          'text-halo-blur': 10,
-          'text-opacity': 1
-        }
-      }, 'property-labels-bg');
+          // Create a marker element
+          const markerEl = document.createElement('div');
+          markerEl.className = 'property-marker';
+          markerEl.style.cssText = `
+            background-color: #3b82f6;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+          `;
+          
+          // Add property type indicator
+          markerEl.textContent = property.type === 'rent' ? 'R' : 'S';
 
-      // Click handlers for clusters
-      map.current.on('click', 'clusters', (e) => {
-        if (!map.current) return;
-        const features = map.current.queryRenderedFeatures(e.point, {
-          layers: ['clusters']
-        });
+          // Create popup
+          const popup = new mapboxgl.default.Popup({
+            offset: 25,
+            closeButton: false,
+            className: 'property-popup'
+          }).setHTML(`
+            <div style="padding: 10px; min-width: 200px;">
+              <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">${property.title}</h3>
+              <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">${property.location}</p>
+              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #3b82f6;">
+                AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/month' : ''}
+              </p>
+              <p style="margin: 5px 0 0 0; font-size: 11px; color: #888;">
+                Click to view details
+              </p>
+            </div>
+          `);
 
-        const clusterId = features[0].properties!.cluster_id;
-        (map.current.getSource('properties') as mapboxgl.GeoJSONSource).getClusterExpansionZoom(
-          clusterId,
-          (err, zoom) => {
-            if (err || !map.current) return;
+          // Create marker
+          const marker = new mapboxgl.default.Marker(markerEl)
+            .setLngLat([property.longitude, property.latitude])
+            .setPopup(popup)
+            .addTo(newMap);
 
-            map.current.easeTo({
-              center: (features[0].geometry as any).coordinates,
-              zoom: zoom
+          // Add click handler
+          if (onPropertyClick) {
+            markerEl.addEventListener('click', () => {
+              onPropertyClick(property.id);
             });
           }
-        );
-      });
+        });
 
-      // Click handlers for individual properties
-      map.current.on('click', 'unclustered-point', (e) => {
-        if (!e.features || !e.features[0]) return;
-        
-        const properties = e.features[0].properties!;
-        const propertyId = properties.id;
-        
-        console.log('PropertyMap: Marker clicked for property', propertyId);
-        
-        if (enableNavigation) {
-          navigate(`/properties/${propertyId}`);
-        } else if (onPropertySelect) {
-          onPropertySelect(propertyId);
+        // Fit map to show all markers
+        if (validProperties.length > 1) {
+          const bounds = new mapboxgl.default.LngLatBounds();
+          validProperties.forEach(property => {
+            if (property.latitude && property.longitude) {
+              bounds.extend([property.longitude, property.latitude]);
+            }
+          });
+          newMap.fitBounds(bounds, { padding: 50 });
+        } else if (validProperties.length === 1) {
+          const property = validProperties[0];
+          if (property.latitude && property.longitude) {
+            newMap.setCenter([property.longitude, property.latitude]);
+            newMap.setZoom(14);
+          }
         }
       });
 
-      // Add popup on hover
-      const popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
-      });
+      map.current = newMap;
+    };
 
-      map.current.on('mouseenter', 'unclustered-point', (e) => {
-        if (!map.current || !e.features || !e.features[0]) return;
-        
-        map.current.getCanvas().style.cursor = 'pointer';
-        
-        const properties = e.features[0].properties!;
-        const coordinates = (e.features[0].geometry as any).coordinates.slice();
-        
-        const popupContent = enableNavigation ? `
-          <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
-            <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
-            <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
-            <p style="font-size: 14px; font-weight: 700; color: #3b82f6; margin: 0 0 8px 0;">
-              AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
-            </p>
-            <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">Click to view details</p>
-          </div>
-        ` : `
-          <div style="padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 200px;">
-            <h3 style="font-weight: 600; font-size: 14px; margin: 0 0 6px 0; color: #1f2937;">${properties.title}</h3>
-            <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0;">${properties.location}</p>
-            <p style="font-size: 14px; font-weight: 700; color: #3b82f6; margin: 0;">
-              AED ${properties.price.toLocaleString()}${properties.type === 'rent' ? '/month' : ''}
-            </p>
-          </div>
-        `;
-
-        popup.setLngLat(coordinates).setHTML(popupContent).addTo(map.current);
-      });
-
-      map.current.on('mouseleave', 'unclustered-point', () => {
-        if (!map.current) return;
-        map.current.getCanvas().style.cursor = '';
-        popup.remove();
-      });
-
-      // Change cursor on hover
-      map.current.on('mouseenter', 'clusters', () => {
-        if (!map.current) return;
-        map.current.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.current.on('mouseleave', 'clusters', () => {
-        if (!map.current) return;
-        map.current.getCanvas().style.cursor = '';
-      });
-
-      // Fit to bounds if we have properties
-      if (bounds && validProperties.length > 1) {
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 15
-        });
-      }
-    });
+    initializeMap();
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+      }
     };
-  }, [mapboxToken, validProperties, selectedPropertyId, onPropertySelect, enableNavigation, navigate]);
+  }, [mapboxToken, properties, onPropertyClick]);
 
-  // Update selected property styling
-  useEffect(() => {
-    if (!map.current || !map.current.getSource('properties')) return;
-
-    console.log('PropertyMap: Updating property data with', validProperties.length, 'properties');
-
-    const updatedData = {
-      type: 'FeatureCollection' as const,
-      features: validProperties.map(property => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [property.longitude!, property.latitude!]
-        },
-        properties: {
-          id: property.id,
-          title: property.title,
-          location: property.location,
-          price: property.price,
-          type: property.type,
-          isSelected: selectedPropertyId === property.id
-        }
-      }))
-    };
-
-    (map.current.getSource('properties') as mapboxgl.GeoJSONSource).setData(updatedData);
-  }, [selectedPropertyId, validProperties]);
-
-  if (isLoading) {
+  if (!mapboxToken) {
     return (
       <div 
-        className="bg-gray-100 rounded-lg flex items-center justify-center" 
+        className="flex items-center justify-center bg-gray-100 rounded-lg"
         style={{ height }}
       >
         <div className="text-center">
@@ -431,67 +171,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     );
   }
 
-  if (!mapboxToken) {
-    return (
-      <div 
-        className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg flex flex-col items-center justify-center border border-orange-200" 
-        style={{ height }}
-      >
-        <div className="text-center p-6">
-          <MapPin className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Mapbox Token Required</h3>
-          <p className="text-gray-600 mb-4">
-            To display interactive maps, please configure your Mapbox token in the admin settings.
-          </p>
-          {validProperties.length > 0 && (
-            <div className="bg-white rounded-lg p-4 max-w-md mx-auto">
-              <h4 className="font-medium text-gray-800 mb-3">Properties in this area:</h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {validProperties.slice(0, 5).map((property) => (
-                  <div 
-                    key={property.id}
-                    className={`text-sm p-2 rounded cursor-pointer transition-colors ${
-                      selectedPropertyId === property.id 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                    onClick={() => onPropertySelect && onPropertySelect(property.id)}
-                  >
-                    <div className="font-medium">{property.title}</div>
-                    <div className="text-gray-600">{property.location}</div>
-                    <div className="text-blue-600 font-semibold">
-                      AED {property.price.toLocaleString()}{property.type === 'rent' ? '/month' : ''}
-                    </div>
-                  </div>
-                ))}
-                {validProperties.length > 5 && (
-                  <div className="text-xs text-gray-500 text-center pt-1">
-                    +{validProperties.length - 5} more properties
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative">
-      <div 
-        ref={mapContainer}
-        className="w-full rounded-lg"
-        style={{ height }}
-      />
-      
-      <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded text-xs text-gray-600 shadow z-10">
-        {validProperties.length} properties displayed
-        {enableNavigation && (
-          <span className="block text-blue-600">Click markers to view details</span>
-        )}
-      </div>
-    </div>
+    <div 
+      ref={mapContainer} 
+      className="w-full rounded-lg"
+      style={{ height }}
+    />
   );
 };
 

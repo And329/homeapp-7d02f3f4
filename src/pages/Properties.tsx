@@ -10,16 +10,20 @@ import Footer from '@/components/Footer';
 import PropertyFilters from '@/components/PropertyFilters';
 import PropertyGrid from '@/components/PropertyGrid';
 import PropertyStats from '@/components/PropertyStats';
+import PropertyMap from '@/components/PropertyMap';
+import { Button } from '@/components/ui/button';
+import { Map, Grid } from 'lucide-react';
 
 const Properties = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>('all');
   const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showMap, setShowMap] = useState(false);
   const navigate = useNavigate();
 
   const { data: rawProperties = [], isLoading } = useQuery({
-    queryKey: ['properties', 'approved'], // Add 'approved' to key for better cache invalidation
+    queryKey: ['properties', 'approved'],
     queryFn: async () => {
       console.log('Properties: Fetching approved properties from Supabase...');
       
@@ -39,7 +43,6 @@ const Properties = () => {
     },
   });
 
-  // Explicitly type the properties as Property array
   const properties: Property[] = rawProperties;
 
   const filteredProperties = properties.filter(property => {
@@ -81,6 +84,17 @@ const Properties = () => {
     navigate(`/properties/${property.id}`);
   };
 
+  // Transform properties for map
+  const mapProperties = filteredProperties.map(p => ({
+    id: parseInt(p.id) || 0,
+    title: p.title,
+    location: p.location,
+    price: p.price,
+    type: p.type,
+    latitude: p.coordinates.lat,
+    longitude: p.coordinates.lng,
+  }));
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -103,17 +117,42 @@ const Properties = () => {
           resultsCount={filteredProperties.length}
         />
 
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex justify-between items-center">
           <PropertyStats properties={properties} />
+          <Button
+            onClick={() => setShowMap(!showMap)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {showMap ? <Grid className="h-4 w-4" /> : <Map className="h-4 w-4" />}
+            {showMap ? 'Show Grid' : 'Show Map'}
+          </Button>
         </div>
 
-        <PropertyGrid
-          properties={filteredProperties}
-          viewMode={viewMode}
-          isLoading={isLoading}
-          onPropertyClick={handlePropertyClick}
-          transformProperty={transformProperty}
-        />
+        {showMap ? (
+          <div className="mb-8">
+            <div className="h-[600px] rounded-lg overflow-hidden border">
+              <PropertyMap
+                properties={mapProperties}
+                height="600px"
+                onPropertyClick={(propertyId) => {
+                  const property = filteredProperties.find(p => parseInt(p.id) === propertyId);
+                  if (property) {
+                    handlePropertyClick(property);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <PropertyGrid
+            properties={filteredProperties}
+            viewMode={viewMode}
+            isLoading={isLoading}
+            onPropertyClick={handlePropertyClick}
+            transformProperty={transformProperty}
+          />
+        )}
       </div>
 
       <Footer />

@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, Camera, QrCode } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PropertyMap from '@/components/PropertyMap';
-import ContactPropertyOwner from '@/components/ContactPropertyOwner';
 import PropertyQRCode from '@/components/PropertyQRCode';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,12 +20,33 @@ const PropertyDetails = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showContactForm, setShowContactForm] = useState(false);
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
     queryFn: () => getPropertyById(id!),
     enabled: !!id,
+  });
+
+  // Fetch owner contact information
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['owner-profile', property?.owner_id],
+    queryFn: async () => {
+      if (!property?.owner_id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', property.owner_id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching owner profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!property?.owner_id,
   });
 
   if (isLoading) {
@@ -230,22 +251,43 @@ const PropertyDetails = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
-              {/* Contact Card */}
+              {/* Contact Information Card */}
               <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Contact Property Owner</h3>
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full"
-                    onClick={() => setShowContactForm(true)}
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call Now
-                  </Button>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                {ownerProfile ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 mr-2 text-gray-500" />
+                      <span className="font-medium">{ownerProfile.full_name || 'Property Owner'}</span>
+                    </div>
+                    {ownerProfile.email && (
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                        <a 
+                          href={`mailto:${ownerProfile.email}`}
+                          className="text-primary hover:underline"
+                        >
+                          {ownerProfile.email}
+                        </a>
+                      </div>
+                    )}
+                    {ownerProfile.phone && (
+                      <div className="flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                        <a 
+                          href={`tel:${ownerProfile.phone}`}
+                          className="text-primary hover:underline"
+                        >
+                          {ownerProfile.phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-500">
+                    Contact information not available
+                  </div>
+                )}
               </div>
 
               {/* Property Details */}
@@ -293,18 +335,6 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
-
-      {/* Contact Form Modal */}
-      {showContactForm && (
-        <ContactPropertyOwner
-          propertyId={property.id}
-          ownerId={property.owner_id || ''}
-          propertyTitle={property.title}
-          contactName="Property Owner"
-          contactEmail="owner@example.com"
-          contactPhone="N/A"
-        />
-      )}
 
       <Footer />
     </div>

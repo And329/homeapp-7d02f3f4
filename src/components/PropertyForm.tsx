@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
 import QRCodeUpload from '@/components/QRCodeUpload';
@@ -32,6 +33,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     is_hot_deal: false,
     amenities: [] as string[],
     images: [] as string[],
+    videos: [] as string[],
     qr_code: '',
   });
   const [loading, setLoading] = useState(false);
@@ -54,6 +56,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
         amenities: property.amenities || [],
         images: property.images || [],
+        videos: property.videos || [],
         qr_code: property.qr_code || '',
       };
       console.log('PropertyForm: Setting form data from property:', newFormData);
@@ -74,6 +77,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: false,
         amenities: [] as string[],
         images: [] as string[],
+        videos: [] as string[],
         qr_code: '',
       };
       console.log('PropertyForm: Resetting form data for new property');
@@ -125,6 +129,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
+        videos: formData.videos,
         qr_code: formData.qr_code.trim(),
       };
 
@@ -192,6 +197,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   const handleImagesChange = (images: string[]) => {
     console.log('PropertyForm: Images changed to:', images.length, 'images');
     setFormData(prev => ({ ...prev, images }));
+  };
+
+  const handleVideosChange = (videos: string[]) => {
+    console.log('PropertyForm: Videos changed to:', videos.length, 'videos');
+    setFormData(prev => ({ ...prev, videos }));
   };
 
   const handleEmirateChange = (emirate: string) => {
@@ -327,6 +337,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
           <PropertyImageUpload
             images={formData.images}
             onImagesChange={handleImagesChange}
+          />
+
+          <PropertyVideoUpload
+            videos={formData.videos}
+            onVideosChange={handleVideosChange}
           />
 
           <QRCodeUpload
