@@ -66,7 +66,7 @@ const Properties = () => {
       (priceRange === 'high' && property.price >= 500000);
 
     const matchesPropertyType = propertyTypeFilter === 'all' || 
-      property.propertyType === propertyTypeFilter;
+      property.property_type === propertyTypeFilter;
 
     const matchesBedrooms = bedroomsFilter === 'all' || 
       (bedroomsFilter === 'studio' && property.bedrooms === 0) ||
