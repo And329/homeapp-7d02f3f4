@@ -357,6 +357,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone: string | null
           profile_picture: string | null
           role: string | null
           updated_at: string | null
@@ -366,6 +367,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          phone?: string | null
           profile_picture?: string | null
           role?: string | null
           updated_at?: string | null
@@ -375,6 +377,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           profile_picture?: string | null
           role?: string | null
           updated_at?: string | null
@@ -384,6 +387,7 @@ export type Database = {
       properties: {
         Row: {
           amenities: Json | null
+          area: number | null
           bathrooms: number | null
           bedrooms: number | null
           created_at: string
@@ -398,13 +402,18 @@ export type Database = {
           location: string | null
           longitude: number | null
           owner_id: string | null
+          parking: number | null
           price: number | null
+          property_type: string | null
           qr_code: string | null
           title: string | null
           type: string | null
+          videos: Json | null
+          year_built: number | null
         }
         Insert: {
           amenities?: Json | null
+          area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
@@ -419,13 +428,18 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           owner_id?: string | null
+          parking?: number | null
           price?: number | null
+          property_type?: string | null
           qr_code?: string | null
           title?: string | null
           type?: string | null
+          videos?: Json | null
+          year_built?: number | null
         }
         Update: {
           amenities?: Json | null
+          area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
           created_at?: string
@@ -440,10 +454,14 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           owner_id?: string | null
+          parking?: number | null
           price?: number | null
+          property_type?: string | null
           qr_code?: string | null
           title?: string | null
           type?: string | null
+          videos?: Json | null
+          year_built?: number | null
         }
         Relationships: [
           {
