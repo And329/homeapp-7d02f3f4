@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -244,7 +245,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
           // Click event for individual properties
           newMap.on('click', 'unclustered-point', (e) => {
-            const coordinates = e.features![0].geometry.coordinates.slice();
+            const coordinates = (e.features![0].geometry as any).coordinates.slice();
             const properties = e.features![0].properties;
 
             // Ensure that if the map is zoomed out such that multiple
@@ -322,13 +323,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               layers: ['clusters']
             });
             const clusterId = features[0].properties.cluster_id;
-            newMap.getSource('properties').getClusterExpansionZoom(
+            const source = newMap.getSource('properties') as any;
+            source.getClusterExpansionZoom(
               clusterId,
               (err: any, zoom: number) => {
                 if (err) return;
 
                 newMap.easeTo({
-                  center: features[0].geometry.coordinates,
+                  center: (features[0].geometry as any).coordinates,
                   zoom: zoom
                 });
               }
