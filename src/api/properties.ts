@@ -8,7 +8,31 @@ export const getProperties = async (): Promise<Property[]> => {
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*, owner_id')
+    .select(`
+      id,
+      title,
+      price,
+      location,
+      emirate,
+      latitude,
+      longitude,
+      bedrooms,
+      bathrooms,
+      area,
+      property_type,
+      year_built,
+      parking,
+      type,
+      description,
+      is_hot_deal,
+      amenities,
+      images,
+      videos,
+      qr_code,
+      owner_id,
+      is_approved,
+      created_at
+    `)
     .eq('is_approved', true);
 
   if (error) {
@@ -31,7 +55,31 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
   
   const { data, error } = await supabase
     .from('properties')
-    .select('*, owner_id')
+    .select(`
+      id,
+      title,
+      price,
+      location,
+      emirate,
+      latitude,
+      longitude,
+      bedrooms,
+      bathrooms,
+      area,
+      property_type,
+      year_built,
+      parking,
+      type,
+      description,
+      is_hot_deal,
+      amenities,
+      images,
+      videos,
+      qr_code,
+      owner_id,
+      is_approved,
+      created_at
+    `)
     .eq('id', id)
     .maybeSingle();
 

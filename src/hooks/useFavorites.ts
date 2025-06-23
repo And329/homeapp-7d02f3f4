@@ -27,15 +27,25 @@ export const useFavorites = () => {
             title,
             price,
             location,
+            emirate,
             bedrooms,
             bathrooms,
+            area,
+            property_type,
+            year_built,
+            parking,
             type,
             images,
+            videos,
             description,
             amenities,
             latitude,
             longitude,
-            owner_id
+            owner_id,
+            is_hot_deal,
+            is_approved,
+            qr_code,
+            created_at
           )
         `)
         .eq('user_id', user.id)
