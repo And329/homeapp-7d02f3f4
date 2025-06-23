@@ -114,8 +114,8 @@ const AdminDashboard = () => {
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
       area: rawProperties.find(p => parseInt(p.id) === property.id)?.area || 1000,
-      property_type: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
-      year_built: rawProperties.find(p => parseInt(p.id) === property.id)?.year_built,
+      propertyType: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
+      yearBuilt: rawProperties.find(p => parseInt(p.id) === property.id)?.year_built,
       parking: rawProperties.find(p => parseInt(p.id) === property.id)?.parking,
       image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
       images: property.images || ['/placeholder.svg'],
@@ -128,7 +128,6 @@ const AdminDashboard = () => {
         lat: property.latitude || 0,
         lng: property.longitude || 0
       },
-      propertyType: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
       owner_id: rawProperties.find(p => parseInt(p.id) === property.id)?.owner_id,
       qr_code: rawProperties.find(p => parseInt(p.id) === property.id)?.qr_code || '',
       is_approved: true,
