@@ -1,17 +1,21 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play, Edit } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PropertyMap from '@/components/PropertyMap';
 import PropertyQRCode from '@/components/PropertyQRCode';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFavorites } from '@/hooks/useFavorites';
 import { supabase } from '@/integrations/supabase/client';
 
 const PropertyDetails = () => {
@@ -19,7 +23,15 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite, isToggling } = useFavorites();
+  const queryClient = useQueryClient();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editedContact, setEditedContact] = useState({
+    full_name: '',
+    email: '',
+    phone: ''
+  });
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -48,6 +60,59 @@ const PropertyDetails = () => {
     },
     enabled: !!property?.owner_id,
   });
+
+  // Fetch user profile to check if admin
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Update contact info mutation
+  const updateContactMutation = useMutation({
+    mutationFn: async (contactData: { full_name: string; email: string; phone: string }) => {
+      if (!property?.owner_id) throw new Error('Owner ID not found');
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(contactData)
+        .eq('id', property.owner_id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner-profile', property?.owner_id] });
+      setIsEditingContact(false);
+      toast({
+        title: "Contact updated",
+        description: "Owner contact information has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to update contact: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isAdmin = userProfile?.role === 'admin';
 
   if (isLoading) {
     return (
@@ -97,20 +162,28 @@ const PropertyDetails = () => {
     }
   };
 
-  const handleAddToFavorites = () => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to add properties to favorites.",
-        variant: "destructive",
+  const handleFavoriteToggle = () => {
+    toggleFavorite(property.id);
+  };
+
+  const handleEditContact = () => {
+    if (ownerProfile) {
+      setEditedContact({
+        full_name: ownerProfile.full_name || '',
+        email: ownerProfile.email || '',
+        phone: ownerProfile.phone || ''
       });
-      return;
     }
-    
-    toast({
-      title: "Added to favorites!",
-      description: "Property has been added to your favorites.",
-    });
+    setIsEditingContact(true);
+  };
+
+  const handleSaveContact = () => {
+    updateContactMutation.mutate(editedContact);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingContact(false);
+    setEditedContact({ full_name: '', email: '', phone: '' });
   };
 
   return (
@@ -200,9 +273,14 @@ const PropertyDetails = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleAddToFavorites}>
-                    <Heart className="h-4 w-4 mr-1" />
-                    Save
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleFavoriteToggle}
+                    disabled={isToggling}
+                  >
+                    <Heart className={`h-4 w-4 mr-1 ${isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                    {isFavorite(property.id) ? 'Saved' : 'Save'}
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleShare}>
                     <Share2 className="h-4 w-4 mr-1" />
@@ -284,43 +362,94 @@ const PropertyDetails = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               {/* Contact Information Card */}
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-                {ownerProfile ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 mr-2 text-gray-500" />
-                      <span className="font-medium">{ownerProfile.full_name || 'Property Owner'}</span>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                    {isAdmin && !isEditingContact && (
+                      <Button variant="outline" size="sm" onClick={handleEditContact}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {isEditingContact ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="full_name">Full Name</Label>
+                        <Input
+                          id="full_name"
+                          value={editedContact.full_name}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, full_name: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={editedContact.email}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, email: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          value={editedContact.phone}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, phone: e.target.value }))}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handleSaveContact} 
+                          disabled={updateContactMutation.isPending}
+                          size="sm"
+                        >
+                          Save
+                        </Button>
+                        <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                    {ownerProfile.email && (
+                  ) : ownerProfile ? (
+                    <div className="space-y-3">
                       <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                        <a 
-                          href={`mailto:${ownerProfile.email}`}
-                          className="text-primary hover:underline"
-                        >
-                          {ownerProfile.email}
-                        </a>
+                        <User className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="font-medium">{ownerProfile.full_name || 'Property Owner'}</span>
                       </div>
-                    )}
-                    {ownerProfile.phone && (
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                        <a 
-                          href={`tel:${ownerProfile.phone}`}
-                          className="text-primary hover:underline"
-                        >
-                          {ownerProfile.phone}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-gray-500">
-                    Contact information not available
-                  </div>
-                )}
-              </div>
+                      {ownerProfile.email && (
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                          <a 
+                            href={`mailto:${ownerProfile.email}`}
+                            className="text-primary hover:underline"
+                          >
+                            {ownerProfile.email}
+                          </a>
+                        </div>
+                      )}
+                      {ownerProfile.phone && (
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                          <a 
+                            href={`tel:${ownerProfile.phone}`}
+                            className="text-primary hover:underline"
+                          >
+                            {ownerProfile.phone}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500">
+                      Contact information not available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Property Details */}
               <div className="bg-white border rounded-lg p-6 shadow-sm">

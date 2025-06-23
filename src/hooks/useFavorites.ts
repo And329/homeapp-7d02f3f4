@@ -51,7 +51,10 @@ export const useFavorites = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching favorites:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: !!user,
