@@ -28,6 +28,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     longitude: null as number | null,
     bedrooms: '',
     bathrooms: '',
+    area: '',
+    property_type: 'Apartment',
+    year_built: '',
+    parking: '',
     type: 'rent' as 'rent' | 'sale',
     description: '',
     is_hot_deal: false,
@@ -51,6 +55,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         longitude: property.longitude || property.coordinates?.lng || null,
         bedrooms: property.bedrooms?.toString() || '',
         bathrooms: property.bathrooms?.toString() || '',
+        area: property.area?.toString() || '',
+        property_type: property.property_type || property.propertyType || 'Apartment',
+        year_built: property.year_built?.toString() || property.yearBuilt?.toString() || '',
+        parking: property.parking?.toString() || '',
         type: property.type || 'rent',
         description: property.description || '',
         is_hot_deal: property.is_hot_deal || property.isHotDeal || false,
@@ -72,6 +80,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         longitude: null as number | null,
         bedrooms: '',
         bathrooms: '',
+        area: '',
+        property_type: 'Apartment',
+        year_built: '',
+        parking: '',
         type: 'rent' as 'rent' | 'sale',
         description: '',
         is_hot_deal: false,
@@ -124,6 +136,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         longitude: formData.longitude,
         bedrooms: parseInt(formData.bedrooms),
         bathrooms: parseFloat(formData.bathrooms),
+        area: formData.area ? parseInt(formData.area) : null,
+        property_type: formData.property_type,
+        year_built: formData.year_built ? parseInt(formData.year_built) : null,
+        parking: formData.parking ? parseInt(formData.parking) : null,
         type: formData.type,
         description: formData.description.trim(),
         is_hot_deal: formData.is_hot_deal,
@@ -138,6 +154,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
       if (property && property.id) {
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         
+        // Ensure we're using the correct property ID format
         const propertyId = String(property.id);
         console.log('PropertyForm: Using property ID as string:', propertyId);
 
@@ -290,6 +307,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Property Type *
+              </label>
+              <select
+                name="property_type"
+                value={formData.property_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              >
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Townhouse">Townhouse</option>
+                <option value="Penthouse">Penthouse</option>
+                <option value="Studio">Studio</option>
+                <option value="Office">Office</option>
+                <option value="Shop">Shop</option>
+                <option value="Warehouse">Warehouse</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Bedrooms *
               </label>
               <input
@@ -316,6 +355,49 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
                 step="0.5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Area (sq ft)
+              </label>
+              <input
+                type="number"
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year Built
+              </label>
+              <input
+                type="number"
+                name="year_built"
+                value={formData.year_built}
+                onChange={handleChange}
+                min="1900"
+                max={new Date().getFullYear()}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Parking Spaces
+              </label>
+              <input
+                type="number"
+                name="parking"
+                value={formData.parking}
+                onChange={handleChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>

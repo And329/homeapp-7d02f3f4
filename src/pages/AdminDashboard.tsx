@@ -104,16 +104,22 @@ const AdminDashboard = () => {
   );
 
   const handleEdit = (property: AdminProperty) => {
+    // Create the property object with all the fields that PropertyForm expects
     const propertyForEdit: Property = {
       id: String(property.id),
       title: property.title,
       price: property.price,
       location: property.location,
+      emirate: rawProperties.find(p => parseInt(p.id) === property.id)?.emirate || '',
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
-      area: 1000,
+      area: rawProperties.find(p => parseInt(p.id) === property.id)?.area || 1000,
+      property_type: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
+      year_built: rawProperties.find(p => parseInt(p.id) === property.id)?.year_built,
+      parking: rawProperties.find(p => parseInt(p.id) === property.id)?.parking,
       image: property.images && property.images.length > 0 ? property.images[0] : '/placeholder.svg',
       images: property.images || ['/placeholder.svg'],
+      videos: rawProperties.find(p => parseInt(p.id) === property.id)?.videos as string[] || [],
       type: property.type,
       isHotDeal: property.is_hot_deal,
       description: property.description,
@@ -122,10 +128,9 @@ const AdminDashboard = () => {
         lat: property.latitude || 0,
         lng: property.longitude || 0
       },
-      propertyType: 'Apartment',
-      yearBuilt: undefined,
-      parking: undefined,
-      owner_id: undefined,
+      propertyType: rawProperties.find(p => parseInt(p.id) === property.id)?.property_type || 'Apartment',
+      owner_id: rawProperties.find(p => parseInt(p.id) === property.id)?.owner_id,
+      qr_code: rawProperties.find(p => parseInt(p.id) === property.id)?.qr_code || '',
       is_approved: true,
       created_at: property.created_at
     };
