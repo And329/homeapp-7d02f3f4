@@ -155,7 +155,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             clusterRadius: 50
           });
 
-          // Add cluster circles
+          // Add cluster layers
           newMap.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -183,7 +183,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Add cluster count labels
           newMap.addLayer({
             id: 'cluster-count',
             type: 'symbol',
@@ -199,7 +198,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Add individual property markers
+          // Add individual property layers
           newMap.addLayer({
             id: 'unclustered-point',
             type: 'circle',
@@ -218,7 +217,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Add price labels for individual properties
           newMap.addLayer({
             id: 'unclustered-point-label',
             type: 'symbol',
@@ -235,12 +233,13 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Create popup
+          // Create popup with improved styling
           const popup = new mapboxgl.default.Popup({
-            closeButton: true,
+            closeButton: false, // We'll create our own close button
             closeOnClick: false,
-            maxWidth: '350px',
-            className: 'property-popup'
+            maxWidth: '380px',
+            className: 'property-popup',
+            anchor: 'bottom'
           });
 
           // Click event for individual properties
@@ -255,65 +254,93 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
 
+            const imageUrl = properties.image && properties.image !== '/placeholder.svg' 
+              ? properties.image 
+              : 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=200&fit=crop';
+
             const popupContent = `
               <div style="
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 background: white;
-                border-radius: 12px;
+                border-radius: 16px;
                 overflow: hidden;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
                 border: 1px solid #e5e7eb;
+                position: relative;
+                max-width: 380px;
               ">
+                <!-- Custom Close Button -->
+                <button 
+                  onclick="document.querySelector('.mapboxgl-popup-close-button').click()" 
+                  style="
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    z-index: 10;
+                    background: rgba(0, 0, 0, 0.7);
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                    transition: all 0.2s ease;
+                    backdrop-filter: blur(4px);
+                  "
+                  onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'; this.style.transform='scale(1.1)';"
+                  onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.transform='scale(1)';"
+                >
+                  ×
+                </button>
+
                 <div style="position: relative; overflow: hidden;">
                   <img 
-                    src="${properties.image}" 
+                    src="${imageUrl}" 
                     alt="${properties.title}"
                     style="
                       width: 100%; 
-                      height: 140px; 
+                      height: 200px; 
                       object-fit: cover; 
                       display: block;
                       border: none;
                     "
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    onload="this.style.opacity='1';"
+                    onerror="this.src='https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=200&fit=crop'; this.style.opacity='1';"
+                    style="opacity: 0; transition: opacity 0.3s ease;"
                   />
-                  <div style="
-                    display: none;
-                    width: 100%;
-                    height: 140px;
-                    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-                    align-items: center;
-                    justify-content: center;
-                    color: #9ca3af;
-                    font-size: 14px;
-                  ">
-                    No Image Available
-                  </div>
+                  
+                  <!-- Status Badge -->
                   <div style="
                     position: absolute;
-                    top: 12px;
-                    right: 12px;
+                    top: 16px;
+                    left: 16px;
                     background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                     color: white;
-                    padding: 4px 10px;
+                    padding: 6px 12px;
                     border-radius: 20px;
-                    font-size: 11px;
+                    font-size: 12px;
                     font-weight: 600;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    backdrop-filter: blur(4px);
                   ">
                     For ${properties.type}
                   </div>
                 </div>
                 
-                <div style="padding: 20px;">
+                <div style="padding: 24px;">
                   <h3 style="
-                    margin: 0 0 8px 0; 
-                    font-size: 18px; 
+                    margin: 0 0 12px 0; 
+                    font-size: 20px; 
                     font-weight: 700; 
                     color: #111827; 
-                    line-height: 1.4;
+                    line-height: 1.3;
                     letter-spacing: -0.02em;
                   ">
                     ${properties.title}
@@ -322,11 +349,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                   <div style="
                     display: flex; 
                     align-items: center; 
-                    margin-bottom: 16px; 
+                    margin-bottom: 20px; 
                     color: #6b7280; 
                     font-size: 14px;
+                    font-weight: 500;
                   ">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px; flex-shrink: 0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; flex-shrink: 0;">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     <span style="line-height: 1.4;">${properties.location}</span>
@@ -336,14 +364,15 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                     display: flex; 
                     justify-content: space-between; 
                     align-items: center;
-                    margin-bottom: ${onPropertyClick ? '16px' : '0'};
+                    margin-bottom: ${onPropertyClick ? '24px' : '0'};
                   ">
                     <div>
                       <div style="
-                        font-size: 24px; 
+                        font-size: 28px; 
                         font-weight: 800; 
                         color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                        line-height: 1.2;
+                        line-height: 1.1;
+                        margin-bottom: 4px;
                       ">
                         AED ${parseInt(properties.price).toLocaleString()}
                       </div>
@@ -352,7 +381,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                           font-size: 13px; 
                           color: #6b7280; 
                           font-weight: 500;
-                          margin-top: 2px;
                         ">
                           per month
                         </div>
@@ -365,19 +393,19 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                       onclick="window.handlePropertyClick(${properties.id})" 
                       style="
                         width: 100%;
-                        padding: 12px 20px;
+                        padding: 14px 24px;
                         background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                         color: white;
                         border: none;
-                        border-radius: 8px;
+                        border-radius: 12px;
                         font-weight: 600;
-                        font-size: 14px;
+                        font-size: 15px;
                         cursor: pointer;
                         transition: all 0.2s ease;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                       "
-                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.15)';"
-                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';"
+                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0, 0, 0, 0.15)';"
+                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.1)';"
                     >
                       View Property Details
                     </button>
@@ -396,7 +424,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             });
             const clusterId = features[0].properties.cluster_id;
             const source = newMap.getSource('properties') as any;
-            source.getClusterExpansionZoom(
+            (source as any).getClusterExpansionZoom(
               clusterId,
               (err: any, zoom: number) => {
                 if (err) return;
@@ -424,7 +452,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             newMap.getCanvas().style.cursor = '';
           });
 
-          // Fit map to show all markers
           if (validProperties.length > 1) {
             const bounds = new mapboxgl.default.LngLatBounds();
             validProperties.forEach(property => {
