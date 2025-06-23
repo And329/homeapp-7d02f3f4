@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -240,7 +239,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           const popup = new mapboxgl.default.Popup({
             closeButton: true,
             closeOnClick: false,
-            maxWidth: '320px'
+            maxWidth: '350px',
+            className: 'property-popup'
           });
 
           // Click event for individual properties
@@ -256,61 +256,133 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
 
             const popupContent = `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                <img 
-                  src="${properties.image}" 
-                  alt="${properties.title}"
-                  style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;"
-                  onerror="this.src='/placeholder.svg'"
-                />
-                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.3;">
-                  ${properties.title}
-                </h3>
-                <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; display: flex; align-items: center;">
-                  📍 ${properties.location}
-                </p>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <span style="font-size: 18px; font-weight: 700; color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};">
-                      AED ${parseInt(properties.price).toLocaleString()}
-                    </span>
-                    <span style="font-size: 12px; color: #6b7280;">
-                      ${properties.type === 'rent' ? '/month' : ''}
-                    </span>
+              <div style="
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                border: 1px solid #e5e7eb;
+              ">
+                <div style="position: relative; overflow: hidden;">
+                  <img 
+                    src="${properties.image}" 
+                    alt="${properties.title}"
+                    style="
+                      width: 100%; 
+                      height: 140px; 
+                      object-fit: cover; 
+                      display: block;
+                      border: none;
+                    "
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                  />
+                  <div style="
+                    display: none;
+                    width: 100%;
+                    height: 140px;
+                    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                    align-items: center;
+                    justify-content: center;
+                    color: #9ca3af;
+                    font-size: 14px;
+                  ">
+                    No Image Available
                   </div>
-                  <span style="
+                  <div style="
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
                     background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
                     color: white;
-                    padding: 4px 8px;
-                    border-radius: 4px;
+                    padding: 4px 10px;
+                    border-radius: 20px;
                     font-size: 11px;
-                    font-weight: 500;
+                    font-weight: 600;
                     text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
                   ">
                     For ${properties.type}
-                  </span>
+                  </div>
                 </div>
-                ${onPropertyClick ? `
-                  <button 
-                    onclick="window.handlePropertyClick(${properties.id})" 
-                    style="
-                      width: 100%;
-                      margin-top: 12px;
-                      padding: 8px 16px;
-                      background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                      color: white;
-                      border: none;
-                      border-radius: 6px;
-                      font-weight: 500;
-                      cursor: pointer;
-                      transition: opacity 0.2s;
-                    "
-                    onmouseover="this.style.opacity='0.9'"
-                    onmouseout="this.style.opacity='1'"
-                  >
-                    View Details
-                  </button>
-                ` : ''}
+                
+                <div style="padding: 20px;">
+                  <h3 style="
+                    margin: 0 0 8px 0; 
+                    font-size: 18px; 
+                    font-weight: 700; 
+                    color: #111827; 
+                    line-height: 1.4;
+                    letter-spacing: -0.02em;
+                  ">
+                    ${properties.title}
+                  </h3>
+                  
+                  <div style="
+                    display: flex; 
+                    align-items: center; 
+                    margin-bottom: 16px; 
+                    color: #6b7280; 
+                    font-size: 14px;
+                  ">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px; flex-shrink: 0;">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <span style="line-height: 1.4;">${properties.location}</span>
+                  </div>
+                  
+                  <div style="
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center;
+                    margin-bottom: ${onPropertyClick ? '16px' : '0'};
+                  ">
+                    <div>
+                      <div style="
+                        font-size: 24px; 
+                        font-weight: 800; 
+                        color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                        line-height: 1.2;
+                      ">
+                        AED ${parseInt(properties.price).toLocaleString()}
+                      </div>
+                      ${properties.type === 'rent' ? `
+                        <div style="
+                          font-size: 13px; 
+                          color: #6b7280; 
+                          font-weight: 500;
+                          margin-top: 2px;
+                        ">
+                          per month
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                  
+                  ${onPropertyClick ? `
+                    <button 
+                      onclick="window.handlePropertyClick(${properties.id})" 
+                      style="
+                        width: 100%;
+                        padding: 12px 20px;
+                        background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                      "
+                      onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.15)';"
+                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';"
+                    >
+                      View Property Details
+                    </button>
+                  ` : ''}
+                </div>
               </div>
             `;
 
