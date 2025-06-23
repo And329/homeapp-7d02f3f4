@@ -126,26 +126,29 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           // Add markers for each property
           validProperties.forEach((property) => {
             try {
-              // Create a simple marker element
+              // Create compact marker element
               const markerEl = document.createElement('div');
+              markerEl.className = 'property-marker';
               markerEl.style.cssText = `
-                width: 200px;
+                width: 120px;
                 background: white;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
                 overflow: hidden;
                 border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
                 cursor: pointer;
                 transform: translate(-50%, -100%);
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                transition: all 0.2s ease-in-out;
+                z-index: 1;
               `;
 
               // Create image element
               const imageEl = document.createElement('img');
-              imageEl.src = property.image;
+              imageEl.src = property.image || '/placeholder.svg';
               imageEl.style.cssText = `
                 width: 100%;
-                height: 80px;
+                height: 50px;
                 object-fit: cover;
                 display: block;
               `;
@@ -158,60 +161,110 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               // Create info container
               const infoEl = document.createElement('div');
               infoEl.style.cssText = `
-                padding: 8px;
+                padding: 6px;
                 background: white;
               `;
 
-              // Create title
-              const titleEl = document.createElement('div');
-              titleEl.textContent = property.title.length > 30 ? property.title.substring(0, 30) + '...' : property.title;
-              titleEl.style.cssText = `
-                font-size: 12px;
-                font-weight: 600;
-                color: #1f2937;
-                margin-bottom: 4px;
-                line-height: 1.2;
-              `;
-
-              // Create price
+              // Create price (main display)
               const priceEl = document.createElement('div');
               priceEl.textContent = `AED ${property.price.toLocaleString()}${property.type === 'rent' ? '/mo' : ''}`;
               priceEl.style.cssText = `
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 700;
                 color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                margin-bottom: 4px;
+                text-align: center;
               `;
 
-              // Create type badge
+              // Create expanded content (hidden by default)
+              const expandedEl = document.createElement('div');
+              expandedEl.className = 'expanded-content';
+              expandedEl.style.cssText = `
+                display: none;
+                margin-top: 4px;
+                padding-top: 4px;
+                border-top: 1px solid #e5e7eb;
+              `;
+
+              // Create title for expanded view
+              const titleEl = document.createElement('div');
+              titleEl.textContent = property.title.length > 25 ? property.title.substring(0, 25) + '...' : property.title;
+              titleEl.style.cssText = `
+                font-size: 10px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 3px;
+                line-height: 1.2;
+              `;
+
+              // Create type badge for expanded view
               const typeEl = document.createElement('div');
               typeEl.textContent = property.type === 'rent' ? 'For Rent' : 'For Sale';
               typeEl.style.cssText = `
-                font-size: 9px;
+                font-size: 8px;
                 font-weight: 500;
                 color: white;
                 background: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                padding: 2px 6px;
-                border-radius: 4px;
+                padding: 2px 4px;
+                border-radius: 3px;
                 display: inline-block;
+                text-align: center;
+                width: 100%;
+                box-sizing: border-box;
               `;
 
+              // Assemble expanded content
+              expandedEl.appendChild(titleEl);
+              expandedEl.appendChild(typeEl);
+
               // Assemble the marker
-              infoEl.appendChild(titleEl);
               infoEl.appendChild(priceEl);
-              infoEl.appendChild(typeEl);
+              infoEl.appendChild(expandedEl);
               markerEl.appendChild(imageEl);
               markerEl.appendChild(infoEl);
 
-              // Add hover effects
+              // Add hover effects for expansion
               markerEl.addEventListener('mouseenter', () => {
-                markerEl.style.transform = 'translate(-50%, -100%) scale(1.05)';
-                markerEl.style.zIndex = '1000';
+                markerEl.style.cssText = `
+                  width: 160px;
+                  background: white;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                  overflow: hidden;
+                  border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+                  cursor: pointer;
+                  transform: translate(-50%, -100%) scale(1.05);
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  transition: all 0.2s ease-in-out;
+                  z-index: 1000;
+                `;
+                
+                // Update image size for expanded view
+                imageEl.style.height = '70px';
+                
+                // Show expanded content
+                expandedEl.style.display = 'block';
               });
 
               markerEl.addEventListener('mouseleave', () => {
-                markerEl.style.transform = 'translate(-50%, -100%) scale(1)';
-                markerEl.style.zIndex = 'auto';
+                markerEl.style.cssText = `
+                  width: 120px;
+                  background: white;
+                  border-radius: 6px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                  overflow: hidden;
+                  border: 2px solid ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
+                  cursor: pointer;
+                  transform: translate(-50%, -100%);
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  transition: all 0.2s ease-in-out;
+                  z-index: 1;
+                `;
+                
+                // Reset image size
+                imageEl.style.height = '50px';
+                
+                // Hide expanded content
+                expandedEl.style.display = 'none';
               });
 
               // Create marker
@@ -227,7 +280,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 });
               }
 
-              console.log(`Added marker for property: ${property.title}`);
+              console.log(`Added compact marker for property: ${property.title}`);
             } catch (error) {
               console.error(`Error creating marker for property ${property.id}:`, error);
             }
