@@ -42,7 +42,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
     getMapboxToken();
   }, []);
 
-  // Fetch property images
   useEffect(() => {
     const fetchPropertyImages = async () => {
       try {
@@ -108,7 +107,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
 
         // Wait for the map to load
         newMap.on('load', () => {
-          console.log('Map loaded, adding markers for properties:', propertiesWithImages.length);
+          console.log('Map loaded, adding properties to map');
           
           // Filter properties with valid coordinates
           const validProperties = propertiesWithImages.filter(
@@ -122,112 +121,233 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             return;
           }
 
-          // Add markers for each property using Mapbox tools
-          validProperties.forEach((property) => {
-            try {
-              // Create a simple marker element
-              const markerEl = document.createElement('div');
-              markerEl.className = 'mapbox-marker';
-              markerEl.style.cssText = `
-                width: 40px;
-                height: 40px;
-                background-color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                border: 3px solid white;
-                border-radius: 50%;
-                cursor: pointer;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                color: white;
-                font-size: 12px;
-                transition: transform 0.2s ease;
-              `;
-              
-              // Add price indicator
-              const priceText = property.price > 1000000 
-                ? `${Math.round(property.price / 1000000)}M` 
-                : property.price > 1000 
-                ? `${Math.round(property.price / 1000)}K` 
-                : property.price.toString();
-              
-              markerEl.textContent = priceText;
+          // Create GeoJSON data source
+          const geojsonData = {
+            type: 'FeatureCollection' as const,
+            features: validProperties.map((property) => ({
+              type: 'Feature' as const,
+              geometry: {
+                type: 'Point' as const,
+                coordinates: [property.longitude, property.latitude]
+              },
+              properties: {
+                id: property.id,
+                title: property.title,
+                location: property.location,
+                price: property.price,
+                type: property.type,
+                image: property.image,
+                priceText: property.price > 1000000 
+                  ? `${Math.round(property.price / 1000000)}M` 
+                  : property.price > 1000 
+                  ? `${Math.round(property.price / 1000)}K` 
+                  : property.price.toString()
+              }
+            }))
+          };
 
-              // Add hover effect
-              markerEl.addEventListener('mouseenter', () => {
-                markerEl.style.transform = 'scale(1.2)';
-              });
-              
-              markerEl.addEventListener('mouseleave', () => {
-                markerEl.style.transform = 'scale(1)';
-              });
+          // Add data source
+          newMap.addSource('properties', {
+            type: 'geojson',
+            data: geojsonData,
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 50
+          });
 
-              // Create popup content
-              const popupContent = `
-                <div style="max-width: 280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                  <img 
-                    src="${property.image || '/placeholder.svg'}" 
-                    alt="${property.title}"
-                    style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;"
-                    onerror="this.src='/placeholder.svg'"
-                  />
-                  <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.3;">
-                    ${property.title}
-                  </h3>
-                  <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; display: flex; align-items: center;">
-                    📍 ${property.location}
-                  </p>
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <span style="font-size: 18px; font-weight: 700; color: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};">
-                        AED ${property.price.toLocaleString()}
-                      </span>
-                      <span style="font-size: 12px; color: #6b7280;">
-                        ${property.type === 'rent' ? '/month' : ''}
-                      </span>
-                    </div>
-                    <span style="
-                      background: ${property.type === 'rent' ? '#3b82f6' : '#10b981'};
-                      color: white;
-                      padding: 4px 8px;
-                      border-radius: 4px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      text-transform: uppercase;
-                    ">
-                      For ${property.type}
+          // Add cluster circles
+          newMap.addLayer({
+            id: 'clusters',
+            type: 'circle',
+            source: 'properties',
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#51bbd6',
+                10,
+                '#f1f075',
+                30,
+                '#f28cb1'
+              ],
+              'circle-radius': [
+                'step',
+                ['get', 'point_count'],
+                20,
+                10,
+                30,
+                30,
+                40
+              ]
+            }
+          });
+
+          // Add cluster count labels
+          newMap.addLayer({
+            id: 'cluster-count',
+            type: 'symbol',
+            source: 'properties',
+            filter: ['has', 'point_count'],
+            layout: {
+              'text-field': '{point_count_abbreviated}',
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 12
+            },
+            paint: {
+              'text-color': '#ffffff'
+            }
+          });
+
+          // Add individual property markers
+          newMap.addLayer({
+            id: 'unclustered-point',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                '#3b82f6',
+                '#10b981'
+              ],
+              'circle-radius': 20,
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#ffffff'
+            }
+          });
+
+          // Add price labels for individual properties
+          newMap.addLayer({
+            id: 'unclustered-point-label',
+            type: 'symbol',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            layout: {
+              'text-field': ['get', 'priceText'],
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 11,
+              'text-anchor': 'center'
+            },
+            paint: {
+              'text-color': '#ffffff'
+            }
+          });
+
+          // Create popup
+          const popup = new mapboxgl.default.Popup({
+            closeButton: true,
+            closeOnClick: false,
+            maxWidth: '320px'
+          });
+
+          // Click event for individual properties
+          newMap.on('click', 'unclustered-point', (e) => {
+            const coordinates = e.features![0].geometry.coordinates.slice();
+            const properties = e.features![0].properties;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+              coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            const popupContent = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <img 
+                  src="${properties.image}" 
+                  alt="${properties.title}"
+                  style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;"
+                  onerror="this.src='/placeholder.svg'"
+                />
+                <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.3;">
+                  ${properties.title}
+                </h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; display: flex; align-items: center;">
+                  📍 ${properties.location}
+                </p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-size: 18px; font-weight: 700; color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};">
+                      AED ${parseInt(properties.price).toLocaleString()}
+                    </span>
+                    <span style="font-size: 12px; color: #6b7280;">
+                      ${properties.type === 'rent' ? '/month' : ''}
                     </span>
                   </div>
+                  <span style="
+                    background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                  ">
+                    For ${properties.type}
+                  </span>
                 </div>
-              `;
+                ${onPropertyClick ? `
+                  <button 
+                    onclick="window.handlePropertyClick(${properties.id})" 
+                    style="
+                      width: 100%;
+                      margin-top: 12px;
+                      padding: 8px 16px;
+                      background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
+                      color: white;
+                      border: none;
+                      border-radius: 6px;
+                      font-weight: 500;
+                      cursor: pointer;
+                      transition: opacity 0.2s;
+                    "
+                    onmouseover="this.style.opacity='0.9'"
+                    onmouseout="this.style.opacity='1'"
+                  >
+                    View Details
+                  </button>
+                ` : ''}
+              </div>
+            `;
 
-              // Create popup
-              const popup = new mapboxgl.default.Popup({
-                offset: 25,
-                closeButton: true,
-                closeOnClick: false,
-                maxWidth: '300px'
-              }).setHTML(popupContent);
+            popup.setLngLat(coordinates).setHTML(popupContent).addTo(newMap);
+          });
 
-              // Create marker with popup
-              const marker = new mapboxgl.default.Marker(markerEl)
-                .setLngLat([property.longitude, property.latitude])
-                .setPopup(popup)
-                .addTo(newMap);
+          // Click event for clusters
+          newMap.on('click', 'clusters', (e) => {
+            const features = newMap.queryRenderedFeatures(e.point, {
+              layers: ['clusters']
+            });
+            const clusterId = features[0].properties.cluster_id;
+            newMap.getSource('properties').getClusterExpansionZoom(
+              clusterId,
+              (err: any, zoom: number) => {
+                if (err) return;
 
-              // Add click handler for property navigation
-              if (onPropertyClick) {
-                markerEl.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  onPropertyClick(property.id);
+                newMap.easeTo({
+                  center: features[0].geometry.coordinates,
+                  zoom: zoom
                 });
               }
+            );
+          });
 
-              console.log(`Added Mapbox marker for property: ${property.title}`);
-            } catch (error) {
-              console.error(`Error creating marker for property ${property.id}:`, error);
-            }
+          // Change cursor on hover
+          newMap.on('mouseenter', 'clusters', () => {
+            newMap.getCanvas().style.cursor = 'pointer';
+          });
+          newMap.on('mouseleave', 'clusters', () => {
+            newMap.getCanvas().style.cursor = '';
+          });
+
+          newMap.on('mouseenter', 'unclustered-point', () => {
+            newMap.getCanvas().style.cursor = 'pointer';
+          });
+          newMap.on('mouseleave', 'unclustered-point', () => {
+            newMap.getCanvas().style.cursor = '';
           });
 
           // Fit map to show all markers
@@ -246,7 +366,16 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               newMap.setZoom(14);
             }
           }
+
+          console.log(`Added ${validProperties.length} properties to map`);
         });
+
+        // Add global click handler for property navigation
+        if (onPropertyClick) {
+          (window as any).handlePropertyClick = (propertyId: number) => {
+            onPropertyClick(propertyId);
+          };
+        }
 
         newMap.on('error', (e) => {
           console.error('Mapbox error:', e);
@@ -267,6 +396,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       if (map.current) {
         map.current.remove();
         map.current = null;
+      }
+      // Clean up global handler
+      if ((window as any).handlePropertyClick) {
+        delete (window as any).handlePropertyClick;
       }
     };
   }, [mapboxToken, propertiesWithImages, onPropertyClick]);
