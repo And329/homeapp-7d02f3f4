@@ -16,6 +16,12 @@ interface PropertyFiltersProps {
   viewMode: 'grid' | 'list';
   setViewMode: (value: 'grid' | 'list') => void;
   resultsCount: number;
+  propertyTypeFilter: string;
+  setPropertyTypeFilter: (value: string) => void;
+  bedroomsFilter: string;
+  setBedroomsFilter: (value: string) => void;
+  emirateFilter: string;
+  setEmirateFilter: (value: string) => void;
 }
 
 const PropertyFilters: React.FC<PropertyFiltersProps> = ({
@@ -27,7 +33,13 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   setPriceRange,
   viewMode,
   setViewMode,
-  resultsCount
+  resultsCount,
+  propertyTypeFilter,
+  setPropertyTypeFilter,
+  bedroomsFilter,
+  setBedroomsFilter,
+  emirateFilter,
+  setEmirateFilter
 }) => {
   return (
     <Card className="mb-6 sm:mb-8">
@@ -45,10 +57,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
             <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
-              <SelectTrigger className="text-sm sm:text-base sm:w-40">
-                <SelectValue placeholder="Type" />
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue placeholder="For Rent/Sale" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
@@ -57,19 +69,63 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
               </SelectContent>
             </Select>
 
+            <Select value={propertyTypeFilter} onValueChange={setPropertyTypeFilter}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue placeholder="Property Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Apartment">Apartment</SelectItem>
+                <SelectItem value="Villa">Villa</SelectItem>
+                <SelectItem value="Townhouse">Townhouse</SelectItem>
+                <SelectItem value="Studio">Studio</SelectItem>
+                <SelectItem value="Penthouse">Penthouse</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={bedroomsFilter} onValueChange={setBedroomsFilter}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue placeholder="Bedrooms" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Bedrooms</SelectItem>
+                <SelectItem value="studio">Studio</SelectItem>
+                <SelectItem value="1">1 Bedroom</SelectItem>
+                <SelectItem value="2">2 Bedrooms</SelectItem>
+                <SelectItem value="3">3 Bedrooms</SelectItem>
+                <SelectItem value="4">4+ Bedrooms</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={emirateFilter} onValueChange={setEmirateFilter}>
+              <SelectTrigger className="text-sm sm:text-base">
+                <SelectValue placeholder="Emirate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Emirates</SelectItem>
+                <SelectItem value="Dubai">Dubai</SelectItem>
+                <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
+                <SelectItem value="Sharjah">Sharjah</SelectItem>
+                <SelectItem value="Ajman">Ajman</SelectItem>
+                <SelectItem value="Ras Al Khaimah">Ras Al Khaimah</SelectItem>
+                <SelectItem value="Fujairah">Fujairah</SelectItem>
+                <SelectItem value="Umm Al Quwain">Umm Al Quwain</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={priceRange} onValueChange={(value: 'all' | 'low' | 'mid' | 'high') => setPriceRange(value)}>
-              <SelectTrigger className="text-sm sm:text-base sm:w-40">
+              <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue placeholder="Price Range" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="low">Under $100K</SelectItem>
-                <SelectItem value="mid">$100K - $500K</SelectItem>
-                <SelectItem value="high">$500K+</SelectItem>
+                <SelectItem value="low">Under 100K AED</SelectItem>
+                <SelectItem value="mid">100K - 500K AED</SelectItem>
+                <SelectItem value="high">500K+ AED</SelectItem>
               </SelectContent>
             </Select>
 
-            <div className="flex gap-1 sm:gap-2 col-span-2 sm:col-span-1 justify-center sm:justify-start">
+            <div className="flex gap-1 sm:gap-2 justify-center sm:justify-start">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"

@@ -22,13 +22,13 @@ const Index = () => {
   const handleSearch = () => {
     const searchParams = new URLSearchParams();
     
-    if (searchLocation) {
-      searchParams.set('search', searchLocation);
+    if (searchLocation.trim()) {
+      searchParams.set('search', searchLocation.trim());
     }
-    if (searchPropertyType && searchPropertyType !== 'Property Type') {
+    if (searchPropertyType && searchPropertyType !== 'Property Type' && searchPropertyType !== '') {
       searchParams.set('propertyType', searchPropertyType);
     }
-    if (searchListingType && searchListingType !== 'For Rent / Sale') {
+    if (searchListingType && searchListingType !== 'For Rent / Sale' && searchListingType !== '') {
       if (searchListingType === 'For Rent') {
         searchParams.set('type', 'rent');
       } else if (searchListingType === 'For Sale') {
@@ -37,6 +37,16 @@ const Index = () => {
     }
 
     navigate(`/properties${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handlePropertyClick = (property: any) => {
+    navigate(`/properties/${property.id}`);
   };
 
   return (
@@ -84,6 +94,7 @@ const Index = () => {
                   placeholder="Location"
                   value={searchLocation}
                   onChange={(e) => setSearchLocation(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
@@ -97,6 +108,8 @@ const Index = () => {
                   <option value="Apartment">Apartment</option>
                   <option value="Villa">Villa</option>
                   <option value="Townhouse">Townhouse</option>
+                  <option value="Studio">Studio</option>
+                  <option value="Penthouse">Penthouse</option>
                 </select>
               </div>
               <div>
@@ -140,7 +153,12 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {hotDeals.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard 
+                  key={property.id} 
+                  property={property} 
+                  onClick={() => handlePropertyClick(property)}
+                  showContactButton={true}
+                />
               ))}
             </div>
           )}
@@ -195,7 +213,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Access Section */}
       <section className="py-16 uae-gradient-light">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
