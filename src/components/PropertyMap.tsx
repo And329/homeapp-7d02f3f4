@@ -53,7 +53,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         
         const newMap = new mapboxgl.default.Map({
           container: mapContainer.current!,
-          style: 'mapbox://styles/mapbox/satellite-streets-v12', // Changed to colorful satellite style
+          style: 'mapbox://styles/mapbox/streets-v12', // Changed to colorful streets style
           center: [55.2708, 25.2048], // Dubai coordinates
           zoom: 10,
         });
