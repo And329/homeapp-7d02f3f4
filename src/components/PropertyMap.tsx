@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -53,7 +52,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         
         const newMap = new mapboxgl.default.Map({
           container: mapContainer.current!,
-          style: 'mapbox://styles/mapbox/streets-v12', // Changed to colorful streets style
+          style: 'mapbox://styles/mapbox/streets-v11', // Changed to match PropertyLocationPicker
           center: [55.2708, 25.2048], // Dubai coordinates
           zoom: 10,
         });
