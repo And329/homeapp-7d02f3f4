@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -188,9 +187,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Create popup with improved styling
+          // Create popup with improved styling and better X button
           const popup = new mapboxgl.default.Popup({
-            closeButton: true,
+            closeButton: false, // We'll create our own styled close button
             closeOnClick: false,
             maxWidth: '190px',
             className: 'property-popup',
@@ -222,6 +221,47 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 width: 160px;
                 padding: 12px;
               ">
+                <!-- Custom Close Button -->
+                <button
+                  onclick="window.closeMapPopup()"
+                  style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    width: 24px;
+                    height: 24px;
+                    border: none;
+                    background: rgba(255, 255, 255, 0.9);
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #6b7280;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    transition: all 0.2s ease;
+                    z-index: 10;
+                    line-height: 1;
+                  "
+                  onmouseover="
+                    this.style.background='rgba(239, 68, 68, 0.1)';
+                    this.style.color='#ef4444';
+                    this.style.transform='scale(1.1)';
+                    this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.15)';
+                  "
+                  onmouseout="
+                    this.style.background='rgba(255, 255, 255, 0.9)';
+                    this.style.color='#6b7280';
+                    this.style.transform='scale(1)';
+                    this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';
+                  "
+                  title="Close"
+                >
+                  ×
+                </button>
+
                 <!-- Status Badge -->
                 <div style="
                   background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
@@ -236,6 +276,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                   backdrop-filter: blur(4px);
                   margin-bottom: 8px;
                   text-align: center;
+                  margin-top: 12px;
                 ">
                   For ${properties.type}
                 </div>
@@ -383,6 +424,20 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           };
         }
 
+        // Add global close popup handler
+        (window as any).closeMapPopup = () => {
+          const popups = document.getElementsByClassName('mapboxgl-popup');
+          if (popups.length > 0) {
+            const popup = popups[0];
+            const closeButton = popup.querySelector('.mapboxgl-popup-close-button');
+            if (closeButton) {
+              (closeButton as HTMLElement).click();
+            } else {
+              popup.remove();
+            }
+          }
+        };
+
         newMap.on('error', (e) => {
           console.error('Mapbox error:', e);
         });
@@ -403,9 +458,12 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         map.current.remove();
         map.current = null;
       }
-      // Clean up global handler
+      // Clean up global handlers
       if ((window as any).handlePropertyClick) {
         delete (window as any).handlePropertyClick;
+      }
+      if ((window as any).closeMapPopup) {
+        delete (window as any).closeMapPopup;
       }
     };
   }, [mapboxToken, properties, onPropertyClick]);
