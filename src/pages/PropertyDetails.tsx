@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -96,7 +95,10 @@ const PropertyDetails = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all queries related to this owner's profile
       queryClient.invalidateQueries({ queryKey: ['owner-profile', property?.owner_id] });
+      // Also invalidate any other cached profile data
+      queryClient.invalidateQueries({ queryKey: ['owner-profile'] });
       setIsEditingContact(false);
       toast({
         title: "Contact updated",

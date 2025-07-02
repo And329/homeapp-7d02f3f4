@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Map, Edit, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -85,6 +84,8 @@ const ContactEditDialog: React.FC<ContactEditDialogProps> = ({ propertyId, owner
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all queries related to owner profiles to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['owner-profile'] });
       queryClient.invalidateQueries({ queryKey: ['owner-profile', ownerId] });
       setIsOpen(false);
       toast({
