@@ -18,7 +18,6 @@ import PropertyImageUpload from '@/components/PropertyImageUpload';
 import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
-import QRCodeUpload from '@/components/QRCodeUpload';
 
 const propertyRequestSchema = z.object({
   title: z.string().min(1, 'Property title is required'),
@@ -35,16 +34,6 @@ const propertyRequestSchema = z.object({
   contactEmail: z.string().email('Valid email is required'),
   contactPhone: z.string().optional(),
   submitterType: z.enum(['owner', 'broker', 'referral']),
-  qrCode: z.string().optional(),
-}).refine((data) => {
-  // QR code is required for brokers and referral agents, but optional for property owners
-  if (data.submitterType !== 'owner' && !data.qrCode) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'QR code is required for brokers and referral agents',
-  path: ['qrCode'],
 });
 
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
@@ -57,7 +46,6 @@ const ListProperty = () => {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [selectedEmirate, setSelectedEmirate] = useState('');
-  const [qrCode, setQrCode] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -78,7 +66,6 @@ const ListProperty = () => {
       contactEmail: user?.email || '',
       contactPhone: '',
       submitterType: 'owner',
-      qrCode: '',
     },
   });
 
@@ -93,10 +80,6 @@ const ListProperty = () => {
     form.setValue('emirate', emirate);
   };
 
-  const handleQRCodeChange = (qrCodeValue: string) => {
-    setQrCode(qrCodeValue);
-    form.setValue('qrCode', qrCodeValue);
-  };
 
   const onSubmit = async (data: PropertyRequestForm) => {
     if (!user) {
@@ -108,16 +91,6 @@ const ListProperty = () => {
       return;
     }
 
-    // QR code validation based on submitter type
-    const submitterType = form.getValues('submitterType');
-    if (submitterType !== 'owner' && !qrCode.trim()) {
-      toast({
-        title: "QR Code Required",
-        description: "QR code is required for brokers and referral agents for legal compliance.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -145,7 +118,6 @@ const ListProperty = () => {
           contact_email: data.contactEmail,
           contact_phone: data.contactPhone || null,
           submitter_type: data.submitterType,
-          qr_code: qrCode,
         });
 
       if (error) throw error;
@@ -162,7 +134,6 @@ const ListProperty = () => {
       setLatitude(null);
       setLongitude(null);
       setSelectedEmirate('');
-      setQrCode('');
     } catch (error) {
       console.error('Error submitting property request:', error);
       toast({
@@ -329,12 +300,14 @@ const ListProperty = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <PropertyLocationPicker
-                      location={form.watch('location')}
-                      latitude={latitude || undefined}
-                      longitude={longitude || undefined}
-                      onLocationChange={handleLocationChange}
-                    />
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <PropertyLocationPicker
+                        location={form.watch('location')}
+                        latitude={latitude || undefined}
+                        longitude={longitude || undefined}
+                        onLocationChange={handleLocationChange}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -364,30 +337,6 @@ const ListProperty = () => {
                   )}
                 />
 
-                {/* QR Code Upload - Conditional based on submitter type */}
-                <div>
-                  <QRCodeUpload
-                    qrCode={qrCode}
-                    onQRCodeChange={handleQRCodeChange}
-                    required={form.watch('submitterType') !== 'owner'}
-                  />
-                  {form.watch('submitterType') === 'owner' ? (
-                    <p className="text-sm text-gray-600 mt-2">
-                      <strong>Note:</strong> QR code is optional for property owners but required for brokers and referral agents.
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-600 mt-2">
-                      <strong>Note:</strong> QR code is required for {form.watch('submitterType') === 'broker' ? 'brokers' : 'referral agents'} for UAE legal compliance.
-                    </p>
-                  )}
-                  <FormField
-                    control={form.control}
-                    name="qrCode"
-                    render={() => (
-                      <FormMessage />
-                    )}
-                  />
-                </div>
 
                 {/* Amenities */}
                 <PropertyAmenities
@@ -476,7 +425,7 @@ const ListProperty = () => {
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Your property listing will be reviewed by our team before being published. 
-                    We'll contact you within 24-48 hours regarding the status of your submission. QR code is optional for property owners but required for brokers and referral agents for UAE legal compliance.
+                    We'll contact you within 24-48 hours regarding the status of your submission. QR codes will be added by the admin after approval.
                   </p>
                 </div>
 
