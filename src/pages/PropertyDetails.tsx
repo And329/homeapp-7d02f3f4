@@ -194,40 +194,36 @@ const PropertyDetails = () => {
       
       <div className="container mx-auto px-4 py-8">
         {/* Property Images */}
-        <div className="mb-12">
-          <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 shadow-2xl bg-gradient-to-br from-muted/20 to-muted/40">
+        <div className="mb-8">
+          <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4 bg-muted">
             <img
               src={property.images[selectedImageIndex]}
               alt={property.title}
-              className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
+              className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
             {property.images.length > 1 && (
-              <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium">
+              <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
                 {selectedImageIndex + 1} of {property.images.length}
               </div>
             )}
-            <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md text-primary px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-lg">
-              Featured
-            </div>
           </div>
           
           {property.images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
               {property.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-3 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                  className={`aspect-square rounded-md overflow-hidden border-2 transition-colors ${
                     selectedImageIndex === index 
-                      ? 'border-primary shadow-primary/25 shadow-lg ring-4 ring-primary/20' 
+                      ? 'border-primary' 
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <img
                     src={image}
                     alt={`Property ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
                 </button>
               ))}
