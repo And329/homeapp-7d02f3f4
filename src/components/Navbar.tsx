@@ -70,17 +70,19 @@ const Navbar = () => {
           </div>
 
           {/* Right side - Language Switcher, Auth buttons/User menu */}
-          <div className="flex items-center space-x-4">
-            {/* Language Switcher */}
-            <LanguageSwitcher />
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Language Switcher - Hidden on very small screens */}
+            <div className="hidden xs:block">
+              <LanguageSwitcher />
+            </div>
 
             {user ? (
-              <div className="flex items-center space-x-3">
-                {/* List Property Button */}
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/list-property" className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                {/* List Property Button - Only icon on mobile */}
+                <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
+                  <Link to="/list-property" className="flex items-center space-x-1 sm:space-x-2">
                     <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('navbar.listProperty')}</span>
+                    <span className="hidden lg:inline">{t('navbar.listProperty')}</span>
                   </Link>
                 </Button>
 
@@ -136,21 +138,21 @@ const Navbar = () => {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Button asChild variant="ghost" size="sm">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Button asChild variant="ghost" size="sm" className="px-2 sm:px-3 text-xs sm:text-sm">
                   <Link to="/auth">{t('navbar.login')}</Link>
                 </Button>
-                <Button asChild size="sm">
-                  <Link to="/auth" className="flex items-center space-x-2">
-                    <UserPlus className="h-4 w-4" />
-                    <span>{t('navbar.signup')}</span>
+                <Button asChild size="sm" className="px-2 sm:px-3 text-xs sm:text-sm">
+                  <Link to="/auth" className="flex items-center space-x-1">
+                    <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="whitespace-nowrap">{t('navbar.signup')}</span>
                   </Link>
                 </Button>
               </div>
             )}
 
             {/* Mobile menu trigger */}
-            <div className="md:hidden">
+            <div className="md:hidden ml-1">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" className="px-2">
@@ -159,6 +161,14 @@ const Navbar = () => {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <nav className="flex flex-col space-y-4 mt-8">
+                    {/* Language Switcher in mobile menu */}
+                    <div className="px-3 py-2 border-b">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">Language / Язык:</span>
+                        <LanguageSwitcher />
+                      </div>
+                    </div>
+
                     {navItems.map((item) => {
                       const Icon = item.icon;
                       return (
@@ -176,9 +186,32 @@ const Navbar = () => {
                           <span>{item.label}</span>
                         </Link>
                       );
-                    })}
-                    
-                    {user && (
+                     })}
+                     
+                     {!user && (
+                       <>
+                         <div className="border-t pt-4 mt-4">
+                           <Link
+                             to="/auth"
+                             onClick={() => setIsOpen(false)}
+                             className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100"
+                           >
+                             <User className="h-5 w-5" />
+                             <span>{t('navbar.login')}</span>
+                           </Link>
+                           <Link
+                             to="/auth"
+                             onClick={() => setIsOpen(false)}
+                             className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-white bg-primary hover:bg-primary/90"
+                           >
+                             <UserPlus className="h-5 w-5" />
+                             <span>{t('navbar.signup')}</span>
+                           </Link>
+                         </div>
+                       </>
+                     )}
+                     
+                     {user && (
                       <>
                         <div className="border-t pt-4 mt-4">
                           <Link
