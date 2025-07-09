@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Properties from "./pages/Properties";
 import PropertyDetails from "./pages/PropertyDetails";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Information from "./pages/Information";
@@ -37,6 +38,7 @@ function App() {
               <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetails />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/news" element={<News />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/information" element={<Information />} />

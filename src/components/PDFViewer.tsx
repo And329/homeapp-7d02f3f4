@@ -27,13 +27,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, title, className = "" }) 
         </a>
       </div>
       
-      <div className="w-full h-96 border border-gray-300 rounded">
+      <div className="w-full h-[600px] border border-gray-300 rounded bg-white">
         <iframe
-          src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+          src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
           width="100%"
           height="100%"
           className="rounded"
           title={title || 'PDF Document'}
+          style={{ border: 'none' }}
         />
       </div>
     </div>

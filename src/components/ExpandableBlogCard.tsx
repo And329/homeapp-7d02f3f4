@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Calendar, User, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, User, Tag, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ interface ExpandableBlogCardProps {
 
 const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -83,25 +85,36 @@ const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
               />
             )}
           </div>
-        )}
+         )}
 
-        <Button
-          variant="ghost"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mt-4 flex items-center justify-center gap-2"
-        >
-          {isExpanded ? (
-            <>
-              <ChevronUp className="h-4 w-4" />
-              Show Less
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4" />
-              Read More
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-1 mt-4 flex items-center justify-center gap-2"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Show Less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Read More
+              </>
+            )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/blog/${post.slug}`)}
+            className="mt-4 flex items-center justify-center gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Full Post
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
