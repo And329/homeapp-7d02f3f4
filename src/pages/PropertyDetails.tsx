@@ -27,9 +27,9 @@ const PropertyDetails = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editedContact, setEditedContact] = useState({
-    full_name: '',
-    email: '',
-    phone: ''
+    contact_name: '',
+    contact_email: '',
+    contact_phone: ''
   });
 
   const { data: property, isLoading, error } = useQuery({
@@ -38,27 +38,12 @@ const PropertyDetails = () => {
     enabled: !!id,
   });
 
-  // Fetch owner contact information
-  const { data: ownerProfile } = useQuery({
-    queryKey: ['owner-profile', property?.owner_id],
-    queryFn: async () => {
-      if (!property?.owner_id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, email, phone')
-        .eq('id', property.owner_id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching owner profile:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!property?.owner_id,
-  });
+  // Get property contact information (use property's contact info or fallback to owner profile)
+  const propertyContactInfo = property ? {
+    contact_name: property.contact_name,
+    contact_email: property.contact_email, 
+    contact_phone: property.contact_phone
+  } : null;
 
   // Fetch user profile to check if admin
   const { data: userProfile } = useQuery({
@@ -84,25 +69,23 @@ const PropertyDetails = () => {
 
   // Update contact info mutation
   const updateContactMutation = useMutation({
-    mutationFn: async (contactData: { full_name: string; email: string; phone: string }) => {
-      if (!property?.owner_id) throw new Error('Owner ID not found');
+    mutationFn: async (contactData: { contact_name: string; contact_email: string; contact_phone: string }) => {
+      if (!property?.id) throw new Error('Property ID not found');
       
       const { error } = await supabase
-        .from('profiles')
+        .from('properties')
         .update(contactData)
-        .eq('id', property.owner_id);
+        .eq('id', property.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalidate all queries related to this owner's profile
-      queryClient.invalidateQueries({ queryKey: ['owner-profile', property?.owner_id] });
-      // Also invalidate any other cached profile data
-      queryClient.invalidateQueries({ queryKey: ['owner-profile'] });
+      // Invalidate the property query to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ['property', id] });
       setIsEditingContact(false);
       toast({
         title: "Contact updated",
-        description: "Owner contact information has been updated successfully.",
+        description: "Property contact information has been updated successfully.",
       });
     },
     onError: (error: any) => {
@@ -169,11 +152,11 @@ const PropertyDetails = () => {
   };
 
   const handleEditContact = () => {
-    if (ownerProfile) {
+    if (propertyContactInfo) {
       setEditedContact({
-        full_name: ownerProfile.full_name || '',
-        email: ownerProfile.email || '',
-        phone: ownerProfile.phone || ''
+        contact_name: propertyContactInfo.contact_name || '',
+        contact_email: propertyContactInfo.contact_email || '',
+        contact_phone: propertyContactInfo.contact_phone || ''
       });
     }
     setIsEditingContact(true);
@@ -185,7 +168,7 @@ const PropertyDetails = () => {
 
   const handleCancelEdit = () => {
     setIsEditingContact(false);
-    setEditedContact({ full_name: '', email: '', phone: '' });
+    setEditedContact({ contact_name: '', contact_email: '', contact_phone: '' });
   };
 
   return (
@@ -386,28 +369,28 @@ const PropertyDetails = () => {
                   {isEditingContact ? (
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="full_name">Full Name</Label>
+                        <Label htmlFor="contact_name">Contact Name</Label>
                         <Input
-                          id="full_name"
-                          value={editedContact.full_name}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, full_name: e.target.value }))}
+                          id="contact_name"
+                          value={editedContact.contact_name}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_name: e.target.value }))}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="contact_email">Email</Label>
                         <Input
-                          id="email"
+                          id="contact_email"
                           type="email"
-                          value={editedContact.email}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, email: e.target.value }))}
+                          value={editedContact.contact_email}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_email: e.target.value }))}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="contact_phone">Phone</Label>
                         <Input
-                          id="phone"
-                          value={editedContact.phone}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, phone: e.target.value }))}
+                          id="contact_phone"
+                          value={editedContact.contact_phone}
+                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_phone: e.target.value }))}
                         />
                       </div>
                       <div className="flex gap-2">
@@ -423,31 +406,33 @@ const PropertyDetails = () => {
                         </Button>
                       </div>
                     </div>
-                  ) : ownerProfile ? (
+                  ) : propertyContactInfo && (propertyContactInfo.contact_name || propertyContactInfo.contact_email || propertyContactInfo.contact_phone) ? (
                     <div className="space-y-3">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">{ownerProfile.full_name || 'Property Owner'}</span>
-                      </div>
-                      {ownerProfile.email && (
+                      {propertyContactInfo.contact_name && (
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="font-medium">{propertyContactInfo.contact_name}</span>
+                        </div>
+                      )}
+                      {propertyContactInfo.contact_email && (
                         <div className="flex items-center">
                           <Mail className="h-4 w-4 mr-2 text-gray-500" />
                           <a 
-                            href={`mailto:${ownerProfile.email}`}
+                            href={`mailto:${propertyContactInfo.contact_email}`}
                             className="text-primary hover:underline"
                           >
-                            {ownerProfile.email}
+                            {propertyContactInfo.contact_email}
                           </a>
                         </div>
                       )}
-                      {ownerProfile.phone && (
+                      {propertyContactInfo.contact_phone && (
                         <div className="flex items-center">
                           <Phone className="h-4 w-4 mr-2 text-gray-500" />
                           <a 
-                            href={`tel:${ownerProfile.phone}`}
+                            href={`tel:${propertyContactInfo.contact_phone}`}
                             className="text-primary hover:underline"
                           >
-                            {ownerProfile.phone}
+                            {propertyContactInfo.contact_phone}
                           </a>
                         </div>
                       )}

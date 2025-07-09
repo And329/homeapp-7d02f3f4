@@ -23,6 +23,9 @@ export interface Property {
   owner_id?: string;
   is_approved?: boolean;
   created_at?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 export interface DatabaseProperty {
