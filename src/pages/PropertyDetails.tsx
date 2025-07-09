@@ -253,20 +253,19 @@ const PropertyDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {property.videos.map((video, index) => (
                 <div key={index} className="group relative">
-                  <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl border border-border bg-gradient-to-br from-muted/30 to-muted/10 hover:shadow-3xl transition-all duration-500">
+                  <div className="aspect-video rounded-2xl overflow-hidden shadow-lg border border-border bg-card">
                     <video
                       controls
-                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.02]"
+                      className="w-full h-full"
                       src={video}
-                      poster="/placeholder.svg"
+                      preload="metadata"
                     >
                       Your browser does not support the video tag.
                     </video>
                   </div>
-                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide">
+                  <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold">
                     Video {index + 1}
                   </div>
-                  <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5 group-hover:ring-primary/20 transition-all duration-300"></div>
                 </div>
               ))}
             </div>
