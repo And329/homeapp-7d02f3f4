@@ -106,11 +106,13 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   longitude,
   onLocationChange,
 }) => {
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(true); // Show map by default
   const [tempLat, setTempLat] = useState(latitude?.toString() || '');
   const [tempLng, setTempLng] = useState(longitude?.toString() || '');
   const [coordinateError, setCoordinateError] = useState('');
   const [mapToken, setMapToken] = useState<string | null>(null);
+  const [manualToken, setManualToken] = useState('');
+  const [useManualToken, setUseManualToken] = useState(false);
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -120,8 +122,9 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
   useEffect(() => {
     const loadToken = async () => {
       try {
-        const { data } = await supabase.rpc('get_setting', { setting_key: 'mapbox_token' });
-        if (data) setMapToken(data);
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        if (data?.token) setMapToken(data.token);
       } catch (error) {
         console.error('Error loading Mapbox token:', error);
       }
@@ -137,9 +140,10 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
 
   // Initialize map when shown
   useEffect(() => {
-    if (!showMap || !mapContainer.current || !mapToken) return;
+    const tokenToUse = useManualToken ? manualToken : mapToken;
+    if (!showMap || !mapContainer.current || !tokenToUse) return;
 
-    mapboxgl.accessToken = mapToken;
+    mapboxgl.accessToken = tokenToUse;
     
     const centerLat = latitude || 25.2048; // Default to Dubai
     const centerLng = longitude || 55.2708;
@@ -189,7 +193,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
         map.current.remove();
       }
     };
-  }, [showMap, mapToken]);
+  }, [showMap, mapToken, manualToken, useManualToken]);
 
   // Update map center and marker when coordinates change
   useEffect(() => {
@@ -302,9 +306,36 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
           required
         />
         <p className="text-xs text-gray-500 mt-1">
-          Enter a location name (not validated) - use map or coordinates for precise location
+          Enter a location name and use the map below to set precise coordinates
         </p>
       </div>
+
+      {/* Manual Token Input */}
+      {!mapToken && (
+        <div className="border border-yellow-300 bg-yellow-50 p-3 rounded-lg">
+          <p className="text-sm text-yellow-800 mb-2">
+            Map service not configured. Enter your Mapbox token to use the interactive map:
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              placeholder="Enter Mapbox public token"
+              className="text-sm"
+            />
+            <Button
+              type="button"
+              onClick={() => setUseManualToken(true)}
+              variant="outline"
+              size="sm"
+              disabled={!manualToken.trim()}
+            >
+              Use Token
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Coordinate Input Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -345,7 +376,7 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
 
       {/* Map Toggle and Current Location */}
       <div className="flex gap-2">
-        {mapToken && (
+        {(mapToken || useManualToken) && (
           <Button
             type="button"
             onClick={() => setShowMap(!showMap)}
@@ -368,20 +399,20 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
       </div>
 
       {/* Interactive Map */}
-      {showMap && mapToken && (
-        <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-          <div ref={mapContainer} className="h-64 w-full" />
-          <div className="p-2 bg-gray-50 text-xs text-gray-600">
-            Click on the map to set the property location (must be within UAE)
+      {showMap && (mapToken || useManualToken) && (
+        <div className="border rounded-lg overflow-hidden bg-white shadow-lg">
+          <div ref={mapContainer} className="h-80 w-full" />
+          <div className="p-3 bg-gray-50 text-sm text-gray-700 border-t">
+            <strong>Instructions:</strong> Click anywhere on the map to set the exact property location (must be within UAE boundaries)
           </div>
         </div>
       )}
       
       {/* Map Token Missing Message */}
-      {showMap && !mapToken && (
-        <div className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
-          <p className="text-sm text-yellow-800">
-            Map is not available. Please contact the administrator to configure the Mapbox token.
+      {showMap && !mapToken && !useManualToken && (
+        <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+          <p className="text-sm text-blue-800">
+            Interactive map requires a Mapbox token. Please enter your token above or contact the administrator.
           </p>
         </div>
       )}
