@@ -369,11 +369,20 @@ const PropertyLocationPicker: React.FC<PropertyLocationPickerProps> = ({
 
       {/* Interactive Map */}
       {showMap && mapToken && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
           <div ref={mapContainer} className="h-64 w-full" />
           <div className="p-2 bg-gray-50 text-xs text-gray-600">
             Click on the map to set the property location (must be within UAE)
           </div>
+        </div>
+      )}
+      
+      {/* Map Token Missing Message */}
+      {showMap && !mapToken && (
+        <div className="border rounded-lg p-4 bg-yellow-50 border-yellow-200">
+          <p className="text-sm text-yellow-800">
+            Map is not available. Please contact the administrator to configure the Mapbox token.
+          </p>
         </div>
       )}
       

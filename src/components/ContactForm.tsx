@@ -70,17 +70,17 @@ const ContactForm: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Send className="h-6 w-6 text-primary" />
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <Send className="h-5 w-5 text-primary" />
           <span>{t('contact.form.title')}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="pt-0">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-1">
                 {t('contact.form.name')} *
               </label>
               <Input
@@ -89,10 +89,11 @@ const ContactForm: React.FC = () => {
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder={t('contact.form.namePlaceholder')}
                 required
+                className="h-9"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-1">
                 {t('contact.form.email')} *
               </label>
               <Input
@@ -101,13 +102,14 @@ const ContactForm: React.FC = () => {
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder={t('contact.form.emailPlaceholder')}
                 required
+                className="h-9"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-1">
                 {t('contact.form.phone')}
               </label>
               <Input
@@ -115,14 +117,15 @@ const ContactForm: React.FC = () => {
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder={t('contact.form.phonePlaceholder')}
+                className="h-9"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-1">
                 {t('contact.form.inquiryType')} *
               </label>
               <Select value={formData.inquiryType} onValueChange={(value) => handleInputChange('inquiryType', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,22 +142,23 @@ const ContactForm: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-1">
               {t('contact.form.message')} *
             </label>
             <Textarea
               value={formData.message}
               onChange={(e) => handleInputChange('message', e.target.value)}
               placeholder={t('contact.form.messagePlaceholder')}
-              rows={5}
+              rows={4}
               required
+              className="resize-none"
             />
           </div>
 
           <Button 
             type="submit" 
             disabled={isSubmitting || !formData.name || !formData.email || !formData.inquiryType || !formData.message}
-            className="w-full"
+            className="w-full h-9"
           >
             <Send className="h-4 w-4 mr-2" />
             {isSubmitting ? 'Sending...' : t('contact.form.submit')}
