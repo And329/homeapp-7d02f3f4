@@ -194,34 +194,40 @@ const PropertyDetails = () => {
       
       <div className="container mx-auto px-4 py-8">
         {/* Property Images */}
-        <div className="mb-8">
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+        <div className="mb-12">
+          <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-6 shadow-2xl bg-gradient-to-br from-muted/20 to-muted/40">
             <img
               src={property.images[selectedImageIndex]}
               alt={property.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
             {property.images.length > 1 && (
-              <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                {selectedImageIndex + 1} / {property.images.length}
+              <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium">
+                {selectedImageIndex + 1} of {property.images.length}
               </div>
             )}
+            <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md text-primary px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-lg">
+              Featured
+            </div>
           </div>
           
           {property.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {property.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    selectedImageIndex === index ? 'border-primary' : 'border-gray-200'
+                  className={`flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-3 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    selectedImageIndex === index 
+                      ? 'border-primary shadow-primary/25 shadow-lg ring-4 ring-primary/20' 
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <img
                     src={image}
                     alt={`Property ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300"
                   />
                 </button>
               ))}
@@ -231,30 +237,36 @@ const PropertyDetails = () => {
 
         {/* Videos Section */}
         {property.videos && property.videos.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-6">
-              <Play className="h-5 w-5 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">Property Videos</h2>
-              <Badge variant="outline" className="ml-2">
-                {property.videos.length} {property.videos.length === 1 ? 'video' : 'videos'}
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg">
+                <Play className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-foreground">Property Videos</h2>
+                <p className="text-muted-foreground text-sm">Explore the property in detail</p>
+              </div>
+              <Badge variant="secondary" className="ml-auto px-3 py-1 text-xs font-semibold">
+                {property.videos.length} {property.videos.length === 1 ? 'Video' : 'Videos'}
               </Badge>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {property.videos.map((video, index) => (
                 <div key={index} className="group relative">
-                  <div className="aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-gray-50">
+                  <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl border border-border bg-gradient-to-br from-muted/30 to-muted/10 hover:shadow-3xl transition-all duration-500">
                     <video
                       controls
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.02]"
                       src={video}
                       poster="/placeholder.svg"
                     >
                       Your browser does not support the video tag.
                     </video>
                   </div>
-                  <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded-lg text-xs font-medium">
+                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide">
                     Video {index + 1}
                   </div>
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-black/5 group-hover:ring-primary/20 transition-all duration-300"></div>
                 </div>
               ))}
             </div>
