@@ -78,7 +78,10 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
       qr_code,
       owner_id,
       is_approved,
-      created_at
+      created_at,
+      contact_name,
+      contact_email,
+      contact_phone
     `)
     .eq('id', id)
     .maybeSingle();

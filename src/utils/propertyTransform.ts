@@ -68,5 +68,8 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     owner_id: dbProperty.owner_id,
     is_approved: dbProperty.is_approved,
     created_at: dbProperty.created_at,
+    contact_name: dbProperty.contact_name,
+    contact_email: dbProperty.contact_email,
+    contact_phone: dbProperty.contact_phone,
   };
 };
