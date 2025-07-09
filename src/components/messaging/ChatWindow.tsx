@@ -1,12 +1,15 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, X } from 'lucide-react';
+import { Send, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '@/hooks/use-toast';
+import FileAttachment from '../FileAttachment';
+import DragDropFileUpload from '../DragDropFileUpload';
 
 interface ChatWindowProps {
   conversationId: string;
@@ -19,6 +22,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   otherUserName,
   onClose
 }) => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const { user, profile } = useAuth();
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [conversationTitle, setConversationTitle] = useState<string>('');
@@ -28,7 +33,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   
   const { messages, messagesLoading, sendMessage, isSendingMessage } = useMessages(conversationId);
 
-  // Fetch conversation details and determine the title
   useEffect(() => {
     const fetchConversationDetails = async () => {
       if (!conversationId || !user) return;
@@ -153,7 +157,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
-  // Handle initial scroll and new messages
   useEffect(() => {
     if (!messagesLoading && messages.length > 0) {
       setTimeout(() => {
@@ -162,17 +165,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [messages, messagesLoading]);
 
-  // Reset scroll when conversation changes
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = 0;
     }
   }, [conversationId]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
-      sendMessage({ content: newMessage.trim() });
-      setNewMessage('');
+      try {
+        await sendMessage({ content: newMessage.trim() });
+        setNewMessage('');
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
     }
   };
 
@@ -183,20 +189,73 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
+  const handleFileUploaded = async (fileData: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }) => {
+    try {
+      await sendMessage({
+        content: `📎 ${fileData.name}`,
+        file_url: fileData.url,
+        file_name: fileData.name,
+        file_type: fileData.type,
+        file_size: fileData.size
+      });
+
+      console.log('ChatWindow: Message with file sent successfully');
+
+    } catch (error) {
+      console.error('ChatWindow: Error sending file message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageUploaded = async (fileData: {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }) => {
+    try {
+      await sendMessage({
+        content: `📷 ${fileData.name}`,
+        file_url: fileData.url,
+        file_name: fileData.name,
+        file_type: fileData.type,
+        file_size: fileData.size
+      });
+
+      console.log('ChatWindow: Message with image sent successfully');
+
+    } catch (error) {
+      console.error('ChatWindow: Error sending image message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getUserDisplayName = (senderId: string) => {
     if (senderId === user?.id) {
-      return 'You';
+      return t('chat.you', 'You');
     }
     
-    // Use the cached user names or fallback to "Administrator"
-    return userNames[senderId] || 'Administrator';
+    return userNames[senderId] || t('chat.administrator', 'Administrator');
   };
 
   if (!conversationId) {
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Select a conversation to start messaging</p>
+          <p className="text-gray-500">{t('chat.selectConversation', 'Select a conversation to start messaging')}</p>
         </CardContent>
       </Card>
     );
@@ -205,21 +264,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="flex-shrink-0 py-3 px-4 border-b">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <div className="flex items-center space-x-2">
-            <User className="h-5 w-5" />
-            <span>{conversationTitle}</span>
-          </div>
-          {onClose && (
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+        <CardTitle className="flex items-center space-x-2 text-lg">
+          <User className="h-5 w-5" />
+          <span>{conversationTitle || t('chat.administrator', 'Administrator')}</span>
         </CardTitle>
       </CardHeader>
 
@@ -232,7 +279,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           {messagesLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
+              <span className="ml-3 text-sm text-gray-600">{t('chat.loadingMessages', 'Loading messages...')}</span>
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -241,8 +288,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p className="font-medium">No messages yet</p>
-              <p className="text-sm">Start the conversation by sending a message below</p>
+              <p className="font-medium">{t('chat.noMessages', 'No messages yet')}</p>
+              <p className="text-sm">{t('chat.startConversation', 'Start the conversation by sending a message below')}</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -262,7 +309,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                   <div className="font-medium text-xs mb-1 opacity-75">
                     {getUserDisplayName(message.sender_id)}
                   </div>
-                  <div className="leading-relaxed break-words">{message.content}</div>
+                  
+                  {/* Display file attachment if present */}
+                  {message.file_url && message.file_name ? (
+                    <div className="mb-2">
+                      <FileAttachment
+                        fileName={message.file_name}
+                        fileUrl={message.file_url}
+                        fileType={message.file_type || 'application/octet-stream'}
+                        fileSize={message.file_size || 0}
+                      />
+                    </div>
+                  ) : (
+                    <div className="leading-relaxed break-words">{message.content}</div>
+                  )}
+                  
                   <div className="text-xs mt-1 opacity-60">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
@@ -276,24 +337,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message input */}
-        <div className="flex-shrink-0 p-4 border-t bg-gray-50">
-          <div className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              onKeyPress={handleKeyPress}
-              disabled={isSendingMessage}
-              className="text-sm"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isSendingMessage}
-              size="sm"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+        {/* Message input area with drag-and-drop */}
+        <div className="flex-shrink-0 border-t bg-white p-4">
+          <div className="space-y-4">
+            {/* Drag and drop file upload areas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DragDropFileUpload
+                onFileUploaded={handleImageUploaded}
+                acceptedTypes="image/*"
+                maxSize={5 * 1024 * 1024} // 5MB for images
+                uploadType="image"
+              />
+              <DragDropFileUpload
+                onFileUploaded={handleFileUploaded}
+                acceptedTypes="*/*"
+                maxSize={10 * 1024 * 1024} // 10MB for files
+                uploadType="file"
+              />
+            </div>
+            
+            {/* Message input row */}
+            <div className="flex gap-3 items-end">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder={t('chat.typeMessage', 'Type your message...')}
+                onKeyPress={handleKeyPress}
+                disabled={isSendingMessage}
+                className="flex-1 text-base py-3"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || isSendingMessage}
+                size="default"
+                className="px-6 py-3"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

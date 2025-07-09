@@ -35,7 +35,16 @@ const propertyRequestSchema = z.object({
   contactEmail: z.string().email('Valid email is required'),
   contactPhone: z.string().optional(),
   submitterType: z.enum(['owner', 'broker', 'referral']),
-  qrCode: z.string().min(1, 'QR code is required for legal compliance'),
+  qrCode: z.string().optional(),
+}).refine((data) => {
+  // QR code is required for brokers and referral agents, but optional for property owners
+  if (data.submitterType !== 'owner' && !data.qrCode) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'QR code is required for brokers and referral agents',
+  path: ['qrCode'],
 });
 
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
@@ -99,10 +108,12 @@ const ListProperty = () => {
       return;
     }
 
-    if (!qrCode.trim()) {
+    // QR code validation based on submitter type
+    const submitterType = form.getValues('submitterType');
+    if (submitterType !== 'owner' && !qrCode.trim()) {
       toast({
         title: "QR Code Required",
-        description: "QR code is required for legal compliance.",
+        description: "QR code is required for brokers and referral agents for legal compliance.",
         variant: "destructive",
       });
       return;
@@ -353,13 +364,22 @@ const ListProperty = () => {
                   )}
                 />
 
-                {/* QR Code Upload */}
+                {/* QR Code Upload - Conditional based on submitter type */}
                 <div>
                   <QRCodeUpload
                     qrCode={qrCode}
                     onQRCodeChange={handleQRCodeChange}
-                    required
+                    required={form.watch('submitterType') !== 'owner'}
                   />
+                  {form.watch('submitterType') === 'owner' ? (
+                    <p className="text-sm text-gray-600 mt-2">
+                      <strong>Note:</strong> QR code is optional for property owners but required for brokers and referral agents.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600 mt-2">
+                      <strong>Note:</strong> QR code is required for {form.watch('submitterType') === 'broker' ? 'brokers' : 'referral agents'} for UAE legal compliance.
+                    </p>
+                  )}
                   <FormField
                     control={form.control}
                     name="qrCode"
@@ -456,7 +476,7 @@ const ListProperty = () => {
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Your property listing will be reviewed by our team before being published. 
-                    We'll contact you within 24-48 hours regarding the status of your submission. QR code is required for UAE legal compliance.
+                    We'll contact you within 24-48 hours regarding the status of your submission. QR code is optional for property owners but required for brokers and referral agents for UAE legal compliance.
                   </p>
                 </div>
 
