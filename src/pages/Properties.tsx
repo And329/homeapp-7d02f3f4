@@ -20,7 +20,8 @@ const Properties = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>(
     (searchParams.get('type') as 'rent' | 'sale') || 'all'
   );
-  const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMap, setShowMap] = useState(false);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState(
@@ -60,10 +61,9 @@ const Properties = () => {
     
     const matchesType = typeFilter === 'all' || property.type === typeFilter;
     
-    const matchesPrice = priceRange === 'all' || 
-      (priceRange === 'low' && property.price < 100000) ||
-      (priceRange === 'mid' && property.price >= 100000 && property.price < 500000) ||
-      (priceRange === 'high' && property.price >= 500000);
+    const matchesPrice = !minPrice && !maxPrice ? true :
+      (!minPrice || property.price >= parseInt(minPrice)) &&
+      (!maxPrice || property.price <= parseInt(maxPrice));
 
     const matchesPropertyType = propertyTypeFilter === 'all' || 
       property.property_type === propertyTypeFilter;
@@ -111,8 +111,10 @@ const Properties = () => {
           setSearchTerm={setSearchTerm}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
           viewMode={viewMode}
           setViewMode={setViewMode}
           resultsCount={filteredProperties.length}

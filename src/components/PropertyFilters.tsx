@@ -11,8 +11,10 @@ interface PropertyFiltersProps {
   setSearchTerm: (value: string) => void;
   typeFilter: 'all' | 'rent' | 'sale';
   setTypeFilter: (value: 'all' | 'rent' | 'sale') => void;
-  priceRange: 'all' | 'low' | 'mid' | 'high';
-  setPriceRange: (value: 'all' | 'low' | 'mid' | 'high') => void;
+  minPrice: string;
+  setMinPrice: (value: string) => void;
+  maxPrice: string;
+  setMaxPrice: (value: string) => void;
   viewMode: 'grid' | 'list';
   setViewMode: (value: 'grid' | 'list') => void;
   resultsCount: number;
@@ -29,8 +31,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   setSearchTerm,
   typeFilter,
   setTypeFilter,
-  priceRange,
-  setPriceRange,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
   viewMode,
   setViewMode,
   resultsCount,
@@ -57,7 +61,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 sm:gap-4">
             <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
               <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue placeholder="For Rent/Sale" />
@@ -113,17 +117,21 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
               </SelectContent>
             </Select>
 
-            <Select value={priceRange} onValueChange={(value: 'all' | 'low' | 'mid' | 'high') => setPriceRange(value)}>
-              <SelectTrigger className="text-sm sm:text-base">
-                <SelectValue placeholder="Price Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="low">Under 100K AED</SelectItem>
-                <SelectItem value="mid">100K - 500K AED</SelectItem>
-                <SelectItem value="high">500K+ AED</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              type="number"
+              placeholder="Min Price (AED)"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="text-sm sm:text-base"
+            />
+
+            <Input
+              type="number"
+              placeholder="Max Price (AED)"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="text-sm sm:text-base"
+            />
 
             <div className="flex gap-1 sm:gap-2 justify-center sm:justify-start">
               <Button
