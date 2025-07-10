@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Building2, 
   Users, 
@@ -9,10 +14,163 @@ import {
   Settings,
   Shield,
   Phone,
-  Mail
+  Mail,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
 
+// Определяем секции инструкций
+const instructionSections = [
+  {
+    key: 'admin_instructions_access',
+    title: 'Доступ к панели администратора',
+    icon: Shield,
+    color: 'text-green-600'
+  },
+  {
+    key: 'admin_instructions_properties',
+    title: 'Управление недвижимостью',
+    icon: Building2,
+    color: 'text-blue-600'
+  },
+  {
+    key: 'admin_instructions_requests',
+    title: 'Обработка заявок на недвижимость',
+    icon: FileText,
+    color: 'text-orange-600'
+  },
+  {
+    key: 'admin_instructions_content',
+    title: 'Управление контентом',
+    icon: FileText,
+    color: 'text-purple-600'
+  },
+  {
+    key: 'admin_instructions_chats',
+    title: 'Управление чатами и сообщениями',
+    icon: MessageSquare,
+    color: 'text-green-600'
+  },
+  {
+    key: 'admin_instructions_contacts',
+    title: 'Обработка контактных обращений',
+    icon: Mail,
+    color: 'text-yellow-600'
+  },
+  {
+    key: 'admin_instructions_team',
+    title: 'Управление командой',
+    icon: Users,
+    color: 'text-indigo-600'
+  },
+  {
+    key: 'admin_instructions_recommendations',
+    title: 'Рекомендации по работе',
+    icon: Phone,
+    color: 'text-red-600'
+  }
+];
+
 const AdminInstructionsTab: React.FC = () => {
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<string>('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Загружаем настройки инструкций
+  const { data: instructions, isLoading } = useQuery({
+    queryKey: ['admin-instructions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('key, value, description')
+        .in('key', instructionSections.map(section => section.key));
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Мутация для обновления инструкций
+  const updateInstructionMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const { error } = await supabase.rpc('upsert_setting', {
+        setting_key: key,
+        setting_value: value
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-instructions'] });
+      toast({
+        title: "Успешно",
+        description: "Инструкция обновлена",
+      });
+      setEditingSection(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить инструкцию",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleEdit = (key: string, currentValue: string) => {
+    setEditingSection(key);
+    setEditContent(currentValue);
+  };
+
+  const handleSave = () => {
+    if (editingSection) {
+      updateInstructionMutation.mutate({
+        key: editingSection,
+        value: editContent
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingSection(null);
+    setEditContent('');
+  };
+
+  // Получаем значение инструкции по ключу
+  const getInstructionValue = (key: string) => {
+    const instruction = instructions?.find(inst => inst.key === key);
+    return instruction?.value || '';
+  };
+
+  // Рендеринг markdown контента как обычного текста
+  const renderContent = (content: string) => {
+    return content.split('\n').map((line, index) => {
+      if (line.startsWith('## ')) {
+        return <h3 key={index} className="text-lg font-semibold mt-4 mb-2">{line.replace('## ', '')}</h3>;
+      }
+      if (line.startsWith('### ')) {
+        return <h4 key={index} className="text-md font-medium mt-3 mb-1">{line.replace('### ', '')}</h4>;
+      }
+      if (line.startsWith('- ')) {
+        return <li key={index} className="ml-4">{line.replace('- ', '')}</li>;
+      }
+      if (line.trim() === '') {
+        return <br key={index} />;
+      }
+      return <p key={index} className="text-gray-700">{line}</p>;
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-500">Загрузка инструкций...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -24,253 +182,79 @@ const AdminInstructionsTab: React.FC = () => {
         </p>
       </div>
 
-      {/* Доступ к панели администратора */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-green-600" />
-            Доступ к панели администратора
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Вход в систему:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Войдите на сайт с учетной записью администратора</li>
-              <li>В верхнем меню нажмите "Админ" для доступа к панели управления</li>
-              <li>Убедитесь, что у вас есть права администратора для полного доступа</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      {instructionSections.map((section) => {
+        const content = getInstructionValue(section.key);
+        const isEditing = editingSection === section.key;
+        const IconComponent = section.icon;
 
-      {/* Управление недвижимостью */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-600" />
-            Управление недвижимостью
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Вкладка "Опубликованные объекты":</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li><strong>Просмотр:</strong> Список всех активных объектов недвижимости</li>
-              <li><strong>Добавление:</strong> Кнопка "Добавить объект" для создания новых объявлений</li>
-              <li><strong>Редактирование:</strong> Кнопка "Редактировать" для изменения данных объекта</li>
-              <li><strong>Удаление:</strong> Кнопка "Удалить" для удаления объектов</li>
-              <li><strong>Горячие предложения:</strong> Переключатель для выделения объектов</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold mb-2">При добавлении/редактировании объекта:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Заполните все обязательные поля (название, цена, тип, местоположение)</li>
-              <li>Добавьте подробное описание объекта</li>
-              <li>Загрузите качественные фотографии</li>
-              <li>Укажите точное местоположение на карте</li>
-              <li>Добавьте контактную информацию для связи</li>
-              <li>Выберите удобства из предложенного списка</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Обработка заявок */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-orange-600" />
-            Обработка заявок на недвижимость
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Статусы заявок:</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Badge variant="outline" className="mb-2">На рассмотрении</Badge>
-                <p className="text-sm text-gray-600">Новые заявки, требующие проверки</p>
-              </div>
-              <div>
-                <Badge variant="default" className="mb-2">Одобрено</Badge>
-                <p className="text-sm text-gray-600">Заявки, переведенные в активные объявления</p>
-              </div>
-              <div>
-                <Badge variant="destructive" className="mb-2">Отклонено</Badge>
-                <p className="text-sm text-gray-600">Заявки, не прошедшие модерацию</p>
-              </div>
-              <div>
-                <Badge variant="secondary" className="mb-2">Запрос удаления</Badge>
-                <p className="text-sm text-gray-600">Заявки на удаление от владельцев</p>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold mb-2">Действия с заявками:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li><strong>Одобрить:</strong> Переводит заявку в активное объявление</li>
-              <li><strong>Отклонить:</strong> Отклоняет заявку с возможностью указать причину</li>
-              <li><strong>Удалить:</strong> Окончательно удаляет заявку из системы</li>
-              <li><strong>Ответить:</strong> Отправить сообщение подавшему заявку</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Управление контентом */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-purple-600" />
-            Управление контентом
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Блог и новости:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li><strong>Создание статей:</strong> Используйте встроенный редактор для создания контента</li>
-              <li><strong>Публикация:</strong> Установите статус "Опубликовано" для показа на сайте</li>
-              <li><strong>Изображения:</strong> Добавляйте обложки для привлекательности</li>
-              <li><strong>Теги:</strong> Используйте теги для категоризации контента</li>
-              <li><strong>SEO:</strong> Заполняйте мета-описания для поисковой оптимизации</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Управление чатами */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-green-600" />
-            Управление чатами и сообщениями
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Работа с чатами:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Просматривайте все активные разговоры с пользователями</li>
-              <li>Отвечайте на вопросы пользователей в режиме реального времени</li>
-              <li>Создавайте новые разговоры с пользователями при необходимости</li>
-              <li>Прикрепляйте файлы и изображения к сообщениям</li>
-              <li>Отслеживайте историю всех сообщений</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Обработка обращений */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-yellow-600" />
-            Обработка контактных обращений
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Работа с обращениями:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Просматривайте все поступающие обращения от посетителей сайта</li>
-              <li>Обновляйте статус обращений (Новое, В работе, Завершено)</li>
-              <li>Добавляйте внутренние заметки для отслеживания прогресса</li>
-              <li>Своевременно отвечайте на запросы клиентов</li>
-              <li>Ведите статистику обращений по типам</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Управление командой */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-indigo-600" />
-            Управление командой
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Редактирование команды:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Добавляйте новых сотрудников с их фотографиями и описанием</li>
-              <li>Редактируйте информацию о существующих участниках команды</li>
-              <li>Управляйте порядком отображения сотрудников</li>
-              <li>Добавляйте ссылки на социальные сети и контакты</li>
-              <li>Включайте/отключайте отображение сотрудников на сайте</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Системные настройки */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-gray-600" />
-            Системные настройки
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Конфигурация системы:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li><strong>Карты:</strong> Настройка токена для корректного отображения карт</li>
-              <li><strong>Уведомления:</strong> Мониторинг счетчиков новых сообщений и обращений</li>
-              <li><strong>Резервное копирование:</strong> Регулярное сохранение важных данных</li>
-              <li><strong>Безопасность:</strong> Мониторинг подозрительной активности</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Рекомендации */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-red-600" />
-            Рекомендации по работе
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-semibold mb-2">Ежедневные задачи:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Проверяйте новые заявки на недвижимость</li>
-              <li>Отвечайте на сообщения в чатах</li>
-              <li>Обрабатывайте контактные обращения</li>
-              <li>Мониторьте активность на сайте</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold mb-2">Еженедельные задачи:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Обновляйте контент блога и новостей</li>
-              <li>Проверяйте актуальность информации об объектах</li>
-              <li>Анализируйте статистику посещений</li>
-              <li>Обновляйте информацию о команде при необходимости</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold mb-2">Важные принципы:</h4>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Всегда проверяйте качество загружаемых изображений</li>
-              <li>Поддерживайте актуальность контактной информации</li>
-              <li>Быстро реагируйте на обращения клиентов</li>
-              <li>Ведите подробную документацию изменений</li>
-              <li>Регулярно проверяйте работоспособность всех функций</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+        return (
+          <Card key={section.key}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <IconComponent className={`h-5 w-5 ${section.color}`} />
+                  {section.title}
+                </div>
+                <div className="flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={updateInstructionMutation.isPending}
+                        className="h-8"
+                      >
+                        <Save className="h-4 w-4" />
+                        Сохранить
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancel}
+                        className="h-8"
+                      >
+                        <X className="h-4 w-4" />
+                        Отмена
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(section.key, content)}
+                      className="h-8"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Редактировать
+                    </Button>
+                  )}
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="min-h-[200px] font-mono text-sm"
+                    placeholder="Введите текст инструкции в формате Markdown"
+                  />
+                  <div className="text-sm text-gray-500">
+                    Поддерживается разметка Markdown: ## Заголовок 2, ### Заголовок 3, - Список
+                  </div>
+                </div>
+              ) : (
+                <div className="prose prose-sm max-w-none">
+                  {content ? renderContent(content) : (
+                    <p className="text-gray-500 italic">Инструкция не найдена</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };
