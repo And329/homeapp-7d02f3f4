@@ -39,6 +39,9 @@ interface FormData {
   images: string[];
   videos: string[];
   qr_code: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
 }
 
 const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSuccess }) => {
@@ -62,6 +65,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     images: [],
     videos: [],
     qr_code: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -91,6 +97,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         images: Array.isArray(property.images) ? property.images : [],
         videos: Array.isArray(property.videos) ? property.videos : [],
         qr_code: property.qr_code || '',
+        contact_name: property.contact_name || '',
+        contact_email: property.contact_email || '',
+        contact_phone: property.contact_phone || '',
       });
     } else {
       // Reset form for new property
@@ -114,6 +123,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         images: [],
         videos: [],
         qr_code: '',
+        contact_name: '',
+        contact_email: '',
+        contact_phone: '',
       });
     }
   }, [property]);
@@ -169,6 +181,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         images: formData.images,
         videos: formData.videos,
         qr_code: formData.qr_code.trim(),
+        contact_name: formData.contact_name.trim(),
+        contact_email: formData.contact_email.trim(),
+        contact_phone: formData.contact_phone.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -425,6 +440,48 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
                 onChange={handleChange}
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                name="contact_name"
+                value={formData.contact_name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter contact person's name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                name="contact_email"
+                value={formData.contact_email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter contact email address"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                name="contact_phone"
+                value={formData.contact_phone}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter contact phone number"
               />
             </div>
           </div>
