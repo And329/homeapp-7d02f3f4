@@ -24,49 +24,49 @@ import {
 const instructionSections = [
   {
     key: 'admin_instructions_access',
-    title: 'Доступ к панели администратора',
+    title: 'Admin Panel Access',
     icon: Shield,
     color: 'text-green-600'
   },
   {
     key: 'admin_instructions_properties',
-    title: 'Управление недвижимостью',
+    title: 'Property Management',
     icon: Building2,
     color: 'text-blue-600'
   },
   {
     key: 'admin_instructions_requests',
-    title: 'Обработка заявок на недвижимость',
+    title: 'Property Request Processing',
     icon: FileText,
     color: 'text-orange-600'
   },
   {
     key: 'admin_instructions_content',
-    title: 'Управление контентом',
+    title: 'Content Management',
     icon: FileText,
     color: 'text-purple-600'
   },
   {
     key: 'admin_instructions_chats',
-    title: 'Управление чатами и сообщениями',
+    title: 'Chat and Message Management',
     icon: MessageSquare,
     color: 'text-green-600'
   },
   {
     key: 'admin_instructions_contacts',
-    title: 'Обработка контактных обращений',
+    title: 'Contact Inquiry Processing',
     icon: Mail,
     color: 'text-yellow-600'
   },
   {
     key: 'admin_instructions_team',
-    title: 'Управление командой',
+    title: 'Team Management',
     icon: Users,
     color: 'text-indigo-600'
   },
   {
     key: 'admin_instructions_recommendations',
-    title: 'Рекомендации по работе',
+    title: 'Work Recommendations',
     icon: Phone,
     color: 'text-red-600'
   }
@@ -105,15 +105,15 @@ const AdminInstructionsTab: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-instructions'] });
       toast({
-        title: "Успешно",
-        description: "Инструкция обновлена",
+        title: "Success",
+        description: "Instruction updated successfully",
       });
       setEditingSection(null);
     },
     onError: (error) => {
       toast({
-        title: "Ошибка",
-        description: "Не удалось обновить инструкцию",
+        title: "Error",
+        description: "Failed to update instruction",
         variant: "destructive",
       });
     }
@@ -166,7 +166,7 @@ const AdminInstructionsTab: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-500">Загрузка инструкций...</div>
+        <div className="text-gray-500">Loading instructions...</div>
       </div>
     );
   }
@@ -205,7 +205,7 @@ const AdminInstructionsTab: React.FC = () => {
                         className="h-8"
                       >
                         <Save className="h-4 w-4" />
-                        Сохранить
+                        Save
                       </Button>
                       <Button
                         size="sm"
@@ -214,7 +214,7 @@ const AdminInstructionsTab: React.FC = () => {
                         className="h-8"
                       >
                         <X className="h-4 w-4" />
-                        Отмена
+                        Cancel
                       </Button>
                     </>
                   ) : (
@@ -225,7 +225,7 @@ const AdminInstructionsTab: React.FC = () => {
                       className="h-8"
                     >
                       <Edit className="h-4 w-4" />
-                      Редактировать
+                      Edit
                     </Button>
                   )}
                 </div>
@@ -233,21 +233,21 @@ const AdminInstructionsTab: React.FC = () => {
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <div className="space-y-4">
+                  <div className="space-y-4">
                   <Textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     className="min-h-[200px] font-mono text-sm"
-                    placeholder="Введите текст инструкции в формате Markdown"
+                    placeholder="Enter instruction text in Markdown format"
                   />
                   <div className="text-sm text-gray-500">
-                    Поддерживается разметка Markdown: ## Заголовок 2, ### Заголовок 3, - Список
+                    Supports Markdown formatting: ## Heading 2, ### Heading 3, - List
                   </div>
                 </div>
               ) : (
                 <div className="prose prose-sm max-w-none">
                   {content ? renderContent(content) : (
-                    <p className="text-gray-500 italic">Инструкция не найдена</p>
+                    <p className="text-gray-500 italic">Instruction not found</p>
                   )}
                 </div>
               )}
