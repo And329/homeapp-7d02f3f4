@@ -123,8 +123,8 @@ const PropertyImageUpload: React.FC<PropertyImageUploadProps> = ({
               className="w-full h-32 object-cover rounded-lg border border-gray-200"
               onError={(e) => {
                 console.error('Image failed to load at index:', index);
-                // Remove the broken image
-                removeImage(index);
+                // Show fallback instead of removing automatically
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NyA2NEw5MyA3MEw5OSA2NEwxMDUgNzBMMTExIDY0TDExNyA3MEwxMjMgNjQiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4OCIgeT0iNTIiPgo8cGF0aCBkPSJNNCA0SDIwQzIwLjU1MjMgNCAyMSA0LjQ0NzcyIDIxIDVWMTlDMjEgMTkuNTUyMyAyMC41NTIzIDIwIDIwIDIwSDRDMy40NDc3MiAyMCAzIDE5LjU1MjMgMyAxOVY1QzMgNC40NDc3MiAzLjQ0NzcyIDQgNCA0WiIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiLz4KPHBhdGggZD0iTTguNSA5LjVDOS4zMjg0MyA5LjUgMTAgOC44Mjg0MyAxMCA4QzEwIDcuMTcxNTcgOS4zMjg0MyA2LjUgOC41IDYuNUM3LjY3MTU3IDYuNSA3IDcuMTcxNTcgNyA4QzcgOC44Mjg0MyA3LjY3MTU3IDkuNSA4LjUgOS41WiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMjEgMTVMMTYgMTBMMTMgMTNMOCAxMEwzIDE1IiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo8L3N2Zz4K';
               }}
             />
             <button
