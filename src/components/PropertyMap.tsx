@@ -1,16 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+
+interface Property {
+  id: string | number;
+  title: string;
+  location: string;
+  price: number;
+  type: 'rent' | 'sale';
+  latitude: number | null;
+  longitude: number | null;
+}
 
 interface PropertyMapProps {
-  properties: Array<{
-    id: string | number;
-    title: string;
-    location: string;
-    price: number;
-    type: 'rent' | 'sale';
-    latitude: number | null;
-    longitude: number | null;
-  }>;
+  properties: Property[];
   height?: string;
   onPropertyClick?: (propertyId: string | number) => void;
 }
@@ -23,7 +26,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
+  // Fetch Mapbox token
   useEffect(() => {
     const getMapboxToken = async () => {
       try {
@@ -35,14 +41,168 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         setMapboxToken(data.token);
       } catch (error) {
         console.error('Error fetching Mapbox token:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     getMapboxToken();
   }, []);
 
+  // Handle property click
+  const handlePropertyClick = useCallback((propertyId: string | number) => {
+    if (onPropertyClick) {
+      onPropertyClick(propertyId);
+    } else {
+      navigate(`/properties/${propertyId}`);
+    }
+  }, [onPropertyClick, navigate]);
+
+  // Create popup content
+  const createPopupContent = useCallback((property: any) => {
+    const priceFormatted = parseInt(property.price).toLocaleString();
+    const typeColor = property.type === 'rent' ? '#3b82f6' : '#10b981';
+    
+    return `
+      <div class="property-popup-content" style="
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e5e7eb;
+        max-width: 280px;
+        width: 280px;
+        position: relative;
+      ">
+        <!-- Header with type badge -->
+        <div style="
+          background: linear-gradient(135deg, ${typeColor}, ${property.type === 'rent' ? '#60a5fa' : '#34d399'});
+          padding: 16px;
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+          "></div>
+          
+          <div style="
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+          ">
+            For ${property.type}
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 20px;">
+          <h3 style="
+            margin: 0 0 12px 0; 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #111827; 
+            line-height: 1.4;
+            letter-spacing: -0.02em;
+          ">
+            ${property.title}
+          </h3>
+          
+          <div style="
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 16px; 
+            color: #6b7280; 
+            font-size: 13px;
+            font-weight: 500;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px; flex-shrink: 0;">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span style="line-height: 1.4;">${property.location}</span>
+          </div>
+          
+          <!-- Price Section -->
+          <div style="
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #e2e8f0;
+          ">
+            <div style="
+              font-size: 20px; 
+              font-weight: 800; 
+              color: ${typeColor};
+              line-height: 1.2;
+              margin-bottom: 4px;
+            ">
+              AED ${priceFormatted}
+            </div>
+            ${property.type === 'rent' ? `
+              <div style="
+                font-size: 12px; 
+                color: #64748b; 
+                font-weight: 500;
+              ">
+                per month
+              </div>
+            ` : ''}
+          </div>
+          
+          <!-- View Details Button -->
+          <button 
+            class="view-details-btn"
+            data-property-id="${property.id}"
+            style="
+              width: 100%;
+              padding: 12px 16px;
+              background: linear-gradient(135deg, ${typeColor}, ${property.type === 'rent' ? '#60a5fa' : '#34d399'});
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-weight: 600;
+              font-size: 14px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              position: relative;
+              overflow: hidden;
+            "
+          >
+            <span style="position: relative; z-index: 2;">View Details</span>
+            <div style="
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+              transition: left 0.5s ease;
+            "></div>
+          </button>
+        </div>
+      </div>
+    `;
+  }, []);
+
+  // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken || properties.length === 0) return;
 
     const initializeMap = async () => {
       try {
@@ -52,24 +212,21 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         
         const newMap = new mapboxgl.default.Map({
           container: mapContainer.current!,
-          style: 'mapbox://styles/mapbox/streets-v11', // Changed to match PropertyLocationPicker
+          style: 'mapbox://styles/mapbox/light-v11',
           center: [55.2708, 25.2048], // Dubai coordinates
           zoom: 10,
+          attributionControl: false
         });
 
         // Add navigation controls
-        newMap.addControl(new mapboxgl.default.NavigationControl());
+        newMap.addControl(new mapboxgl.default.NavigationControl(), 'top-right');
 
         // Wait for the map to load
         newMap.on('load', () => {
-          console.log('Map loaded, adding properties to map');
-          
           // Filter properties with valid coordinates
           const validProperties = properties.filter(
             property => property.latitude && property.longitude
           );
-
-          console.log('Valid properties with coordinates:', validProperties.length);
 
           if (validProperties.length === 0) {
             console.log('No properties with valid coordinates to display');
@@ -109,7 +266,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             clusterRadius: 50
           });
 
-          // Add cluster layers
+          // Add cluster layers with improved styling
           newMap.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -119,21 +276,24 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               'circle-color': [
                 'step',
                 ['get', 'point_count'],
-                '#51bbd6',
+                '#3b82f6',
                 10,
-                '#f1f075',
+                '#8b5cf6',
                 30,
-                '#f28cb1'
+                '#ec4899'
               ],
               'circle-radius': [
                 'step',
                 ['get', 'point_count'],
-                20,
+                25,
                 10,
+                35,
                 30,
-                30,
-                40
-              ]
+                45
+              ],
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 0.9
             }
           });
 
@@ -144,15 +304,18 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             filter: ['has', 'point_count'],
             layout: {
               'text-field': '{point_count_abbreviated}',
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 12
+              'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+              'text-size': 14
             },
             paint: {
-              'text-color': '#ffffff'
+              'text-color': '#ffffff',
+              'text-halo-color': 'rgba(0, 0, 0, 0.3)',
+              'text-halo-width': 1
             }
           });
 
-          // Add shadow layer for depth effect
+          // Add individual property layers with enhanced styling
+          // Shadow layer for depth effect
           newMap.addLayer({
             id: 'property-shadow',
             type: 'circle',
@@ -160,13 +323,13 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             filter: ['!', ['has', 'point_count']],
             paint: {
               'circle-color': 'rgba(0, 0, 0, 0.2)',
-              'circle-radius': 28,
-              'circle-blur': 1.5,
+              'circle-radius': 32,
+              'circle-blur': 2,
               'circle-translate': [2, 2]
             }
           });
 
-          // Add outer glow layer
+          // Outer glow layer
           newMap.addLayer({
             id: 'property-glow',
             type: 'circle',
@@ -176,15 +339,15 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               'circle-color': [
                 'case',
                 ['==', ['get', 'type'], 'rent'],
-                'rgba(59, 130, 246, 0.3)',
-                'rgba(16, 185, 129, 0.3)'
+                'rgba(59, 130, 246, 0.4)',
+                'rgba(16, 185, 129, 0.4)'
               ],
-              'circle-radius': 32,
-              'circle-blur': 2
+              'circle-radius': 36,
+              'circle-blur': 3
             }
           });
 
-          // Add main property point with gradient effect
+          // Main property point
           newMap.addLayer({
             id: 'unclustered-point',
             type: 'circle',
@@ -197,28 +360,28 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 '#3b82f6',
                 '#10b981'
               ],
-              'circle-radius': 24,
-              'circle-stroke-width': 3,
+              'circle-radius': 26,
+              'circle-stroke-width': 4,
               'circle-stroke-color': '#ffffff',
-              'circle-stroke-opacity': 0.9,
+              'circle-stroke-opacity': 0.95,
               'circle-opacity': 0.95
             }
           });
 
-          // Add inner highlight for 3D effect
+          // Inner highlight for 3D effect
           newMap.addLayer({
             id: 'property-highlight',
             type: 'circle',
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             paint: {
-              'circle-color': 'rgba(255, 255, 255, 0.3)',
-              'circle-radius': 18,
-              'circle-translate': [-1, -1]
+              'circle-color': 'rgba(255, 255, 255, 0.4)',
+              'circle-radius': 20,
+              'circle-translate': [-2, -2]
             }
           });
 
-          // Add price label with better styling
+          // Price label
           newMap.addLayer({
             id: 'unclustered-point-label',
             type: 'symbol',
@@ -227,227 +390,100 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             layout: {
               'text-field': ['get', 'priceText'],
               'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
-              'text-size': 11,
+              'text-size': 12,
               'text-anchor': 'center'
             },
             paint: {
               'text-color': '#ffffff',
-              'text-halo-color': 'rgba(0, 0, 0, 0.3)',
-              'text-halo-width': 1
+              'text-halo-color': 'rgba(0, 0, 0, 0.4)',
+              'text-halo-width': 1.5
             }
           });
 
-          // Create popup with improved styling and better X button
+          // Create popup
           const popup = new mapboxgl.default.Popup({
-            closeButton: false, // We'll create our own styled close button
+            closeButton: true,
             closeOnClick: false,
-            maxWidth: '190px',
+            maxWidth: '300px',
             className: 'property-popup',
             anchor: 'bottom'
           });
 
           // Click event for individual properties
           newMap.on('click', 'unclustered-point', (e) => {
-            const coordinates = ((e.features![0].geometry as any) as { coordinates: [number, number] }).coordinates.slice() as [number, number];
+            const coordinates = (e.features![0].geometry as any).coordinates.slice() as [number, number];
             const properties = e.features![0].properties;
 
-            // Ensure that if the map is zoomed out such that multiple
-            // copies of the feature are visible, the popup appears
-            // over the copy being pointed to.
+            // Ensure popup appears over the correct copy of the feature
             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
               coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
 
-            const popupContent = `
-              <div style="
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: white;
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-                border: 1px solid #e5e7eb;
-                position: relative;
-                max-width: 160px;
-                width: 160px;
-                padding: 12px;
-              ">
-                <!-- Custom Close Button -->
-                <button
-                  onclick="window.closeMapPopup()"
-                  style="
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    width: 24px;
-                    height: 24px;
-                    border: none;
-                    background: rgba(255, 255, 255, 0.9);
-                    border-radius: 50%;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 14px;
-                    font-weight: bold;
-                    color: #6b7280;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    transition: all 0.2s ease;
-                    z-index: 10;
-                    line-height: 1;
-                  "
-                  onmouseover="
-                    this.style.background='rgba(239, 68, 68, 0.1)';
-                    this.style.color='#ef4444';
-                    this.style.transform='scale(1.1)';
-                    this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.15)';
-                  "
-                  onmouseout="
-                    this.style.background='rgba(255, 255, 255, 0.9)';
-                    this.style.color='#6b7280';
-                    this.style.transform='scale(1)';
-                    this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)';
-                  "
-                  title="Close"
-                >
-                  ×
-                </button>
-
-                <!-- Status Badge -->
-                <div style="
-                  background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                  color: white;
-                  padding: 4px 8px;
-                  border-radius: 8px;
-                  font-size: 10px;
-                  font-weight: 600;
-                  text-transform: uppercase;
-                  letter-spacing: 0.2px;
-                  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-                  backdrop-filter: blur(4px);
-                  margin-bottom: 8px;
-                  text-align: center;
-                  margin-top: 12px;
-                ">
-                  For ${properties.type}
-                </div>
-                
-                <h3 style="
-                  margin: 0 0 4px 0; 
-                  font-size: 12px; 
-                  font-weight: 700; 
-                  color: #111827; 
-                  line-height: 1.2;
-                  letter-spacing: -0.02em;
-                ">
-                  ${properties.title}
-                </h3>
-                
-                <div style="
-                  display: flex; 
-                  align-items: center; 
-                  margin-bottom: 8px; 
-                  color: #6b7280; 
-                  font-size: 9px;
-                  font-weight: 500;
-                ">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; flex-shrink: 0;">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                  <span style="line-height: 1.3;">${properties.location}</span>
-                </div>
-                
-                <div style="
-                  display: flex; 
-                  justify-content: space-between; 
-                  align-items: center;
-                  margin-bottom: ${onPropertyClick ? '10px' : '0'};
-                ">
-                  <div>
-                    <div style="
-                      font-size: 13px; 
-                      font-weight: 800; 
-                      color: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                      line-height: 1.1;
-                      margin-bottom: 2px;
-                    ">
-                      AED ${parseInt(properties.price).toLocaleString()}
-                    </div>
-                    ${properties.type === 'rent' ? `
-                      <div style="
-                        font-size: 8px; 
-                        color: #6b7280; 
-                        font-weight: 500;
-                      ">
-                        per month
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-                
-                ${onPropertyClick ? `
-                  <button 
-                    onclick="window.handlePropertyClick(${properties.id})" 
-                    style="
-                      width: 100%;
-                      padding: 8px 10px;
-                      background: ${properties.type === 'rent' ? '#3b82f6' : '#10b981'};
-                      color: white;
-                      border: none;
-                      border-radius: 6px;
-                      font-weight: 600;
-                      font-size: 10px;
-                      cursor: pointer;
-                      transition: all 0.2s ease;
-                      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                    "
-                    onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 10px rgba(0, 0, 0, 0.15)';"
-                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.1)';"
-                  >
-                    View Details
-                  </button>
-                ` : ''}
-              </div>
-            `;
-
+            const popupContent = createPopupContent(properties);
             popup.setLngLat(coordinates).setHTML(popupContent).addTo(newMap);
+
+            // Add event listener for the view details button after popup is added
+            setTimeout(() => {
+              const viewDetailsBtn = document.querySelector('.view-details-btn') as HTMLElement;
+              if (viewDetailsBtn) {
+                viewDetailsBtn.addEventListener('click', (event) => {
+                  const propertyId = (event.target as HTMLElement).closest('.view-details-btn')?.getAttribute('data-property-id');
+                  if (propertyId) {
+                    popup.remove();
+                    handlePropertyClick(propertyId);
+                  }
+                });
+
+                // Add hover effects
+                viewDetailsBtn.addEventListener('mouseenter', () => {
+                  viewDetailsBtn.style.transform = 'translateY(-2px)';
+                  viewDetailsBtn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+                  const shimmer = viewDetailsBtn.querySelector('div') as HTMLElement;
+                  if (shimmer) {
+                    shimmer.style.left = '100%';
+                  }
+                });
+
+                viewDetailsBtn.addEventListener('mouseleave', () => {
+                  viewDetailsBtn.style.transform = 'translateY(0)';
+                  viewDetailsBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  const shimmer = viewDetailsBtn.querySelector('div') as HTMLElement;
+                  if (shimmer) {
+                    shimmer.style.left = '-100%';
+                  }
+                });
+              }
+            }, 100);
           });
 
-          // Click event for clusters
+          // Cluster click event
           newMap.on('click', 'clusters', (e) => {
             const features = newMap.queryRenderedFeatures(e.point, {
               layers: ['clusters']
             });
             const clusterId = features[0].properties.cluster_id;
             const source = newMap.getSource('properties') as any;
-            (source as any).getClusterExpansionZoom(
-              clusterId,
-              (err: any, zoom: number) => {
-                if (err) return;
-
-                const coordinates = ((features[0].geometry as any) as { coordinates: [number, number] }).coordinates;
-                newMap.easeTo({
-                  center: coordinates,
-                  zoom: zoom
-                });
-              }
-            );
+            source.getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+              if (err) return;
+              const coordinates = (features[0].geometry as any).coordinates;
+              newMap.easeTo({
+                center: coordinates,
+                zoom: zoom
+              });
+            });
           });
 
-          // Change cursor on hover
-          newMap.on('mouseenter', 'clusters', () => {
-            newMap.getCanvas().style.cursor = 'pointer';
-          });
-          newMap.on('mouseleave', 'clusters', () => {
-            newMap.getCanvas().style.cursor = '';
-          });
-
-          newMap.on('mouseenter', 'unclustered-point', () => {
-            newMap.getCanvas().style.cursor = 'pointer';
-          });
-          newMap.on('mouseleave', 'unclustered-point', () => {
-            newMap.getCanvas().style.cursor = '';
+          // Hover effects
+          ['clusters', 'unclustered-point'].forEach(layer => {
+            newMap.on('mouseenter', layer, () => {
+              newMap.getCanvas().style.cursor = 'pointer';
+            });
+            newMap.on('mouseleave', layer, () => {
+              newMap.getCanvas().style.cursor = '';
+            });
           });
 
+          // Fit bounds to show all properties
           if (validProperties.length > 1) {
             const bounds = new mapboxgl.default.LngLatBounds();
             validProperties.forEach(property => {
@@ -455,41 +491,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 bounds.extend([property.longitude, property.latitude]);
               }
             });
-            newMap.fitBounds(bounds, { padding: 50 });
+            newMap.fitBounds(bounds, { padding: 60 });
           } else if (validProperties.length === 1) {
             const property = validProperties[0];
             if (property.latitude && property.longitude) {
               newMap.setCenter([property.longitude, property.latitude]);
-              newMap.setZoom(14);
+              newMap.setZoom(15);
             }
           }
-
-          console.log(`Added ${validProperties.length} properties to map`);
-        });
-
-        // Add global click handler for property navigation
-        if (onPropertyClick) {
-          (window as any).handlePropertyClick = (propertyId: number) => {
-            onPropertyClick(propertyId);
-          };
-        }
-
-        // Add global close popup handler
-        (window as any).closeMapPopup = () => {
-          const popups = document.getElementsByClassName('mapboxgl-popup');
-          if (popups.length > 0) {
-            const popup = popups[0];
-            const closeButton = popup.querySelector('.mapboxgl-popup-close-button');
-            if (closeButton) {
-              (closeButton as HTMLElement).click();
-            } else {
-              popup.remove();
-            }
-          }
-        };
-
-        newMap.on('error', (e) => {
-          console.error('Mapbox error:', e);
         });
 
         map.current = newMap;
@@ -498,35 +507,39 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       }
     };
 
-    // Only initialize if we have properties to show
-    if (properties.length > 0) {
-      initializeMap();
-    }
+    initializeMap();
 
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
-      // Clean up global handlers
-      if ((window as any).handlePropertyClick) {
-        delete (window as any).handlePropertyClick;
-      }
-      if ((window as any).closeMapPopup) {
-        delete (window as any).closeMapPopup;
-      }
     };
-  }, [mapboxToken, properties, onPropertyClick]);
+  }, [mapboxToken, properties, createPopupContent, handlePropertyClick]);
+
+  if (isLoading) {
+    return (
+      <div 
+        className="flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl"
+        style={{ height }}
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+          <p className="text-gray-600 font-medium">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!mapboxToken) {
     return (
       <div 
-        className="flex items-center justify-center bg-gray-100 rounded-lg"
+        className="flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-100 rounded-xl"
         style={{ height }}
       >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-gray-600">Loading map...</p>
+        <div className="text-center p-6">
+          <p className="text-gray-700 font-medium">Map service not configured</p>
+          <p className="text-gray-500 text-sm mt-2">Please contact the administrator to set up the map service.</p>
         </div>
       </div>
     );
@@ -535,11 +548,17 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   if (properties.length === 0) {
     return (
       <div 
-        className="flex items-center justify-center bg-gray-100 rounded-lg"
+        className="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl"
         style={{ height }}
       >
-        <div className="text-center">
-          <p className="text-gray-600">No properties to display on map</p>
+        <div className="text-center p-6">
+          <div className="text-gray-400 mb-3">
+            <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <p className="text-gray-600 font-medium">No properties to display</p>
+          <p className="text-gray-500 text-sm mt-1">Properties will appear here when available</p>
         </div>
       </div>
     );
@@ -548,7 +567,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
   return (
     <div 
       ref={mapContainer} 
-      className="w-full rounded-lg"
+      className="w-full rounded-xl overflow-hidden shadow-lg"
       style={{ height }}
     />
   );
