@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -8,6 +8,7 @@ import PropertyForm from '@/components/PropertyForm';
 import PropertyRequestApprovalForm from '@/components/PropertyRequestApprovalForm';
 import BlogPostForm from '@/components/BlogPostForm';
 import NewsArticleForm from '@/components/NewsArticleForm';
+import TeamMemberForm from '@/components/TeamMemberForm';
 import MapboxTokenSettings from '@/components/MapboxTokenSettings';
 import AdminTabNavigation from '@/components/admin/AdminTabNavigation';
 import AdminPropertiesTab from '@/components/admin/AdminPropertiesTab';
@@ -15,11 +16,14 @@ import AdminRequestsTab from '@/components/admin/AdminRequestsTab';
 import AdminContentTab from '@/components/admin/AdminContentTab';
 import AdminChatsTab from '@/components/admin/AdminChatsTab';
 import AdminContactTab from '@/components/admin/AdminContactTab';
+import AdminTeamTab from '@/components/admin/AdminTeamTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
 import { useAdminState } from '@/hooks/useAdminState';
 import { Property, DatabaseProperty } from '@/types/property';
+import { TeamMember } from '@/types/teamMember';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define the AdminProperty interface to match AdminPropertiesTab expectations
 interface AdminProperty {
@@ -43,6 +47,23 @@ const AdminDashboard = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const state = useAdminState();
+  
+  // Team management states
+  const [isTeamFormOpen, setIsTeamFormOpen] = useState(false);
+  const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
+
+  // Fetch team members count
+  const { data: teamMembersCount = 0 } = useQuery({
+    queryKey: ['admin-team-members-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('team_members')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
   const {
     properties: rawProperties,
@@ -181,6 +202,7 @@ const AdminDashboard = () => {
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
           openChatsCount={conversations.length}
           contactInquiriesCount={contactInquiries.filter(inquiry => inquiry.status === 'new').length}
+          teamMembersCount={teamMembersCount}
         />
 
         {state.activeTab === 'properties' && (
@@ -233,6 +255,19 @@ const AdminDashboard = () => {
         {state.activeTab === 'contact' && (
           <AdminContactTab />
         )}
+
+        {state.activeTab === 'team' && (
+          <AdminTeamTab 
+            onCreateTeamMember={() => {
+              setEditingTeamMember(null);
+              setIsTeamFormOpen(true);
+            }}
+            onEditTeamMember={(member) => {
+              setEditingTeamMember(member);
+              setIsTeamFormOpen(true);
+            }}
+          />
+        )}
       </div>
 
       {/* Modals */}
@@ -278,6 +313,23 @@ const AdminDashboard = () => {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['admin-news-articles'] });
             state.setIsNewsFormOpen(false);
+          }}
+        />
+      )}
+
+      {isTeamFormOpen && (
+        <TeamMemberForm
+          member={editingTeamMember}
+          onClose={() => {
+            setIsTeamFormOpen(false);
+            setEditingTeamMember(null);
+          }}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-team-members'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-team-members-count'] });
+            queryClient.invalidateQueries({ queryKey: ['team-members'] });
+            setIsTeamFormOpen(false);
+            setEditingTeamMember(null);
           }}
         />
       )}

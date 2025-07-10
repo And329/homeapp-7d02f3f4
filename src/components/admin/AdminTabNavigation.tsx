@@ -3,12 +3,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AdminTabNavigationProps {
-  activeTab: 'properties' | 'requests' | 'content' | 'chats' | 'contact';
-  setActiveTab: (tab: 'properties' | 'requests' | 'content' | 'chats' | 'contact') => void;
+  activeTab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team';
+  setActiveTab: (tab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team') => void;
   propertiesCount: number;
   pendingRequestsCount: number;
   openChatsCount: number;
   contactInquiriesCount: number;
+  teamMembersCount?: number;
 }
 
 const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
@@ -18,6 +19,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
   pendingRequestsCount,
   openChatsCount,
   contactInquiriesCount,
+  teamMembersCount = 0,
 }) => {
   const { t } = useTranslation();
 
@@ -74,6 +76,16 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
             }`}
           >
             {t('admin.contactInquiries')} ({contactInquiriesCount} new)
+          </button>
+          <button
+            onClick={() => setActiveTab('team')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'team'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Team Management ({teamMembersCount})
           </button>
         </nav>
       </div>

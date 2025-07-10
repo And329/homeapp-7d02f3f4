@@ -16,7 +16,7 @@ export const useAdminState = () => {
   const [showMap, setShowMap] = useState(false);
   
   // Navigation state - updated to include contact tab
-  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats' | 'contact'>('properties');
+  const [activeTab, setActiveTab] = useState<'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team'>('properties');
   
   // Chat states
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);

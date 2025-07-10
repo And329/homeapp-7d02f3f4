@@ -601,6 +601,51 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          linkedin: string | null
+          name: string
+          phone: string | null
+          position: string
+          profile_picture: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          linkedin?: string | null
+          name: string
+          phone?: string | null
+          position: string
+          profile_picture?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          linkedin?: string | null
+          name?: string
+          phone?: string | null
+          position?: string
+          profile_picture?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_favorites: {
         Row: {
           created_at: string
