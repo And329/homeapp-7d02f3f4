@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, User, MessageCircle } from 'lucide-react';
+import FileAttachment from '@/components/FileAttachment';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,7 +162,23 @@ const AdminChatsTab: React.FC = () => {
                                 : 'bg-white text-gray-900 border'
                             }`}
                           >
-                            <p className="text-sm">{message.content}</p>
+                            {/* Display file attachment if present */}
+                            {message.file_url && message.file_name ? (
+                              <div className="mb-2">
+                                <FileAttachment
+                                  fileName={message.file_name}
+                                  fileUrl={message.file_url}
+                                  fileType={message.file_type || 'application/octet-stream'}
+                                  fileSize={message.file_size || 0}
+                                />
+                              </div>
+                            ) : null}
+                            
+                            {/* Always display content if it exists */}
+                            {message.content && (
+                              <p className="text-sm">{message.content}</p>
+                            )}
+                            
                             <p className={`text-xs mt-1 ${
                               message.sender_id === profile?.id ? 'text-blue-100' : 'text-gray-500'
                             }`}>

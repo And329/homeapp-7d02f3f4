@@ -95,7 +95,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
               <img
                 src={imageUrl}
                 alt={fileName}
-                className="max-w-full max-h-[85vh] object-contain mx-auto"
+                className="w-auto h-auto max-w-full max-h-[85vh] object-contain"
               />
               <div className="absolute top-4 right-4 space-x-2">
                 <Button
