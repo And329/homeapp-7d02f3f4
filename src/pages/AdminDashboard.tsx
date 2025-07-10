@@ -83,7 +83,7 @@ const AdminDashboard = () => {
 
   // Transform database properties to AdminProperty format
   const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
-    id: parseInt(property.id) || 0,
+    id: parseInt(property.id),
     title: property.title || 'Untitled Property',
     price: property.price || 0,
     location: property.location || 'Unknown Location',
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
 
   const handleEdit = (property: AdminProperty) => {
     // Find the original database property to get all fields
-    const originalProperty = rawProperties.find(p => parseInt(p.id) === property.id);
+    const originalProperty = rawProperties.find(p => p.id === property.id.toString());
     
     if (!originalProperty) {
       console.error('Original property not found for ID:', property.id);

@@ -121,8 +121,8 @@ const ContactEditDialog: React.FC<ContactEditDialogProps> = ({ propertyId, owner
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-white/90 backdrop-blur-sm">
-          <User className="h-4 w-4" />
+        <Button variant="outline" size="sm" className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0">
+          <User className="h-3 w-3" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -196,7 +196,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   });
 
   const getOwnerIdForProperty = (propertyId: number) => {
-    const property = propertiesWithOwners?.find(p => parseInt(p.id) === propertyId);
+    const property = propertiesWithOwners?.find(p => p.id === propertyId.toString());
     return property?.owner_id || null;
   };
 
@@ -244,7 +244,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
           <p className="mt-4 text-gray-600">Loading properties...</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => {
             const transformedProperty: Property = {
               id: property.id.toString(),
@@ -276,8 +276,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
 
             return (
               <div key={property.id} className="relative">
-                <PropertyCard property={transformedProperty} />
-                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                <div className="transform scale-90 origin-top-left">
+                  <PropertyCard property={transformedProperty} />
+                </div>
+                <div className="absolute top-3 right-3 z-10 flex gap-1">
                   <ContactEditDialog 
                     propertyId={property.id} 
                     ownerId={ownerId}
@@ -286,17 +288,17 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onEditProperty(property)}
-                    className="bg-white/90 backdrop-blur-sm"
+                    className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onDeleteProperty(property.id)}
-                    className="text-red-600 hover:text-red-800 bg-white/90 backdrop-blur-sm"
+                    className="text-red-600 hover:text-red-800 bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
