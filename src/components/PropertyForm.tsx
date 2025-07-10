@@ -4,8 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
-import PropertyImageUpload from '@/components/PropertyImageUpload';
-import PropertyVideoUpload from '@/components/PropertyVideoUpload';
+import PropertyMediaUpload from '@/components/PropertyMediaUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
 import QRCodeUpload from '@/components/QRCodeUpload';
@@ -500,15 +499,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
             />
           </div>
 
-          <PropertyImageUpload
-            images={formData.images}
-            onImagesChange={handleImagesChange}
-          />
-
-          <PropertyVideoUpload
-            videos={formData.videos}
-            onVideosChange={handleVideosChange}
-          />
+          {/* Media Section */}
+          <div className="md:col-span-2">
+            <PropertyMediaUpload
+              images={formData.images}
+              videos={formData.videos}
+              onImagesChange={handleImagesChange}
+              onVideosChange={handleVideosChange}
+            />
+          </div>
 
           <QRCodeUpload
             qrCode={formData.qr_code}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play, Edit } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play, Edit, Image, Video } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -182,80 +182,104 @@ const PropertyDetails = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Property Images */}
+        {/* Property Media Gallery */}
         <div className="mb-8">
-          <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4 bg-muted">
-            <img
-              src={property.images[selectedImageIndex]}
-              alt={property.title}
-              className="w-full h-full object-cover"
-            />
-            {property.images.length > 1 && (
-              <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
-                {selectedImageIndex + 1} of {property.images.length}
-              </div>
-            )}
-          </div>
-          
-          {property.images.length > 1 && (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-              {property.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square rounded-md overflow-hidden border-2 transition-colors ${
-                    selectedImageIndex === index 
-                      ? 'border-primary' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Property ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Videos Section */}
-        {property.videos && property.videos.length > 0 && (
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg">
-                <Play className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-foreground">Property Videos</h2>
-                <p className="text-muted-foreground text-sm">Explore the property in detail</p>
-              </div>
-              <Badge variant="secondary" className="ml-auto px-3 py-1 text-xs font-semibold">
-                {property.videos.length} {property.videos.length === 1 ? 'Video' : 'Videos'}
-              </Badge>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {property.videos.map((video, index) => (
-                <div key={index} className="group relative">
-                  <div className="aspect-video rounded-2xl overflow-hidden shadow-lg border border-border bg-card">
+          {/* Combined Media */}
+          {((property.images && property.images.length > 0) || (property.videos && property.videos.length > 0)) && (
+            <div>
+              {/* Main Display */}
+              <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4 bg-muted">
+                {property.images && property.images.length > 0 && selectedImageIndex < property.images.length ? (
+                  <>
+                    <img
+                      src={property.images[selectedImageIndex]}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
+                      <Image className="h-4 w-4" />
+                      Photo {selectedImageIndex + 1} of {(property.images?.length || 0) + (property.videos?.length || 0)}
+                    </div>
+                  </>
+                ) : property.videos && property.videos.length > 0 && (selectedImageIndex >= (property.images?.length || 0)) ? (
+                  <>
                     <video
                       controls
-                      className="w-full h-full"
-                      src={video}
+                      className="w-full h-full object-cover"
+                      src={property.videos[selectedImageIndex - (property.images?.length || 0)]}
                       preload="metadata"
                     >
                       Your browser does not support the video tag.
                     </video>
-                  </div>
-                  <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold">
-                    Video {index + 1}
-                  </div>
+                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
+                      <Play className="h-4 w-4" />
+                      Video {selectedImageIndex - (property.images?.length || 0) + 1} of {(property.images?.length || 0) + (property.videos?.length || 0)}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+              
+              {/* Media Thumbnails */}
+              {((property.images?.length || 0) + (property.videos?.length || 0)) > 1 && (
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  {/* Image Thumbnails */}
+                  {property.images?.map((image, index) => (
+                    <button
+                      key={`image-${index}`}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`aspect-square rounded-md overflow-hidden border-2 transition-colors relative ${
+                        selectedImageIndex === index 
+                          ? 'border-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Property ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-1 right-1">
+                        <Badge variant="secondary" className="text-xs p-1">
+                          <Image className="h-2 w-2" />
+                        </Badge>
+                      </div>
+                    </button>
+                  ))}
+                  
+                  {/* Video Thumbnails */}
+                  {property.videos?.map((video, index) => {
+                    const videoIndex = (property.images?.length || 0) + index;
+                    return (
+                      <button
+                        key={`video-${index}`}
+                        onClick={() => setSelectedImageIndex(videoIndex)}
+                        className={`aspect-square rounded-md overflow-hidden border-2 transition-colors relative ${
+                          selectedImageIndex === videoIndex 
+                            ? 'border-primary' 
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <video
+                          src={video}
+                          className="w-full h-full object-cover"
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <Play className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="absolute top-1 right-1">
+                          <Badge variant="secondary" className="text-xs p-1">
+                            <Video className="h-2 w-2" />
+                          </Badge>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
