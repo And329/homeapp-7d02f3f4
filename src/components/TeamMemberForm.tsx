@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import TeamPhotoUpload from '@/components/TeamPhotoUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember, CreateTeamMemberData, UpdateTeamMemberData } from '@/types/teamMember';
 import { useToast } from '@/hooks/use-toast';
@@ -240,12 +241,11 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="profile_picture">Profile Picture URL</Label>
-              <Input
-                id="profile_picture"
-                value={formData.profile_picture}
-                onChange={(e) => handleInputChange('profile_picture', e.target.value)}
-                placeholder="https://example.com/image.jpg"
+              <Label>Profile Picture</Label>
+              <TeamPhotoUpload
+                currentPhotoUrl={formData.profile_picture}
+                onPhotoChange={(url) => handleInputChange('profile_picture', url)}
+                memberName={formData.name}
               />
             </div>
 

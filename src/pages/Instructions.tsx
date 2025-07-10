@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserPlus, Search, Building2, MessageCircle, Star, Shield, CreditCard, FileText } from 'lucide-react';
+import { UserPlus, Search, Building2, MessageCircle, Star, Shield, Users, FileText, Bell, Map } from 'lucide-react';
 
 const Instructions = () => {
   const { t } = useTranslation();
@@ -15,19 +15,19 @@ const Instructions = () => {
       icon: UserPlus,
       content: [
         "Create your free HomeApp account by clicking 'Sign Up'",
-        "Complete your profile with your preferences and requirements",
+        "Complete your profile with your contact information",
         "Verify your email address to access all features",
-        "Set up your notification preferences"
+        "Explore the platform and set up your preferences"
       ]
     },
     {
       title: t('instructions.searchProperties'),
       icon: Search,
       content: [
-        "Use our advanced search filters to find properties",
-        "Filter by location, price range, property type, and amenities",
-        "Save your favorite properties to your wishlist",
-        "Set up search alerts to get notified of new listings"
+        "Browse all properties or use advanced search filters",
+        "Filter by emirate, property type, bedrooms, and price range",
+        "View properties on map or in grid layout",
+        "Save your favorite properties for later viewing"
       ]
     },
     {
@@ -35,9 +35,10 @@ const Instructions = () => {
       icon: Building2,
       content: [
         "Click 'List Property' in the navigation menu",
-        "Fill out the detailed property information form",
-        "Upload high-quality photos and videos",
-        "Submit for review - our team will approve within 24 hours"
+        "Fill out the comprehensive property information form",
+        "Upload high-quality photos, videos, and documents",
+        "Submit for admin review - properties approved within 24 hours",
+        "Monitor your property status in your profile"
       ]
     },
     {
@@ -45,9 +46,9 @@ const Instructions = () => {
       icon: MessageCircle,
       content: [
         "Use the contact form for general inquiries",
-        "Access live chat support for immediate assistance",
-        "Check our FAQ section for common questions",
-        "Schedule a call with our property experts"
+        "Contact property owners directly through property listings",
+        "Get help from our expert team members",
+        "Access our comprehensive information and news sections"
       ]
     }
   ];
@@ -61,17 +62,27 @@ const Instructions = () => {
     {
       icon: Shield,
       title: "Verified Listings",
-      description: "All properties are verified by our team to ensure accuracy and authenticity."
+      description: "All properties are reviewed and verified by our admin team for accuracy."
     },
     {
-      icon: CreditCard,
-      title: "Secure Transactions",
-      description: "We use industry-standard security measures to protect your information."
+      icon: Map,
+      title: "Interactive Maps",
+      description: "View properties on interactive maps with precise location details."
+    },
+    {
+      icon: Users,
+      title: "Expert Team",
+      description: "Connect with our professional real estate team for personalized assistance."
+    },
+    {
+      icon: Bell,
+      title: "Real-time Updates",
+      description: "Stay informed with the latest property news and market insights."
     },
     {
       icon: FileText,
-      title: "Document Management",
-      description: "Upload and manage all your property documents in one secure place."
+      title: "Comprehensive Information",
+      description: "Access detailed property information, photos, videos, and documentation."
     }
   ];
 
@@ -127,7 +138,7 @@ const Instructions = () => {
             <CardTitle>Platform Features</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (

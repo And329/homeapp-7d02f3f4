@@ -41,22 +41,22 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><Link to="/" className="text-gray-300 hover:text-primary transition-colors">Home</Link></li>
               <li><Link to="/properties" className="text-gray-300 hover:text-primary transition-colors">Properties</Link></li>
-              <li><Link to="/properties/rent" className="text-gray-300 hover:text-primary transition-colors">For Rent</Link></li>
-              <li><Link to="/properties/sale" className="text-gray-300 hover:text-primary transition-colors">For Sale</Link></li>
+              <li><Link to="/team" className="text-gray-300 hover:text-primary transition-colors">Our Team</Link></li>
               <li><Link to="/blog" className="text-gray-300 hover:text-primary transition-colors">Blog</Link></li>
               <li><Link to="/news" className="text-gray-300 hover:text-primary transition-colors">News</Link></li>
+              <li><Link to="/contact" className="text-gray-300 hover:text-primary transition-colors">Contact</Link></li>
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Resources */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Services</h3>
+            <h3 className="text-lg font-semibold">Resources</h3>
             <ul className="space-y-2">
-              <li><span className="text-gray-300">Property Management</span></li>
-              <li><span className="text-gray-300">Real Estate Consultation</span></li>
-              <li><span className="text-gray-300">Investment Advisory</span></li>
-              <li><span className="text-gray-300">Property Valuation</span></li>
-              <li><span className="text-gray-300">Legal Support</span></li>
+              <li><Link to="/information" className="text-gray-300 hover:text-primary transition-colors">Information</Link></li>
+              <li><Link to="/instructions" className="text-gray-300 hover:text-primary transition-colors">How to Use</Link></li>
+              <li><Link to="/list-property" className="text-gray-300 hover:text-primary transition-colors">List Property</Link></li>
+              <li><span className="text-gray-300">Market Reports</span></li>
+              <li><span className="text-gray-300">Investment Guide</span></li>
             </ul>
           </div>
 
