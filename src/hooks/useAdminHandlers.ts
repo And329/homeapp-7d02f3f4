@@ -203,11 +203,17 @@ export const useAdminHandlers = (
           longitude: updatedData.longitude,
           bedrooms: updatedData.bedrooms,
           bathrooms: updatedData.bathrooms,
+          area: updatedData.area,
+          property_type: updatedData.property_type,
           type: updatedData.type,
           description: updatedData.description,
           amenities: updatedData.amenities,
           images: updatedData.images,
+          videos: updatedData.videos,
           qr_code: updatedData.qr_code,
+          contact_name: updatedData.contact_name,
+          contact_email: updatedData.contact_email,
+          contact_phone: updatedData.contact_phone,
         })
         .eq('id', requestId);
 

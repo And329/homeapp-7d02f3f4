@@ -104,11 +104,15 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                 <p><strong>Price:</strong> AED {request.price?.toLocaleString()}</p>
                 <p><strong>Location:</strong> {request.location}</p>
                 <p><strong>Type:</strong> {request.type}</p>
+                <p><strong>Property Type:</strong> {request.property_type}</p>
+                {request.area && <p><strong>Area:</strong> {request.area} sq ft</p>}
               </div>
               <div>
                 <p><strong>Bedrooms:</strong> {request.bedrooms}</p>
                 <p><strong>Bathrooms:</strong> {request.bathrooms}</p>
-                <p><strong>Contact:</strong> {request.contact_phone}</p>
+                <p><strong>Contact Name:</strong> {request.contact_name}</p>
+                <p><strong>Contact Email:</strong> {request.contact_email}</p>
+                {request.contact_phone && <p><strong>Contact Phone:</strong> {request.contact_phone}</p>}
               </div>
             </div>
             
@@ -116,6 +120,40 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
               <div className="mb-4">
                 <p><strong>Description:</strong></p>
                 <p className="text-gray-700 mt-1">{request.description}</p>
+              </div>
+            )}
+
+            {/* Display Images */}
+            {request.images && request.images.length > 0 && (
+              <div className="mb-4">
+                <p className="font-medium mb-2">Images:</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {request.images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Property ${index + 1}`}
+                      className="w-full h-20 object-cover rounded border"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Display Videos */}
+            {request.videos && request.videos.length > 0 && (
+              <div className="mb-4">
+                <p className="font-medium mb-2">Videos:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {request.videos.map((video, index) => (
+                    <video
+                      key={index}
+                      src={video}
+                      controls
+                      className="w-full h-32 rounded border"
+                    />
+                  ))}
+                </div>
               </div>
             )}
 

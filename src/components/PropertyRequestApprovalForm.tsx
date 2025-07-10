@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import QRCodeUpload from '@/components/QRCodeUpload';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -28,11 +29,17 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     longitude: request.longitude || null,
     bedrooms: request.bedrooms?.toString() || '',
     bathrooms: request.bathrooms?.toString() || '',
+    area: request.area?.toString() || '',
+    property_type: request.property_type || 'Apartment',
     type: request.type || 'rent',
     description: request.description || '',
     amenities: request.amenities || [],
     images: request.images || [],
+    videos: request.videos || [],
     qr_code: request.qr_code || '',
+    contact_name: request.contact_name || '',
+    contact_email: request.contact_email || '',
+    contact_phone: request.contact_phone || '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -60,11 +67,17 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         longitude: formData.longitude,
         bedrooms: parseInt(formData.bedrooms),
         bathrooms: parseInt(formData.bathrooms),
+        area: formData.area ? parseInt(formData.area) : null,
+        property_type: formData.property_type,
         type: formData.type,
         description: formData.description,
         amenities: formData.amenities,
         images: formData.images,
+        videos: formData.videos,
         qr_code: formData.qr_code,
+        contact_name: formData.contact_name,
+        contact_email: formData.contact_email,
+        contact_phone: formData.contact_phone,
       };
 
       console.log('Submitting approval with data:', updatedData);
@@ -102,6 +115,10 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
 
   const handleQRCodeChange = (qrCode: string) => {
     setFormData(prev => ({ ...prev, qr_code: qrCode }));
+  };
+
+  const handleVideosChange = (videos: string[]) => {
+    setFormData(prev => ({ ...prev, videos }));
   };
 
   return (
@@ -176,6 +193,28 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Property Type *
+              </label>
+              <select
+                name="property_type"
+                value={formData.property_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              >
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Townhouse">Townhouse</option>
+                <option value="Penthouse">Penthouse</option>
+                <option value="Studio">Studio</option>
+                <option value="Office">Office</option>
+                <option value="Shop">Shop</option>
+                <option value="Warehouse">Warehouse</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Bedrooms *
               </label>
               <input
@@ -204,6 +243,69 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
                 required
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Area (sq ft)
+              </label>
+              <input
+                type="number"
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Property area in square feet"
+              />
+            </div>
+          </div>
+
+          {/* Contact Information Section */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Name *
+                </label>
+                <input
+                  type="text"
+                  name="contact_name"
+                  value={formData.contact_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Email *
+                </label>
+                <input
+                  type="email"
+                  name="contact_email"
+                  value={formData.contact_email}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Contact Phone
+                </label>
+                <input
+                  type="tel"
+                  name="contact_phone"
+                  value={formData.contact_phone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="+971 XX XXX XXXX"
+                />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -223,6 +325,11 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
           <PropertyImageUpload
             images={formData.images}
             onImagesChange={handleImagesChange}
+          />
+
+          <PropertyVideoUpload
+            videos={formData.videos}
+            onVideosChange={handleVideosChange}
           />
 
           <QRCodeUpload
