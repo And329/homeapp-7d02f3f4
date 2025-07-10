@@ -3,8 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AdminTabNavigationProps {
-  activeTab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team';
-  setActiveTab: (tab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team') => void;
+  activeTab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team' | 'instructions';
+  setActiveTab: (tab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team' | 'instructions') => void;
   propertiesCount: number;
   pendingRequestsCount: number;
   openChatsCount: number;
@@ -86,6 +86,16 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
             }`}
           >
             Team Management ({teamMembersCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('instructions')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'instructions'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Инструкции
           </button>
         </nav>
       </div>

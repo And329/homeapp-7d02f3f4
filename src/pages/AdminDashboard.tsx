@@ -17,6 +17,7 @@ import AdminContentTab from '@/components/admin/AdminContentTab';
 import AdminChatsTab from '@/components/admin/AdminChatsTab';
 import AdminContactTab from '@/components/admin/AdminContactTab';
 import AdminTeamTab from '@/components/admin/AdminTeamTab';
+import AdminInstructionsTab from '@/components/admin/AdminInstructionsTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
@@ -282,6 +283,10 @@ const AdminDashboard = () => {
               setIsTeamFormOpen(true);
             }}
           />
+        )}
+
+        {state.activeTab === 'instructions' && (
+          <AdminInstructionsTab />
         )}
       </div>
 
