@@ -260,7 +260,15 @@ const AdminDashboard = () => {
         )}
 
         {state.activeTab === 'contact' && (
-          <AdminContactTab />
+          <AdminContactTab 
+            contactInquiries={contactInquiries.map(inquiry => ({
+              ...inquiry,
+              status: (inquiry.status && ['new', 'in_progress', 'resolved'].includes(inquiry.status)) 
+                ? inquiry.status as 'new' | 'in_progress' | 'resolved'
+                : 'new' as 'new' | 'in_progress' | 'resolved'
+            }))}
+            isLoading={contactInquiriesLoading}
+          />
         )}
 
         {state.activeTab === 'team' && (

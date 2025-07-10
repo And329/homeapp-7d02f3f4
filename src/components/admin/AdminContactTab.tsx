@@ -24,26 +24,18 @@ interface ContactInquiry {
   updated_at: string;
 }
 
-const AdminContactTab: React.FC = () => {
+interface AdminContactTabProps {
+  contactInquiries: ContactInquiry[];
+  isLoading: boolean;
+}
+
+const AdminContactTab: React.FC<AdminContactTabProps> = ({ contactInquiries, isLoading }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingInquiry, setEditingInquiry] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState<'new' | 'in_progress' | 'resolved'>('new');
-
-  const { data: inquiries = [], isLoading } = useQuery({
-    queryKey: ['contact-inquiries'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contact_inquiries')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as ContactInquiry[];
-    },
-  });
 
   const updateInquiryMutation = useMutation({
     mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes: string }) => {
@@ -112,10 +104,10 @@ const AdminContactTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{t('admin.contactInquiries')} ({inquiries.length})</h2>
+        <h2 className="text-2xl font-bold">{t('admin.contactInquiries')} ({contactInquiries.length})</h2>
       </div>
 
-      {inquiries.length === 0 ? (
+      {contactInquiries.length === 0 ? (
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -126,7 +118,7 @@ const AdminContactTab: React.FC = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {inquiries.map((inquiry) => (
+          {contactInquiries.map((inquiry) => (
             <Card key={inquiry.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
