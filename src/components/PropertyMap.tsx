@@ -294,42 +294,55 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Add individual property layers with enhanced styling
-          // Shadow layer for depth effect
-          newMap.addLayer({
-            id: 'property-shadow',
-            type: 'circle',
-            source: 'properties',
-            filter: ['!', ['has', 'point_count']],
-            paint: {
-              'circle-color': 'rgba(0, 0, 0, 0.15)',
-              'circle-radius': 22,
-              'circle-blur': 1.5,
-              'circle-translate': [1, 1]
-            }
-          });
+          // COMPLETELY NEW PROPERTY MARKER DESIGN
+          // Modern floating badge-style property markers
 
-          // Outer glow layer
+          // Base shadow for floating effect
           newMap.addLayer({
-            id: 'property-glow',
+            id: 'property-base-shadow',
             type: 'circle',
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             paint: {
-              'circle-color': [
-                'case',
-                ['==', ['get', 'type'], 'rent'],
-                'rgba(59, 130, 246, 0.3)',
-                'rgba(16, 185, 129, 0.3)'
+              'circle-color': 'rgba(0, 0, 0, 0.25)',
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 18,
+                15, 25,
+                20, 32
               ],
-              'circle-radius': 24,
-              'circle-blur': 2
+              'circle-blur': 3,
+              'circle-translate': [3, 5]
             }
           });
 
-          // Main property point
+          // Main property card background (rounded rectangle effect using large circle)
           newMap.addLayer({
-            id: 'unclustered-point',
+            id: 'property-card-bg',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': '#ffffff',
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 22,
+                15, 30,
+                20, 38
+              ],
+              'circle-stroke-width': 1,
+              'circle-stroke-color': '#e5e7eb',
+              'circle-opacity': 0.98
+            }
+          });
+
+          // Property type color indicator (left border effect)
+          newMap.addLayer({
+            id: 'property-type-border',
             type: 'circle',
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
@@ -340,43 +353,157 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 '#3b82f6',
                 '#10b981'
               ],
-              'circle-radius': 18,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-opacity': 0.9,
-              'circle-opacity': 0.95
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 19,
+                15, 26,
+                20, 33
+              ],
+              'circle-opacity': 0.9,
+              'circle-translate': [-8, 0]
             }
           });
 
-          // Inner highlight for 3D effect
+          // Property icon background (house/building icon area)
           newMap.addLayer({
-            id: 'property-highlight',
+            id: 'property-icon-bg',
             type: 'circle',
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             paint: {
-              'circle-color': 'rgba(255, 255, 255, 0.3)',
-              'circle-radius': 14,
-              'circle-translate': [-1, -1]
+              'circle-color': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                '#dbeafe',
+                '#d1fae5'
+              ],
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 8,
+                15, 11,
+                20, 14
+              ],
+              'circle-translate': [-8, -5]
             }
           });
 
-          // Price label
+          // Property type icon (R for rent, S for sale)
           newMap.addLayer({
-            id: 'unclustered-point-label',
+            id: 'property-icon',
+            type: 'symbol',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            layout: {
+              'text-field': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                '🏠',
+                '🏢'
+              ],
+              'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 10,
+                15, 13,
+                20, 16
+              ],
+              'text-anchor': 'center',
+              'text-offset': [-0.8, -0.3],
+              'text-allow-overlap': true
+            },
+            paint: {
+              'text-opacity': 0.8
+            }
+          });
+
+          // Price text (main text)
+          newMap.addLayer({
+            id: 'property-price-main',
             type: 'symbol',
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             layout: {
               'text-field': ['get', 'priceText'],
               'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
-              'text-size': 12,
-              'text-anchor': 'center'
+              'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 10,
+                15, 12,
+                20, 14
+              ],
+              'text-anchor': 'center',
+              'text-offset': [0.3, -0.2],
+              'text-allow-overlap': true
+            },
+            paint: {
+              'text-color': '#1f2937',
+              'text-halo-color': 'rgba(255, 255, 255, 0.8)',
+              'text-halo-width': 1
+            }
+          });
+
+          // Type indicator badge
+          newMap.addLayer({
+            id: 'property-type-badge',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                '#3b82f6',
+                '#10b981'
+              ],
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 6,
+                15, 8,
+                20, 10
+              ],
+              'circle-translate': [8, 8]
+            }
+          });
+
+          // Type text on badge
+          newMap.addLayer({
+            id: 'property-type-text',
+            type: 'symbol',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            layout: {
+              'text-field': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                'R',
+                'S'
+              ],
+              'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+              'text-size': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 7,
+                15, 9,
+                20, 11
+              ],
+              'text-anchor': 'center',
+              'text-offset': [0.8, 0.5],
+              'text-allow-overlap': true
             },
             paint: {
               'text-color': '#ffffff',
-              'text-halo-color': 'rgba(0, 0, 0, 0.4)',
-              'text-halo-width': 1.5
+              'text-halo-color': 'rgba(0, 0, 0, 0.3)',
+              'text-halo-width': 0.5
             }
           });
 
@@ -389,8 +516,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             anchor: 'bottom'
           });
 
-          // Click event for individual properties
-          newMap.on('click', 'unclustered-point', (e) => {
+          // Click event for individual properties - update to use new layer names
+          newMap.on('click', 'property-card-bg', (e) => {
             const coordinates = (e.features![0].geometry as any).coordinates.slice() as [number, number];
             const properties = e.features![0].properties;
 
@@ -418,19 +545,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 viewDetailsBtn.addEventListener('mouseenter', () => {
                   viewDetailsBtn.style.transform = 'translateY(-2px)';
                   viewDetailsBtn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
-                  const shimmer = viewDetailsBtn.querySelector('div') as HTMLElement;
-                  if (shimmer) {
-                    shimmer.style.left = '100%';
-                  }
                 });
 
                 viewDetailsBtn.addEventListener('mouseleave', () => {
                   viewDetailsBtn.style.transform = 'translateY(0)';
-                  viewDetailsBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                  const shimmer = viewDetailsBtn.querySelector('div') as HTMLElement;
-                  if (shimmer) {
-                    shimmer.style.left = '-100%';
-                  }
+                  viewDetailsBtn.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                 });
               }
             }, 100);
@@ -453,8 +572,8 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             });
           });
 
-          // Hover effects
-          ['clusters', 'unclustered-point'].forEach(layer => {
+          // Hover effects - update to use new layer names
+          ['clusters', 'property-card-bg'].forEach(layer => {
             newMap.on('mouseenter', layer, () => {
               newMap.getCanvas().style.cursor = 'pointer';
             });
