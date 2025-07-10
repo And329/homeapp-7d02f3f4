@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Target, Eye, CheckCircle } from 'lucide-react';
+import { Building2, Target, Eye, CheckCircle, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail } from 'lucide-react';
 
 const Information = () => {
   const { t } = useTranslation();
@@ -65,7 +65,7 @@ const Information = () => {
         </div>
 
         {/* Services */}
-        <Card>
+        <Card className="mb-12">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Building2 className="h-6 w-6 text-primary" />
@@ -80,6 +80,87 @@ const Information = () => {
                   <span className="text-gray-700">{service}</span>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Social Media Links */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Connect With Us</CardTitle>
+            <p className="text-center text-muted-foreground">Follow us on social media for the latest updates</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center items-center gap-6 flex-wrap">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-blue-100 group-hover:bg-blue-500 transition-colors duration-300">
+                  <Facebook className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Facebook</span>
+              </a>
+              
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-pink-100 group-hover:bg-gradient-to-r group-hover:from-purple-500 group-hover:to-pink-500 transition-all duration-300">
+                  <Instagram className="h-6 w-6 text-pink-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Instagram</span>
+              </a>
+              
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-sky-100 group-hover:bg-sky-500 transition-colors duration-300">
+                  <Twitter className="h-6 w-6 text-sky-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Twitter</span>
+              </a>
+              
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-blue-100 group-hover:bg-blue-700 transition-colors duration-300">
+                  <Linkedin className="h-6 w-6 text-blue-700 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">LinkedIn</span>
+              </a>
+              
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-red-100 group-hover:bg-red-600 transition-colors duration-300">
+                  <Youtube className="h-6 w-6 text-red-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">YouTube</span>
+              </a>
+              
+              <a
+                href="mailto:contact@example.com"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-gray-100 group-hover:bg-gray-600 transition-colors duration-300">
+                  <Mail className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Email</span>
+              </a>
             </div>
           </CardContent>
         </Card>
