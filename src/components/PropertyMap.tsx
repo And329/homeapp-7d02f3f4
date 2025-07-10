@@ -67,56 +67,45 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
       <div class="property-popup-content" style="
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: white;
-        border-radius: 12px;
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e5e7eb;
-        max-width: 280px;
-        width: 280px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border: none;
+        max-width: 220px;
+        width: 220px;
         position: relative;
       ">
         <!-- Header with type badge -->
         <div style="
           background: linear-gradient(135deg, ${typeColor}, ${property.type === 'rent' ? '#60a5fa' : '#34d399'});
-          padding: 16px;
+          padding: 12px;
           position: relative;
           overflow: hidden;
         ">
           <div style="
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-          "></div>
-          
-          <div style="
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             display: inline-block;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
           ">
             For ${property.type}
           </div>
         </div>
 
         <!-- Content -->
-        <div style="padding: 20px;">
+        <div style="padding: 14px;">
           <h3 style="
-            margin: 0 0 12px 0; 
-            font-size: 16px; 
+            margin: 0 0 8px 0; 
+            font-size: 14px; 
             font-weight: 700; 
             color: #111827; 
-            line-height: 1.4;
+            line-height: 1.3;
             letter-spacing: -0.02em;
           ">
             ${property.title}
@@ -125,37 +114,36 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           <div style="
             display: flex; 
             align-items: center; 
-            margin-bottom: 16px; 
+            margin-bottom: 12px; 
             color: #6b7280; 
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 500;
           ">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px; flex-shrink: 0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; flex-shrink: 0;">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
-            <span style="line-height: 1.4;">${property.location}</span>
+            <span style="line-height: 1.3;">${property.location}</span>
           </div>
           
           <!-- Price Section -->
           <div style="
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
           ">
             <div style="
-              font-size: 20px; 
+              font-size: 16px; 
               font-weight: 800; 
               color: ${typeColor};
               line-height: 1.2;
-              margin-bottom: 4px;
+              margin-bottom: 2px;
             ">
               AED ${priceFormatted}
             </div>
             ${property.type === 'rent' ? `
               <div style="
-                font-size: 12px; 
+                font-size: 10px; 
                 color: #64748b; 
                 font-weight: 500;
               ">
@@ -170,30 +158,22 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             data-property-id="${property.id}"
             style="
               width: 100%;
-              padding: 12px 16px;
+              padding: 8px 12px;
               background: linear-gradient(135deg, ${typeColor}, ${property.type === 'rent' ? '#60a5fa' : '#34d399'});
               color: white;
               border: none;
-              border-radius: 8px;
+              outline: none;
+              border-radius: 6px;
               font-weight: 600;
-              font-size: 14px;
+              font-size: 12px;
               cursor: pointer;
-              transition: all 0.3s ease;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              transition: all 0.2s ease;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
               position: relative;
               overflow: hidden;
             "
           >
             <span style="position: relative; z-index: 2;">View Details</span>
-            <div style="
-              position: absolute;
-              top: 0;
-              left: -100%;
-              width: 100%;
-              height: 100%;
-              background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-              transition: left 0.5s ease;
-            "></div>
           </button>
         </div>
       </div>
@@ -285,13 +265,13 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               'circle-radius': [
                 'step',
                 ['get', 'point_count'],
-                25,
+                20,
                 10,
-                35,
+                28,
                 30,
-                45
+                35
               ],
-              'circle-stroke-width': 3,
+              'circle-stroke-width': 2,
               'circle-stroke-color': '#ffffff',
               'circle-opacity': 0.9
             }
@@ -305,7 +285,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             layout: {
               'text-field': '{point_count_abbreviated}',
               'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
-              'text-size': 14
+              'text-size': 12
             },
             paint: {
               'text-color': '#ffffff',
@@ -322,10 +302,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             paint: {
-              'circle-color': 'rgba(0, 0, 0, 0.2)',
-              'circle-radius': 32,
-              'circle-blur': 2,
-              'circle-translate': [2, 2]
+              'circle-color': 'rgba(0, 0, 0, 0.15)',
+              'circle-radius': 22,
+              'circle-blur': 1.5,
+              'circle-translate': [1, 1]
             }
           });
 
@@ -339,11 +319,11 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               'circle-color': [
                 'case',
                 ['==', ['get', 'type'], 'rent'],
-                'rgba(59, 130, 246, 0.4)',
-                'rgba(16, 185, 129, 0.4)'
+                'rgba(59, 130, 246, 0.3)',
+                'rgba(16, 185, 129, 0.3)'
               ],
-              'circle-radius': 36,
-              'circle-blur': 3
+              'circle-radius': 24,
+              'circle-blur': 2
             }
           });
 
@@ -360,10 +340,10 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 '#3b82f6',
                 '#10b981'
               ],
-              'circle-radius': 26,
-              'circle-stroke-width': 4,
+              'circle-radius': 18,
+              'circle-stroke-width': 2,
               'circle-stroke-color': '#ffffff',
-              'circle-stroke-opacity': 0.95,
+              'circle-stroke-opacity': 0.9,
               'circle-opacity': 0.95
             }
           });
@@ -375,9 +355,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             source: 'properties',
             filter: ['!', ['has', 'point_count']],
             paint: {
-              'circle-color': 'rgba(255, 255, 255, 0.4)',
-              'circle-radius': 20,
-              'circle-translate': [-2, -2]
+              'circle-color': 'rgba(255, 255, 255, 0.3)',
+              'circle-radius': 14,
+              'circle-translate': [-1, -1]
             }
           });
 
