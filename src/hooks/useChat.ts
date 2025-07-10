@@ -148,10 +148,13 @@ export const useChat = () => {
         },
         (payload) => {
           const newMessage = payload.new as Message;
-          queryClient.setQueryData(['messages', activeConversationId], (old: Message[] = []) => [
-            ...old,
-            newMessage
-          ]);
+          // Don't add the message if it's from the current user (to avoid duplicates)
+          if (newMessage.sender_id !== user.id) {
+            queryClient.setQueryData(['messages', activeConversationId], (old: Message[] = []) => [
+              ...old,
+              newMessage
+            ]);
+          }
         }
       )
       .subscribe();

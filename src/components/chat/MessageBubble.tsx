@@ -43,7 +43,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               fileSize={message.file_size || 0}
             />
           </div>
-        ) : (
+        ) : null}
+        
+        {/* Always display content if it exists */}
+        {message.content && (
           <div className="leading-relaxed break-words">{message.content}</div>
         )}
         
