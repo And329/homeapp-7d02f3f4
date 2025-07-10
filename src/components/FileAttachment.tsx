@@ -57,12 +57,24 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     }
   };
 
+  // Get the public URL for images
+  const getImageUrl = () => {
+    if (fileUrl.startsWith('http')) {
+      return fileUrl; // Already a full URL
+    }
+    // Get public URL from Supabase storage
+    const { data } = supabase.storage
+      .from('chat-attachments')
+      .getPublicUrl(fileUrl);
+    return data.publicUrl;
+  };
+
   // For images, display the image inline instead of just as an attachment
   if (fileType.startsWith('image/')) {
     return (
       <div className="max-w-xs">
         <img
-          src={fileUrl}
+          src={getImageUrl()}
           alt={fileName}
           className="max-w-full h-auto rounded-lg border"
           style={{ maxHeight: '200px' }}
