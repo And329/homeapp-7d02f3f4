@@ -78,7 +78,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">All Property Types</SelectItem>
                 <SelectItem value="Apartment">Apartment</SelectItem>
                 <SelectItem value="Villa">Villa</SelectItem>
                 <SelectItem value="Townhouse">Townhouse</SelectItem>

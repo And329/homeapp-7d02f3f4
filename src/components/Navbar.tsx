@@ -86,8 +86,6 @@ const Navbar = () => {
                   </Link>
                 </Button>
 
-                {/* Message Notifications */}
-                <MessageNotificationBadge />
 
                 {/* User Menu */}
                 <DropdownMenu>
