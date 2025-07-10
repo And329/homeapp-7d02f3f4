@@ -82,7 +82,7 @@ const Footer = () => {
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-300">
-            © 2024 HomeApp. All rights reserved. Real Estate License: RERA-12345
+            © 2025 HomeApp. All rights reserved. Real Estate License: RERA-12345
           </p>
         </div>
       </div>
