@@ -22,6 +22,11 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
         throw new Error('Request user not found');
       }
 
+      // Check if admin is trying to reply to their own request
+      if (profile.id === request.user_id) {
+        throw new Error('You cannot reply to your own property requests. The system does not support self-conversations. Please contact the requester directly using their contact information.');
+      }
+
       // Use the create_admin_conversation function
       const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
         p_admin_id: profile.id,
@@ -36,8 +41,8 @@ export const useAdminMutations = (profile: any, propertyRequests: PropertyReques
     onError: (error) => {
       console.error('Failed to create conversation:', error);
       toast({
-        title: "Error",
-        description: "Failed to create conversation. Please try again.",
+        title: "Cannot Send Reply",
+        description: error.message || "Failed to create conversation. Please try again.",
         variant: "destructive",
       });
     },
