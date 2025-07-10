@@ -152,7 +152,39 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             }
           });
 
-          // Add individual property layers
+          // Add shadow layer for depth effect
+          newMap.addLayer({
+            id: 'property-shadow',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': 'rgba(0, 0, 0, 0.2)',
+              'circle-radius': 28,
+              'circle-blur': 1.5,
+              'circle-translate': [2, 2]
+            }
+          });
+
+          // Add outer glow layer
+          newMap.addLayer({
+            id: 'property-glow',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': [
+                'case',
+                ['==', ['get', 'type'], 'rent'],
+                'rgba(59, 130, 246, 0.3)',
+                'rgba(16, 185, 129, 0.3)'
+              ],
+              'circle-radius': 32,
+              'circle-blur': 2
+            }
+          });
+
+          // Add main property point with gradient effect
           newMap.addLayer({
             id: 'unclustered-point',
             type: 'circle',
@@ -165,12 +197,28 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                 '#3b82f6',
                 '#10b981'
               ],
-              'circle-radius': 20,
+              'circle-radius': 24,
               'circle-stroke-width': 3,
-              'circle-stroke-color': '#ffffff'
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-opacity': 0.9,
+              'circle-opacity': 0.95
             }
           });
 
+          // Add inner highlight for 3D effect
+          newMap.addLayer({
+            id: 'property-highlight',
+            type: 'circle',
+            source: 'properties',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': 'rgba(255, 255, 255, 0.3)',
+              'circle-radius': 18,
+              'circle-translate': [-1, -1]
+            }
+          });
+
+          // Add price label with better styling
           newMap.addLayer({
             id: 'unclustered-point-label',
             type: 'symbol',
@@ -178,12 +226,14 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             filter: ['!', ['has', 'point_count']],
             layout: {
               'text-field': ['get', 'priceText'],
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
               'text-size': 11,
               'text-anchor': 'center'
             },
             paint: {
-              'text-color': '#ffffff'
+              'text-color': '#ffffff',
+              'text-halo-color': 'rgba(0, 0, 0, 0.3)',
+              'text-halo-width': 1
             }
           });
 
