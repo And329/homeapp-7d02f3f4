@@ -16,7 +16,7 @@ import { PropertyRequest } from '@/types/propertyRequest';
 import { Property } from '@/types/property';
 import PropertyCard from '@/components/PropertyCard';
 import FavoritesList from '@/components/FavoritesList';
-import MessagingInterface from '@/components/messaging/MessagingInterface';
+import { ChatInterface } from '@/components/chat/ChatInterface';
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -321,7 +321,7 @@ const UserProfile = () => {
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-6">
-            <MessagingInterface />
+            <ChatInterface />
           </TabsContent>
         </Tabs>
       </div>

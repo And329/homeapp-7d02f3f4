@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle } from 'lucide-react';
-import MessagingInterface from './MessagingInterface';
+import { ChatInterface } from '../chat/ChatInterface';
 
 const AdminChat: React.FC = () => {
   const { user, profile } = useAuth();
@@ -48,7 +48,7 @@ const AdminChat: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        <MessagingInterface />
+        <ChatInterface />
       </div>
     );
   }
@@ -71,7 +71,7 @@ const AdminChat: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      <MessagingInterface />
+      <ChatInterface />
     </div>
   );
 };
