@@ -21,6 +21,7 @@ import ListProperty from "./pages/ListProperty";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
+import { CookieConsent } from "@/components/CookieConsent";
 import './i18n';
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ function App() {
         <AuthProvider>
           <Toaster />
           <Sonner />
+          <CookieConsent />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

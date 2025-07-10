@@ -21,10 +21,19 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
   isSending,
   onSendMessage,
 }) => {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -51,7 +60,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
       <CardContent className="flex-1 flex flex-col min-h-0 p-0">
         {/* Messages area */}
         <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
+          <ScrollArea ref={scrollAreaRef} className="h-full">
             <div className="p-4">
               <MessageList
                 messages={messages}
