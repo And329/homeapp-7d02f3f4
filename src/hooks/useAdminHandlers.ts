@@ -156,8 +156,12 @@ export const useAdminHandlers = (
   };
 
   const handleEdit = (property: Property) => {
+    console.log('useAdminHandlers: handleEdit called with property:', property);
+    console.log('useAdminHandlers: Setting editingProperty to:', property);
     state.setEditingProperty(property);
+    console.log('useAdminHandlers: Setting isFormOpen to true');
     state.setIsFormOpen(true);
+    console.log('useAdminHandlers: Edit state updated');
   };
 
   const handleDelete = async (id: string) => {

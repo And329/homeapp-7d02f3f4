@@ -298,6 +298,8 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
+                      console.log('AdminPropertiesTab: Edit button clicked for property:', property);
+                      console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
                       onEditProperty(property);
                     }}
                     className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0"

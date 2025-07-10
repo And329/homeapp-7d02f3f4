@@ -125,8 +125,13 @@ const AdminDashboard = () => {
   );
 
   const handleEdit = (property: AdminProperty) => {
+    console.log('AdminDashboard: handleEdit called with property:', property);
+    console.log('AdminDashboard: Raw properties available:', rawProperties.length);
+    
     // Find the original database property to get all fields
     const originalProperty = rawProperties.find(p => p.id === property.id.toString());
+    
+    console.log('AdminDashboard: Found original property:', originalProperty);
     
     if (!originalProperty) {
       console.error('Original property not found for ID:', property.id);
@@ -161,7 +166,9 @@ const AdminDashboard = () => {
     };
 
     console.log('AdminDashboard: Setting property for edit:', propertyForEdit);
+    console.log('AdminDashboard: Before calling handlers.handleEdit');
     handlers.handleEdit(propertyForEdit);
+    console.log('AdminDashboard: After calling handlers.handleEdit');
   };
 
   const handleDelete = async (id: number) => {
@@ -272,18 +279,23 @@ const AdminDashboard = () => {
 
       {/* Modals */}
       {state.isFormOpen && (
-        <PropertyForm
-          property={state.editingProperty}
-          onClose={() => {
-            state.setIsFormOpen(false);
-            state.setEditingProperty(null);
-          }}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
-            state.setIsFormOpen(false);
-            state.setEditingProperty(null);
-          }}
-        />
+        <>
+          {console.log('AdminDashboard: Rendering PropertyForm with property:', state.editingProperty)}
+          <PropertyForm
+            property={state.editingProperty}
+            onClose={() => {
+              console.log('AdminDashboard: PropertyForm onClose called');
+              state.setIsFormOpen(false);
+              state.setEditingProperty(null);
+            }}
+            onSuccess={() => {
+              console.log('AdminDashboard: PropertyForm onSuccess called');
+              queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+              state.setIsFormOpen(false);
+              state.setEditingProperty(null);
+            }}
+          />
+        </>
       )}
 
       {state.isApprovalFormOpen && state.approvingRequest && (
