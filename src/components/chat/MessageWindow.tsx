@@ -23,30 +23,30 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
-    }
+    // Use messagesEndRef for immediate scroll
+    messagesEndRef.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'end'
+    });
   };
 
   useEffect(() => {
-    // Only auto-scroll when new messages are added, not when switching conversations
+    // Always scroll on new messages, regardless of timing
     if (!isLoading && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      // Only scroll if the last message was sent recently (within last 5 seconds)
-      const recentMessage = lastMessage && (Date.now() - new Date(lastMessage.created_at).getTime()) < 5000;
-      if (recentMessage) {
-        setTimeout(scrollToBottom, 100);
-      }
+      // Use a longer timeout to ensure DOM is updated
+      setTimeout(scrollToBottom, 200);
     }
   }, [messages, isLoading]);
+
+  // Also scroll when conversation changes
+  useEffect(() => {
+    if (conversationId && !isLoading) {
+      setTimeout(scrollToBottom, 300);
+    }
+  }, [conversationId, isLoading]);
 
   return (
     <Card className="h-full flex flex-col">

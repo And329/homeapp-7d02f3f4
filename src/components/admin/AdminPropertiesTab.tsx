@@ -122,8 +122,8 @@ const ContactEditDialog: React.FC<ContactEditDialogProps> = ({ propertyId, owner
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0">
-          <User className="h-3 w-3" />
+        <Button variant="outline" size="sm" className="bg-white/95 backdrop-blur-sm shadow-md border-white/20 hover:bg-white h-9 w-9 p-0">
+          <User className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -250,7 +250,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
           <p className="mt-4 text-gray-600">Loading properties...</p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => {
             const transformedProperty: Property = {
               id: property.id,
@@ -281,14 +281,14 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
             const ownerId = getOwnerIdForProperty(property.id);
 
             return (
-              <div key={property.id} className="relative">
-                <div className="transform scale-90 origin-top-left">
-                  <PropertyCard 
-                    property={transformedProperty} 
-                    onClick={() => handleCardClick(property.id)}
-                  />
-                </div>
-                <div className="absolute top-3 right-3 z-10 flex gap-1">
+              <div key={property.id} className="relative group">
+                <PropertyCard 
+                  property={transformedProperty} 
+                  onClick={() => handleCardClick(property.id)}
+                />
+                
+                {/* Action buttons overlay */}
+                <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <ContactEditDialog 
                     propertyId={property.id} 
                     ownerId={ownerId}
@@ -302,9 +302,9 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                       console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
                       onEditProperty(property);
                     }}
-                    className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
+                    className="bg-white/95 backdrop-blur-sm shadow-md border-white/20 hover:bg-white h-9 w-9 p-0"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
@@ -313,9 +313,9 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                       e.stopPropagation();
                       onDeleteProperty(property.id);
                     }}
-                    className="text-red-600 hover:text-red-800 bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
+                    className="bg-white/95 backdrop-blur-sm shadow-md border-white/20 hover:bg-red-50 text-red-600 hover:text-red-700 h-9 w-9 p-0"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -323,8 +323,8 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
           })}
 
           {properties.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No properties found. Add your first property!</p>
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">No properties found. Add your first property!</p>
             </div>
           )}
         </div>
