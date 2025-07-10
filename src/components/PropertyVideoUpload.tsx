@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
-import { X, Plus, Video } from 'lucide-react';
+import { X, Video, Upload, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 interface PropertyVideoUploadProps {
   videos: string[];
@@ -13,13 +13,25 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
   onVideosChange,
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Check if adding these files would exceed limit
+    if (videos.length + files.length > 5) {
+      toast({
+        title: "Too many videos",
+        description: "You can upload a maximum of 5 videos per property.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
 
     try {
       const newVideos: string[] = [];
@@ -27,24 +39,35 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
+        // Update progress
+        setUploadProgress((i / files.length) * 100);
+        
         // Validate file type
         if (!file.type.startsWith('video/')) {
           toast({
             title: "Invalid file type",
-            description: `${file.name} is not a video file.`,
+            description: `${file.name} is not a video file. Supported formats: MP4, WebM, MOV, AVI.`,
             variant: "destructive",
           });
           continue;
         }
 
-        // Validate file size (max 50MB)
-        if (file.size > 50 * 1024 * 1024) {
+        // Validate file size (max 100MB for better quality)
+        if (file.size > 100 * 1024 * 1024) {
           toast({
             title: "File too large",
-            description: `${file.name} is larger than 50MB.`,
+            description: `${file.name} is larger than 100MB. Please compress the video or use a smaller file.`,
             variant: "destructive",
           });
           continue;
+        }
+
+        // Show compression warning for large files
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "Large file detected",
+            description: `${file.name} is quite large (${Math.round(file.size / (1024 * 1024))}MB). Consider compressing for faster loading.`,
+          });
         }
 
         // Convert to base64
@@ -57,19 +80,28 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
           reader.onerror = () => {
             reject(new Error(`Failed to read ${file.name}`));
           };
+          reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const fileProgress = (e.loaded / e.total) * 100;
+              const totalProgress = ((i + fileProgress / 100) / files.length) * 100;
+              setUploadProgress(totalProgress);
+            }
+          };
           reader.readAsDataURL(file);
         });
 
         newVideos.push(base64);
       }
 
+      setUploadProgress(100);
+      
       const updatedVideos = [...videos, ...newVideos];
       onVideosChange(updatedVideos);
       
       if (newVideos.length > 0) {
         toast({
-          title: "Videos uploaded",
-          description: `${newVideos.length} video(s) uploaded successfully.`,
+          title: "Videos uploaded successfully",
+          description: `${newVideos.length} video(s) uploaded. Total: ${updatedVideos.length}/5 videos.`,
         });
       }
 
@@ -84,61 +116,114 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
       });
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
   const removeVideo = (index: number) => {
     const newVideos = videos.filter((_, i) => i !== index);
     onVideosChange(newVideos);
+    toast({
+      title: "Video removed",
+      description: `Video ${index + 1} removed successfully.`,
+    });
   };
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Property Videos
-      </label>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">
+          Property Videos ({videos.length}/5)
+        </label>
+        {videos.length >= 5 && (
+          <div className="flex items-center gap-1 text-amber-600 text-xs">
+            <AlertCircle className="h-3 w-3" />
+            Maximum videos reached
+          </div>
+        )}
+      </div>
+
+      {uploading && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-blue-600">
+            <Upload className="h-4 w-4 animate-pulse" />
+            Uploading videos... {Math.round(uploadProgress)}%
+          </div>
+          <Progress value={uploadProgress} className="h-2" />
+        </div>
+      )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {videos.map((video, index) => (
           <div key={index} className="relative group">
-            <video
-              src={video}
-              className="w-full h-32 object-cover rounded-lg border border-gray-200"
-              controls
-            />
-            <button
-              type="button"
-              onClick={() => removeVideo(index)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              <video
+                src={video}
+                className="w-full h-32 object-cover"
+                controls
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => removeVideo(index)}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:scale-110"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+            <div className="mt-1 text-xs text-gray-500 text-center">
+              Video {index + 1}
+            </div>
           </div>
         ))}
         
-        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors">
-          <input
-            type="file"
-            multiple
-            accept="video/*"
-            onChange={handleFileUpload}
-            className="hidden"
-            disabled={uploading}
-          />
-          {uploading ? (
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          ) : (
-            <>
-              <Video className="h-6 w-6 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-500">Add Videos</span>
-            </>
-          )}
-        </label>
+        {videos.length < 5 && (
+          <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 transition-all duration-200 group">
+            <input
+              type="file"
+              multiple
+              accept="video/mp4,video/webm,video/mov,video/avi"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+            {uploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <span className="text-xs text-gray-500">Processing...</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Video className="h-6 w-6 text-gray-400 group-hover:text-primary transition-colors" />
+                <span className="text-sm text-gray-500 group-hover:text-primary transition-colors">
+                  Add Videos
+                </span>
+                <span className="text-xs text-gray-400">
+                  {5 - videos.length} remaining
+                </span>
+              </div>
+            )}
+          </label>
+        )}
       </div>
       
-      <p className="text-xs text-gray-500">
-        Upload up to 5 videos. Max file size: 50MB per video. Supported formats: MP4, WebM, MOV.
-      </p>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex gap-2">
+          <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-blue-800 space-y-1">
+            <p><strong>Video Guidelines:</strong></p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Upload up to 5 videos per property</li>
+              <li>Maximum file size: 100MB per video</li>
+              <li>Supported formats: MP4, WebM, MOV, AVI</li>
+              <li>Recommended: Landscape orientation, good lighting</li>
+              <li>For large files (&gt;50MB), consider compressing for faster loading</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

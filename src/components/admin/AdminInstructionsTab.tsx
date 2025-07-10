@@ -20,7 +20,7 @@ import {
   X
 } from 'lucide-react';
 
-// Определяем секции инструкций
+// Define instruction sections
 const instructionSections = [
   {
     key: 'admin_instructions_access',
@@ -78,7 +78,7 @@ const AdminInstructionsTab: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Загружаем настройки инструкций
+  // Load instruction settings
   const { data: instructions, isLoading } = useQuery({
     queryKey: ['admin-instructions'],
     queryFn: async () => {
@@ -92,7 +92,7 @@ const AdminInstructionsTab: React.FC = () => {
     }
   });
 
-  // Мутация для обновления инструкций
+  // Mutation for updating instructions
   const updateInstructionMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
       const { error } = await supabase.rpc('upsert_setting', {
@@ -138,13 +138,13 @@ const AdminInstructionsTab: React.FC = () => {
     setEditContent('');
   };
 
-  // Получаем значение инструкции по ключу
+  // Get instruction value by key
   const getInstructionValue = (key: string) => {
     const instruction = instructions?.find(inst => inst.key === key);
     return instruction?.value || '';
   };
 
-  // Рендеринг markdown контента как обычного текста
+  // Render markdown content as formatted text
   const renderContent = (content: string) => {
     return content.split('\n').map((line, index) => {
       if (line.startsWith('## ')) {
@@ -175,10 +175,10 @@ const AdminInstructionsTab: React.FC = () => {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Руководство администратора
+          Administrator Guide
         </h1>
         <p className="text-gray-600">
-          Подробное руководство по управлению платформой недвижимости
+          Comprehensive guide for managing the real estate platform
         </p>
       </div>
 
