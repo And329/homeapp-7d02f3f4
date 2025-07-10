@@ -28,8 +28,14 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({
   };
 
   useEffect(() => {
+    // Only auto-scroll when new messages are added, not when switching conversations
     if (!isLoading && messages.length > 0) {
-      setTimeout(scrollToBottom, 100);
+      const lastMessage = messages[messages.length - 1];
+      // Only scroll if the last message was sent recently (within last 5 seconds)
+      const recentMessage = lastMessage && (Date.now() - new Date(lastMessage.created_at).getTime()) < 5000;
+      if (recentMessage) {
+        setTimeout(scrollToBottom, 100);
+      }
     }
   }, [messages, isLoading]);
 
