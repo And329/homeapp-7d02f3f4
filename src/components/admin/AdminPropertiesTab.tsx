@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Map, Edit, Trash2, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -181,6 +182,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   onEditProperty,
   onDeleteProperty,
 }) => {
+  const navigate = useNavigate();
   // Get properties with owner IDs for contact editing
   const { data: propertiesWithOwners } = useQuery({
     queryKey: ['admin-properties-with-owners'],
@@ -198,6 +200,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   const getOwnerIdForProperty = (propertyId: number) => {
     const property = propertiesWithOwners?.find(p => p.id === propertyId.toString());
     return property?.owner_id || null;
+  };
+
+  const handleCardClick = (propertyId: number) => {
+    navigate(`/properties/${propertyId}`);
   };
 
   return (
@@ -277,7 +283,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
             return (
               <div key={property.id} className="relative">
                 <div className="transform scale-90 origin-top-left">
-                  <PropertyCard property={transformedProperty} />
+                  <PropertyCard 
+                    property={transformedProperty} 
+                    onClick={() => handleCardClick(property.id)}
+                  />
                 </div>
                 <div className="absolute top-3 right-3 z-10 flex gap-1">
                   <ContactEditDialog 
@@ -287,7 +296,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEditProperty(property)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditProperty(property);
+                    }}
                     className="bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
                   >
                     <Edit className="h-3 w-3" />
@@ -295,7 +307,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onDeleteProperty(property.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteProperty(property.id);
+                    }}
                     className="text-red-600 hover:text-red-800 bg-white/90 backdrop-blur-sm h-8 w-8 p-0"
                   >
                     <Trash2 className="h-3 w-3" />
