@@ -31,7 +31,10 @@ export const getProperties = async (): Promise<Property[]> => {
       qr_code,
       owner_id,
       is_approved,
-      created_at
+      created_at,
+      contact_name,
+      contact_email,
+      contact_phone
     `)
     .eq('is_approved', true);
 

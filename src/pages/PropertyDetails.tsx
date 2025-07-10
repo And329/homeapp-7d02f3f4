@@ -45,6 +45,12 @@ const PropertyDetails = () => {
     contact_phone: property.contact_phone
   } : null;
 
+  // Debug logging
+  if (property) {
+    console.log('PropertyDetails: Property data:', property);
+    console.log('PropertyDetails: Contact info:', propertyContactInfo);
+  }
+
   // Fetch user profile to check if admin
   const { data: userProfile } = useQuery({
     queryKey: ['user-profile', user?.id],
