@@ -70,6 +70,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     console.log('PropertyForm: useEffect triggered with property:', property);
     if (property) {
       console.log('PropertyForm: Setting form data from property:', property);
+      console.log('PropertyForm: Property emirate value:', property.emirate);
       setFormData({
         title: property.title || '',
         price: property.price?.toString() || '',
@@ -243,6 +244,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
   };
 
   const handleEmirateChange = (emirate: string) => {
+    console.log('PropertyForm: Emirate changed to:', emirate);
     setFormData(prev => ({ ...prev, emirate }));
   };
 
@@ -300,6 +302,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
               onChange={handleEmirateChange}
               required
             />
+            {/* Debug info */}
+            <div className="text-xs text-gray-500">
+              Current emirate value: "{formData.emirate}"
+            </div>
 
             <div className="md:col-span-1">
               <PropertyLocationPicker

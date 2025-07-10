@@ -57,6 +57,31 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     }
   };
 
+  // For images, display the image inline instead of just as an attachment
+  if (fileType.startsWith('image/')) {
+    return (
+      <div className="max-w-xs">
+        <img
+          src={fileUrl}
+          alt={fileName}
+          className="max-w-full h-auto rounded-lg border"
+          style={{ maxHeight: '200px' }}
+        />
+        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+          <span className="truncate">{fileName}</span>
+          <Button
+            onClick={handleDownload}
+            variant="ghost"
+            size="sm"
+            className="p-1 h-6 w-6 ml-2"
+          >
+            <Download className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border max-w-xs">
       <div className="text-gray-600">
