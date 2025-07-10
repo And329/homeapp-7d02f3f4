@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Image as ImageIcon, Video, Music, Archive } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Download, FileText, Image as ImageIcon, Video, Music, Archive, ZoomIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface FileAttachmentProps {
@@ -69,17 +70,48 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     return data.publicUrl;
   };
 
-  // For images, display the image inline instead of just as an attachment
+  // For images, display the image inline with preview modal
   if (fileType.startsWith('image/')) {
+    const imageUrl = getImageUrl();
+    
     return (
       <div className="max-w-xs">
-        <img
-          src={getImageUrl()}
-          alt={fileName}
-          className="max-w-full h-auto rounded-lg border"
-          style={{ maxHeight: '200px' }}
-        />
-        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+        <Dialog>
+          <DialogTrigger asChild>
+            <div className="relative group cursor-pointer">
+              <img
+                src={imageUrl}
+                alt={fileName}
+                className="max-w-full h-auto rounded-lg border transition-opacity group-hover:opacity-80"
+                style={{ maxHeight: '200px' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                <ZoomIn className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+            <div className="relative">
+              <img
+                src={imageUrl}
+                alt={fileName}
+                className="max-w-full max-h-[85vh] object-contain mx-auto"
+              />
+              <div className="absolute top-4 right-4 space-x-2">
+                <Button
+                  onClick={handleDownload}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-black/50 text-white hover:bg-black/70"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
           <span className="truncate">{fileName}</span>
           <Button
             onClick={handleDownload}
