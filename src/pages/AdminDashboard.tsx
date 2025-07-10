@@ -27,7 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Define the AdminProperty interface to match AdminPropertiesTab expectations
 interface AdminProperty {
-  id: number;
+  id: string;
   title: string;
   price: number;
   location: string;
@@ -83,7 +83,7 @@ const AdminDashboard = () => {
 
   // Transform database properties to AdminProperty format
   const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
-    id: parseInt(property.id),
+    id: property.id,
     title: property.title || 'Untitled Property',
     price: property.price || 0,
     location: property.location || 'Unknown Location',
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
     console.log('AdminDashboard: Raw properties available:', rawProperties.length);
     
     // Find the original database property to get all fields
-    const originalProperty = rawProperties.find(p => p.id === property.id.toString());
+    const originalProperty = rawProperties.find(p => p.id === property.id);
     
     console.log('AdminDashboard: Found original property:', originalProperty);
     
@@ -171,8 +171,8 @@ const AdminDashboard = () => {
     console.log('AdminDashboard: After calling handlers.handleEdit');
   };
 
-  const handleDelete = async (id: number) => {
-    await handlers.handleDelete(String(id));
+  const handleDelete = async (id: string) => {
+    await handlers.handleDelete(id);
   };
 
   if (!profile || profile.role !== 'admin') {

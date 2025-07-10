@@ -13,7 +13,7 @@ import PropertyMap from '@/components/PropertyMap';
 import { Property } from '@/types/property';
 
 interface AdminProperty {
-  id: number;
+  id: string;
   title: string;
   price: number;
   location: string;
@@ -36,11 +36,11 @@ interface AdminPropertiesTabProps {
   setShowMap: (show: boolean) => void;
   onAddProperty: () => void;
   onEditProperty: (property: AdminProperty) => void;
-  onDeleteProperty: (id: number) => void;
+  onDeleteProperty: (id: string) => void;
 }
 
 interface ContactEditDialogProps {
-  propertyId: number;
+  propertyId: string;
   ownerId: string | null;
 }
 
@@ -197,12 +197,12 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
     },
   });
 
-  const getOwnerIdForProperty = (propertyId: number) => {
-    const property = propertiesWithOwners?.find(p => p.id === propertyId.toString());
+  const getOwnerIdForProperty = (propertyId: string) => {
+    const property = propertiesWithOwners?.find(p => p.id === propertyId);
     return property?.owner_id || null;
   };
 
-  const handleCardClick = (propertyId: number) => {
+  const handleCardClick = (propertyId: string) => {
     navigate(`/properties/${propertyId}`);
   };
 
@@ -253,7 +253,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => {
             const transformedProperty: Property = {
-              id: property.id.toString(),
+              id: property.id,
               title: property.title || 'Untitled Property',
               price: property.price || 0,
               location: property.location || 'Unknown Location',

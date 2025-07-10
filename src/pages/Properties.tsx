@@ -87,7 +87,7 @@ const Properties = () => {
 
   // Transform properties for map
   const mapProperties = filteredProperties.map(p => ({
-    id: parseInt(p.id) || 0,
+    id: p.id,
     title: p.title,
     location: p.location,
     price: p.price,
@@ -145,7 +145,7 @@ const Properties = () => {
                 properties={mapProperties}
                 height="600px"
                 onPropertyClick={(propertyId) => {
-                  const property = filteredProperties.find(p => parseInt(p.id) === propertyId);
+                  const property = filteredProperties.find(p => p.id === propertyId.toString());
                   if (property) {
                     handlePropertyClick(property);
                   }

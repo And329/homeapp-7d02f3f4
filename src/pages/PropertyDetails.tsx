@@ -336,7 +336,7 @@ const PropertyDetails = () => {
               <div className="h-64 rounded-lg overflow-hidden">
                 <PropertyMap
                   properties={[{
-                    id: parseInt(property.id) || 0,
+                    id: property.id,
                     title: property.title,
                     location: property.location,
                     price: property.price,

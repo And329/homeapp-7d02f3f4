@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMapProps {
   properties: Array<{
-    id: number;
+    id: string | number;
     title: string;
     location: string;
     price: number;
@@ -12,7 +12,7 @@ interface PropertyMapProps {
     longitude: number | null;
   }>;
   height?: string;
-  onPropertyClick?: (propertyId: number) => void;
+  onPropertyClick?: (propertyId: string | number) => void;
 }
 
 const PropertyMap: React.FC<PropertyMapProps> = ({ 
