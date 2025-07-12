@@ -21,45 +21,32 @@ interface PropertyMapProps {
   onPropertyClick?: (propertyId: string | number) => void;
 }
 
-// Custom marker icons
+// Simple custom marker icons without complex styling
 const createCustomIcon = (type: 'rent' | 'sale') => {
   const color = type === 'rent' ? '#3b82f6' : '#10b981';
   return L.divIcon({
     html: `
       <div style="
         background: ${color};
-        width: 30px;
-        height: 30px;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        border: 3px solid white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        border: 2px solid white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         display: flex;
         align-items: center;
         justify-content: center;
-      ">
-        <div style="
-          transform: rotate(45deg);
-          color: white;
-          font-weight: bold;
-          font-size: 12px;
-        ">${type === 'rent' ? 'R' : 'S'}</div>
-      </div>
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+      ">${type === 'rent' ? 'R' : 'S'}</div>
     `,
     className: 'custom-marker',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30]
+    iconSize: [25, 25],
+    iconAnchor: [12, 25],
+    popupAnchor: [0, -25]
   });
 };
-
-// Fix for default marker icons in React-Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 const PropertyMap: React.FC<PropertyMapProps> = ({ 
   properties, 
@@ -124,9 +111,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
             key={property.id}
             position={[property.latitude!, property.longitude!]}
             icon={createCustomIcon(property.type)}
-            eventHandlers={{
-              click: () => handlePropertyClick(property.id)
-            }}
           >
             <Popup>
               <div className="p-2 min-w-[200px]">
