@@ -21,32 +21,20 @@ interface PropertyMapProps {
   onPropertyClick?: (propertyId: string | number) => void;
 }
 
-// Simple custom marker icons without complex styling
-const createCustomIcon = (type: 'rent' | 'sale') => {
-  const color = type === 'rent' ? '#3b82f6' : '#10b981';
-  return L.divIcon({
-    html: `
-      <div style="
-        background: ${color};
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-      ">${type === 'rent' ? 'R' : 'S'}</div>
-    `,
-    className: 'custom-marker',
-    iconSize: [25, 25],
-    iconAnchor: [12, 25],
-    popupAnchor: [0, -25]
-  });
-};
+// Fix Leaflet's default icons issue
+const DefaultIcon = L.icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEMxOS40MDM2IDAgMjUgNS41OTY0NCAyNSAxMi41QzI1IDE5LjQwMzYgMTIuNSA0MSAxMi41IDQxQzEyLjUgNDEgMCAxOS40MDM2IDAgMTIuNUMwIDUuNTk2NDQgNS41OTY0NCAwIDEyLjUgMFoiIGZpbGw9IiMzQjgyRjYiLz4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [0, -41],
+});
+
+const SaleIcon = L.icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEMxOS40MDM2IDAgMjUgNS41OTY0NCAyNSAxMi41QzI1IDE5LjQwMzYgMTIuNSA0MSAxMi41IDQxQzEyLjUgNDEgMCAxOS40MDM2IDAgMTIuNUMwIDUuNTk2NDQgNS41OTY0NCAwIDEyLjUgMFoiIGZpbGw9IiMxMEI5ODEiLz4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [0, -41],
+});
 
 const PropertyMap: React.FC<PropertyMapProps> = ({ 
   properties, 
@@ -110,7 +98,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           <Marker
             key={property.id}
             position={[property.latitude!, property.longitude!]}
-            icon={createCustomIcon(property.type)}
+            icon={property.type === 'rent' ? DefaultIcon : SaleIcon}
           >
             <Popup>
               <div className="p-2 min-w-[200px]">
