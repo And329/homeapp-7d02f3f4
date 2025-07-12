@@ -2,7 +2,6 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface Property {
@@ -20,21 +19,6 @@ interface PropertyMapProps {
   height?: string;
   onPropertyClick?: (propertyId: string | number) => void;
 }
-
-// Fix Leaflet's default icons issue
-const DefaultIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEMxOS40MDM2IDAgMjUgNS41OTY0NCAyNSAxMi41QzI1IDE5LjQwMzYgMTIuNSA0MSAxMi41IDQxQzEyLjUgNDEgMCAxOS40MDM2IDAgMTIuNUMwIDUuNTk2NDQgNS41OTY0NCAwIDEyLjUgMFoiIGZpbGw9IiMzQjgyRjYiLz4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [0, -41],
-});
-
-const SaleIcon = L.icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEMxOS40MDM2IDAgMjUgNS41OTY0NCAyNSAxMi41QzI1IDE5LjQwMzYgMTIuNSA0MSAxMi41IDQxQzEyLjUgNDEgMCAxOS40MDM2IDAgMTIuNUMwIDUuNTk2NDQgNS41OTY0NCAwIDEyLjUgMFoiIGZpbGw9IiMxMEI5ODEiLz4KPGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [0, -41],
-});
 
 const PropertyMap: React.FC<PropertyMapProps> = ({ 
   properties, 
@@ -98,7 +82,6 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
           <Marker
             key={property.id}
             position={[property.latitude!, property.longitude!]}
-            icon={property.type === 'rent' ? DefaultIcon : SaleIcon}
           >
             <Popup>
               <div className="p-2 min-w-[200px]">
