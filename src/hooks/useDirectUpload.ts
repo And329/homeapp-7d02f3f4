@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface DirectUploadResult {
   url: string;
@@ -25,7 +26,7 @@ export const useDirectUpload = () => {
   const getAuthHeaders = useCallback(async () => {
     if (!user) return null;
     
-    const session = await user.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return null;
 
     return {
