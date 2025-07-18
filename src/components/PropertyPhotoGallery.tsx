@@ -204,14 +204,14 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
                 </Button>
               </div>
 
-              {/* Enhanced thumbnail grid */}
+              {/* Enhanced thumbnail grid - Vertical Layout */}
               <div className="flex-1 min-h-0">
-                <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                   {images.map((image, index) => (
-                    <button
+                    <div
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-[1.02] relative group ${
+                      className={`w-full aspect-[4/3] rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02] relative group ${
                         selectedImageIndex === index 
                           ? 'border-primary ring-4 ring-primary/20 shadow-lg' 
                           : 'border-border/50 hover:border-primary/50 hover:shadow-md'
@@ -239,7 +239,7 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
 
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
