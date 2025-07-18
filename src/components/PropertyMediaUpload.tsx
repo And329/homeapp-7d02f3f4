@@ -50,7 +50,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 
         // Upload file to Supabase storage
         const uploadResult = await uploadFile(file, {
-          maxSize: isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024, // 100MB for videos, 10MB for images
+          maxSize: isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024, // 50MB for videos, 10MB for images
           allowedTypes: isImage ? ['image/'] : ['video/'],
           bucket: 'property-media'
         });
@@ -158,7 +158,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             {uploading ? 'Uploading...' : 'Click to upload photos & videos'}
           </div>
           <div className="text-xs text-gray-500">
-            Images: JPG, PNG, WebP (max 10MB) • Videos: MP4, WebM, MOV (max 100MB)
+            Images: JPG, PNG, WebP (max 10MB) • Videos: MP4, WebM, MOV (max 50MB)
           </div>
         </label>
       </div>

@@ -75,7 +75,8 @@ export const useFileUpload = () => {
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          duplex: 'half' // Helps with large file uploads
         });
 
       if (error) {
