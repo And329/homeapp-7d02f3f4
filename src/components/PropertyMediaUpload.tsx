@@ -3,6 +3,8 @@ import { Upload, X, Image, Video, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMediaUploadProps {
   images: string[];
@@ -19,6 +21,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 }) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { uploadFile } = useFileUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -43,43 +46,25 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           continue;
         }
 
-        // Check file size limits
-        const maxImageSize = 10 * 1024 * 1024; // 10MB for images
-        const maxVideoSize = 100 * 1024 * 1024; // 100MB for videos
-        
-        if (isImage && file.size > maxImageSize) {
-          toast({
-            title: "File too large",
-            description: `${file.name} exceeds the 10MB limit for images.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        if (isVideo && file.size > maxVideoSize) {
-          toast({
-            title: "File too large",
-            description: `${file.name} exceeds the 100MB limit for videos.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Convert to base64
-        const reader = new FileReader();
-        await new Promise((resolve, reject) => {
-          reader.onload = () => {
-            const base64String = reader.result as string;
-            if (isImage) {
-              newImages.push(base64String);
-            } else {
-              newVideos.push(base64String);
-            }
-            resolve(base64String);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
+        // Upload file to Supabase storage
+        const uploadResult = await uploadFile(file, {
+          maxSize: isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024, // 100MB for videos, 10MB for images
+          allowedTypes: isImage ? ['image/'] : ['video/'],
+          bucket: 'chat-attachments'
         });
+
+        if (uploadResult) {
+          // Get the public URL for the uploaded file
+          const { data } = await supabase.storage
+            .from('chat-attachments')
+            .getPublicUrl(uploadResult.url);
+
+          if (isImage) {
+            newImages.push(data.publicUrl);
+          } else {
+            newVideos.push(data.publicUrl);
+          }
+        }
       }
 
       // Update state with new files
@@ -90,10 +75,12 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         onVideosChange([...videos, ...newVideos]);
       }
 
-      toast({
-        title: "Upload successful",
-        description: `${newImages.length + newVideos.length} file(s) uploaded successfully.`,
-      });
+      if (newImages.length > 0 || newVideos.length > 0) {
+        toast({
+          title: "Upload successful",
+          description: `${newImages.length + newVideos.length} file(s) uploaded successfully.`,
+        });
+      }
     } catch (error) {
       console.error('Upload error:', error);
       toast({
