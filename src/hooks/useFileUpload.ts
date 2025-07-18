@@ -71,6 +71,8 @@ export const useFileUpload = () => {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      console.log(`Uploading to bucket: ${bucket}, path: ${filePath}`);
+      
       const { error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
@@ -80,7 +82,7 @@ export const useFileUpload = () => {
         });
 
       if (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error for', file.name, ':', error);
         toast({
           title: "Upload failed",
           description: `Failed to upload file: ${error.message}`,
@@ -88,6 +90,8 @@ export const useFileUpload = () => {
         });
         return null;
       }
+
+      console.log('Upload successful for', file.name);
 
       const result: FileUploadResult = {
         url: filePath,
