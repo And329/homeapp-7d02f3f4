@@ -14,9 +14,9 @@ export interface PropertyRequest {
   emirate: string | null;
   type: 'rent' | 'sale';
   property_type: string | null;
-  amenities: string[] | null;
-  images: string[] | null;
-  videos: string[] | null;
+  amenities: any | null; // Json type from Supabase
+  images: any | null; // Json type from Supabase  
+  videos: any | null; // Json type from Supabase
   contact_name: string;
   contact_email: string;
   contact_phone: string | null;

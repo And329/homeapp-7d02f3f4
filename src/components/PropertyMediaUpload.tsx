@@ -30,52 +30,84 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
     setUploading(true);
 
     try {
-      const newImages: string[] = [];
-      const newVideos: string[] = [];
-
-      for (const file of Array.from(files)) {
+      const filesArray = Array.from(files);
+      console.log(`Starting parallel upload of ${filesArray.length} files`);
+      
+      // Upload all files in parallel instead of sequentially
+      const uploadPromises = filesArray.map(async (file) => {
         const isImage = file.type.startsWith('image/');
         const isVideo = file.type.startsWith('video/');
 
         if (!isImage && !isVideo) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not a supported image or video file.`,
-            variant: "destructive",
-          });
-          continue;
+          console.warn(`Skipping unsupported file: ${file.name}`);
+          return { success: false, error: `${file.name} is not a supported image or video file.` };
         }
 
         console.log('Starting upload for file:', file.name, 'Type:', file.type, 'Size:', file.size);
 
-        // Upload file to Supabase storage
-        const uploadResult = await uploadFile(file, {
-          maxSize: isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024, // 50MB for videos, 10MB for images
-          allowedTypes: isImage ? ['image/'] : ['video/'],
-          bucket: 'property-media'
-        });
+        try {
+          // Upload file to Supabase storage
+          const uploadResult = await uploadFile(file, {
+            maxSize: isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024, // 50MB for videos, 10MB for images
+            allowedTypes: isImage ? ['image/'] : ['video/'],
+            bucket: 'property-media'
+          });
 
-        console.log('Upload result:', uploadResult);
-        
-        if (!uploadResult) {
-          console.error('Upload failed: uploadResult is null');
-          continue;
-        }
+          console.log('Upload result for', file.name, ':', uploadResult);
+          
+          if (!uploadResult) {
+            console.error('Upload failed: uploadResult is null for', file.name);
+            return { success: false, error: `Failed to upload ${file.name}` };
+          }
 
-        if (uploadResult) {
           // Get the public URL for the uploaded file
           const { data } = await supabase.storage
             .from('property-media')
             .getPublicUrl(uploadResult.url);
 
-          console.log('Public URL data:', data);
+          console.log('Public URL data for', file.name, ':', data);
 
-          if (isImage) {
-            newImages.push(data.publicUrl);
-          } else {
-            newVideos.push(data.publicUrl);
-          }
+          return {
+            success: true,
+            url: data.publicUrl,
+            isImage,
+            fileName: file.name
+          };
+        } catch (error) {
+          console.error('Error uploading file:', file.name, error);
+          return { success: false, error: `Failed to upload ${file.name}: ${error.message}` };
         }
+      });
+
+      // Wait for all uploads to complete
+      const results = await Promise.all(uploadPromises);
+      
+      // Process results
+      const newImages: string[] = [];
+      const newVideos: string[] = [];
+      const errors: string[] = [];
+
+      results.forEach(result => {
+        if (result.success) {
+          if (result.isImage) {
+            newImages.push(result.url);
+          } else {
+            newVideos.push(result.url);
+          }
+        } else {
+          errors.push(result.error);
+        }
+      });
+
+      // Show errors if any
+      if (errors.length > 0) {
+        errors.forEach(error => {
+          toast({
+            title: "Upload error",
+            description: error,
+            variant: "destructive",
+          });
+        });
       }
 
       // Update state with new files
@@ -86,10 +118,11 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         onVideosChange([...videos, ...newVideos]);
       }
 
-      if (newImages.length > 0 || newVideos.length > 0) {
+      const successCount = newImages.length + newVideos.length;
+      if (successCount > 0) {
         toast({
           title: "Upload successful",
-          description: `${newImages.length + newVideos.length} file(s) uploaded successfully.`,
+          description: `${successCount} file(s) uploaded successfully.`,
         });
       }
     } catch (error) {
