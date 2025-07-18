@@ -50,13 +50,13 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         const uploadResult = await uploadFile(file, {
           maxSize: isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024, // 100MB for videos, 10MB for images
           allowedTypes: isImage ? ['image/'] : ['video/'],
-          bucket: 'chat-attachments'
+          bucket: 'property-media'
         });
 
         if (uploadResult) {
           // Get the public URL for the uploaded file
           const { data } = await supabase.storage
-            .from('chat-attachments')
+            .from('property-media')
             .getPublicUrl(uploadResult.url);
 
           if (isImage) {
