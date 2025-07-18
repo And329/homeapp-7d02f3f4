@@ -114,9 +114,9 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
 
   return (
     <>
-      {/* Main Gallery - Compact Left, Expanded Right Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
-        {/* Left Side - Compact Main Display */}
+      {/* Main Gallery - Compact Right Panel Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+        {/* Left Side - Main Display */}
         <div className="lg:col-span-4">
           <div className="relative group">
             <div className="aspect-[4/3] rounded-xl overflow-hidden bg-card border border-border/50 shadow-lg cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-border"
@@ -178,9 +178,9 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
           </div>
         </div>
 
-        {/* Right Side - Expanded Thumbnails Panel */}
-        <div className="lg:col-span-3">
-          <div className="bg-card rounded-xl border border-border/50 shadow-sm p-6 h-full">
+        {/* Right Side - Compact Thumbnails Panel */}
+        <div className="lg:col-span-2">
+          <div className="bg-card rounded-xl border border-border/50 shadow-sm p-4 h-full">
             <div className="space-y-4 h-full flex flex-col">
               {/* Enhanced gallery header */}
               <div className="flex items-center justify-between pb-4 border-b border-border/50">
