@@ -126,9 +126,13 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 
       // Update state with new files
       if (newImages.length > 0) {
+        console.log('PropertyMediaUpload: Updating images:', newImages);
         onImagesChange([...images, ...newImages]);
       }
       if (newVideos.length > 0) {
+        console.log('PropertyMediaUpload: Updating videos:', newVideos);
+        console.log('PropertyMediaUpload: Current videos:', videos);
+        console.log('PropertyMediaUpload: New combined videos:', [...videos, ...newVideos]);
         onVideosChange([...videos, ...newVideos]);
       }
 
