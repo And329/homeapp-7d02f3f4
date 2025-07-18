@@ -114,10 +114,10 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
 
   return (
     <>
-      {/* Main Gallery - Enhanced Side by Side Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left Side - Main Display */}
-        <div className="lg:col-span-3">
+      {/* Main Gallery - Compact Left, Expanded Right Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+        {/* Left Side - Compact Main Display */}
+        <div className="lg:col-span-4">
           <div className="relative group">
             <div className="aspect-[4/3] rounded-xl overflow-hidden bg-card border border-border/50 shadow-lg cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-border"
                  onClick={() => openLightbox(selectedImageIndex)}>
@@ -178,8 +178,8 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
           </div>
         </div>
 
-        {/* Right Side - Enhanced Thumbnails Panel */}
-        <div className="lg:col-span-2">
+        {/* Right Side - Expanded Thumbnails Panel */}
+        <div className="lg:col-span-3">
           <div className="bg-card rounded-xl border border-border/50 shadow-sm p-6 h-full">
             <div className="space-y-4 h-full flex flex-col">
               {/* Enhanced gallery header */}
