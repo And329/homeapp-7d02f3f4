@@ -109,104 +109,121 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
 
   return (
     <>
-      {/* Main Gallery */}
-      <div className="space-y-4">
-        {/* Main Display */}
-        <div className="relative group">
-          <div className="aspect-[16/9] rounded-lg overflow-hidden bg-muted cursor-pointer"
-               onClick={() => openLightbox(selectedImageIndex)}>
-            <img
-              src={images[selectedImageIndex]}
-              alt={`${title} - Photo ${selectedImageIndex + 1}`}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            
-            {/* Overlay with info and expand button */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-              <Button 
-                variant="secondary" 
-                size="lg"
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm"
-              >
-                <ZoomIn className="h-5 w-5 mr-2" />
-                View Full Size
-              </Button>
-            </div>
-
-            {/* Photo counter */}
-            <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              {selectedImageIndex + 1} of {images.length}
-            </div>
-
-            {/* Navigation arrows */}
-            {images.length > 1 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    goToPrevious();
-                  }}
+      {/* Main Gallery - Side by Side Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left Side - Main Display */}
+        <div className="lg:col-span-2">
+          <div className="relative group">
+            <div className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer"
+                 onClick={() => openLightbox(selectedImageIndex)}>
+              <img
+                src={images[selectedImageIndex]}
+                alt={`${title} - Photo ${selectedImageIndex + 1}`}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              
+              {/* Overlay with info and expand button */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                <Button 
+                  variant="secondary" 
+                  size="lg"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ZoomIn className="h-5 w-5 mr-2" />
+                  View Full Size
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    goToNext();
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+              </div>
+
+              {/* Photo counter */}
+              <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                {selectedImageIndex + 1} of {images.length}
+              </div>
+
+              {/* Navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToPrevious();
+                    }}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToNext();
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Thumbnail Grid */}
-        {images.length > 1 && (
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-            {images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImageIndex(index)}
-                className={`aspect-square rounded-md overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
-                  selectedImageIndex === index 
-                    ? 'border-primary ring-2 ring-primary/20' 
-                    : 'border-border hover:border-primary/50'
-                }`}
+        {/* Right Side - All Thumbnails */}
+        <div className="lg:col-span-1">
+          <div className="space-y-3">
+            {/* Gallery header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <ImageIcon className="h-4 w-4" />
+                {images.length} {images.length === 1 ? 'photo' : 'photos'}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => openLightbox(selectedImageIndex)}
+                className="hover-scale"
               >
-                <img
-                  src={image}
-                  alt={`${title} thumbnail ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
+                <ZoomIn className="h-4 w-4 mr-2" />
+                Gallery
+              </Button>
+            </div>
 
-        {/* Gallery actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ImageIcon className="h-4 w-4" />
-            {images.length} {images.length === 1 ? 'photo' : 'photos'}
+            {/* Thumbnail Grid */}
+            <div className="grid grid-cols-2 gap-2 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              {images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 hover:scale-105 relative ${
+                    selectedImageIndex === index 
+                      ? 'border-primary ring-2 ring-primary/20 shadow-lg' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${title} thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Selected indicator */}
+                  {selectedImageIndex === index && (
+                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                      <div className="bg-primary text-primary-foreground rounded-full p-1">
+                        <ImageIcon className="h-3 w-3" />
+                      </div>
+                    </div>
+                  )}
+                  {/* Image number overlay */}
+                  <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => openLightbox(selectedImageIndex)}
-            className="hover-scale"
-          >
-            <ZoomIn className="h-4 w-4 mr-2" />
-            View Gallery
-          </Button>
         </div>
       </div>
 
