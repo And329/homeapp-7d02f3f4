@@ -56,6 +56,11 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         });
 
         console.log('Upload result:', uploadResult);
+        
+        if (!uploadResult) {
+          console.error('Upload failed: uploadResult is null');
+          continue;
+        }
 
         if (uploadResult) {
           // Get the public URL for the uploaded file
