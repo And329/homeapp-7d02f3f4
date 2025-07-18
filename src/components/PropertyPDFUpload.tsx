@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useDirectUpload } from '@/hooks/useDirectUpload';
 
 interface PropertyPDFUploadProps {
   onPDFChange: (pdfUrl: string | null) => void;
@@ -12,6 +12,7 @@ interface PropertyPDFUploadProps {
 const PropertyPDFUpload: React.FC<PropertyPDFUploadProps> = ({ onPDFChange, currentPDF }) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { uploadFile } = useDirectUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -26,10 +27,10 @@ const PropertyPDFUpload: React.FC<PropertyPDFUploadProps> = ({ onPDFChange, curr
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit for PDFs
       toast({
         title: "File too large",
-        description: "Please upload a PDF file smaller than 10MB.",
+        description: "Please upload a PDF file smaller than 50MB.",
         variant: "destructive",
       });
       return;
@@ -38,26 +39,22 @@ const PropertyPDFUpload: React.FC<PropertyPDFUploadProps> = ({ onPDFChange, curr
     setUploading(true);
 
     try {
-      // Convert file to base64 for storage
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        onPDFChange(base64String);
-        toast({
-          title: "PDF uploaded",
-          description: "Your PDF has been uploaded successfully.",
-        });
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload PDF. Please try again.",
-          variant: "destructive",
-        });
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      // Upload to Supabase storage
+      const uploadResult = await uploadFile(file, {
+        maxSize: 50 * 1024 * 1024, // 50MB for PDFs
+        allowedTypes: ['application/pdf'],
+        bucket: 'property-media'
+      });
+
+      if (!uploadResult) {
+        throw new Error('Upload failed');
+      }
+
+      onPDFChange(uploadResult.url);
+      toast({
+        title: "PDF uploaded",
+        description: "Your PDF has been uploaded successfully.",
+      });
     } catch (error) {
       console.error('Error uploading PDF:', error);
       toast({
@@ -65,6 +62,7 @@ const PropertyPDFUpload: React.FC<PropertyPDFUploadProps> = ({ onPDFChange, curr
         description: "Failed to upload PDF. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setUploading(false);
     }
   };
@@ -125,7 +123,7 @@ const PropertyPDFUpload: React.FC<PropertyPDFUploadProps> = ({ onPDFChange, curr
                 </span>
               </Button>
             </label>
-            <p className="text-xs text-gray-500 mt-1">Max file size: 10MB</p>
+            <p className="text-xs text-gray-500 mt-1">Max file size: 50MB</p>
           </div>
         </div>
       )}

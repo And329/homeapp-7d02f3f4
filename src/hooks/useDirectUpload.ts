@@ -209,8 +209,13 @@ export const useDirectUpload = () => {
         return rest;
       });
 
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+
       const result: DirectUploadResult = {
-        url: filePath,
+        url: publicUrlData.publicUrl,
         name: file.name,
         type: file.type,
         size: file.size

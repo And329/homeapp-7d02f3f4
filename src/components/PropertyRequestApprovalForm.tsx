@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
-import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyMediaUpload from '@/components/PropertyMediaUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import QRCodeUpload from '@/components/QRCodeUpload';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -316,7 +316,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
             />
           </div>
 
-          <PropertyImageUpload
+          <PropertyMediaUpload
             images={formData.images}
             onImagesChange={handleImagesChange}
           />

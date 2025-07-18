@@ -1,35 +1,38 @@
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Upload, X, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useDirectUpload } from '@/hooks/useDirectUpload';
 
 interface ProfilePictureUploadProps {
-  onImageChange: (imageUrl: string | null) => void;
   currentImage?: string | null;
+  onImageChange: (imageUrl: string) => void;
 }
 
-const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ onImageChange, currentImage }) => {
+const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ currentImage, onImageChange }) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { uploadFile } = useDirectUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid file type",
-        description: "Please upload an image file.",
+        description: "Please select an image file.",
         variant: "destructive",
       });
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Please upload an image smaller than 5MB.",
+        description: "Image must be smaller than 10MB.",
         variant: "destructive",
       });
       return;
@@ -38,39 +41,36 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ onImageChan
     setUploading(true);
 
     try {
-      // Convert file to base64 for storage
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        onImageChange(base64String);
-        toast({
-          title: "Profile picture updated",
-          description: "Your profile picture has been updated successfully.",
-        });
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
-        });
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      // Upload to Supabase storage
+      const uploadResult = await uploadFile(file, {
+        maxSize: 10 * 1024 * 1024, // 10MB for profile pictures
+        allowedTypes: ['image/'],
+        bucket: 'property-media'
+      });
+
+      if (!uploadResult) {
+        throw new Error('Upload failed');
+      }
+
+      onImageChange(uploadResult.url);
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been updated successfully.",
+      });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading profile picture:', error);
       toast({
         title: "Upload failed",
         description: "Failed to upload image. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setUploading(false);
     }
   };
 
   const removeImage = () => {
-    onImageChange(null);
+    onImageChange('');
     toast({
       title: "Profile picture removed",
       description: "Your profile picture has been removed.",
@@ -84,15 +84,28 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ onImageChan
       </label>
       
       <div className="flex items-center space-x-4">
-        <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-          {currentImage ? (
-            <img 
-              src={currentImage} 
-              alt="Profile" 
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <User className="h-8 w-8 text-gray-400" />
+        <div className="relative">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
+            {currentImage ? (
+              <img
+                src={currentImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <User className="h-8 w-8 text-gray-400" />
+              </div>
+            )}
+          </div>
+          {currentImage && (
+            <button
+              type="button"
+              onClick={removeImage}
+              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
           )}
         </div>
         
@@ -113,31 +126,17 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({ onImageChan
               className="cursor-pointer"
               asChild
             >
-              <span>
-                <Upload className="h-4 w-4 mr-2" />
-                {uploading ? 'Uploading...' : 'Upload Photo'}
+              <span className="flex items-center space-x-2">
+                <Upload className="h-4 w-4" />
+                <span>{uploading ? 'Uploading...' : 'Upload Picture'}</span>
               </span>
             </Button>
           </label>
-          
-          {currentImage && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={removeImage}
-              className="text-red-600 hover:text-red-700"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Remove
-            </Button>
-          )}
+          <p className="text-xs text-gray-500">
+            JPG, PNG or WebP. Max size: 10MB
+          </p>
         </div>
       </div>
-      
-      <p className="text-xs text-gray-500">
-        Recommended: Square image, max 5MB
-      </p>
     </div>
   );
 };

@@ -74,7 +74,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 
             return {
               success: true,
-              url: uploadResult.url, // This is already the full public URL
+              url: uploadResult.url, // This is now the full public URL from Supabase storage
               isImage,
               fileName: file.name
             };

@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { X, QrCode, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useDirectUpload } from '@/hooks/useDirectUpload';
 
 interface QRCodeUploadProps {
   qrCode: string;
@@ -17,6 +17,7 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
 }) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { uploadFile } = useDirectUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -47,22 +48,18 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
     setUploading(true);
 
     try {
-      // Convert to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          console.log('QRCodeUpload: File converted to base64');
-          resolve(result);
-        };
-        reader.onerror = () => {
-          console.error('QRCodeUpload: Error reading file');
-          reject(new Error('Failed to read file'));
-        };
-        reader.readAsDataURL(file);
+      // Upload to Supabase storage
+      const uploadResult = await uploadFile(file, {
+        maxSize: 5 * 1024 * 1024, // 5MB
+        allowedTypes: ['image/'],
+        bucket: 'property-media'
       });
 
-      onQRCodeChange(base64);
+      if (!uploadResult) {
+        throw new Error('Upload failed');
+      }
+
+      onQRCodeChange(uploadResult.url);
       
       toast({
         title: "QR code uploaded",

@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PropertyAmenities from '@/components/PropertyAmenities';
-import PropertyImageUpload from '@/components/PropertyImageUpload';
+import PropertyMediaUpload from '@/components/PropertyMediaUpload';
 
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
@@ -345,7 +345,7 @@ const ListProperty = () => {
                 />
 
                 {/* Images */}
-                <PropertyImageUpload
+                <PropertyMediaUpload
                   images={propertyImages}
                   onImagesChange={setPropertyImages}
                 />
