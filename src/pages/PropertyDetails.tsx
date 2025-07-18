@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Edit } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PropertyMap from '@/components/PropertyMap';
 import PropertyQRCode from '@/components/PropertyQRCode';
@@ -16,7 +14,6 @@ import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
-import { supabase } from '@/integrations/supabase/client';
 
 const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,13 +21,6 @@ const PropertyDetails = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
-  const queryClient = useQueryClient();
-  const [isEditingContact, setIsEditingContact] = useState(false);
-  const [editedContact, setEditedContact] = useState({
-    contact_name: '',
-    contact_email: '',
-    contact_phone: ''
-  });
 
   const { data: property, isLoading, error } = useQuery({
     queryKey: ['property', id],
@@ -50,60 +40,6 @@ const PropertyDetails = () => {
     console.log('PropertyDetails: Property data:', property);
     console.log('PropertyDetails: Contact info:', propertyContactInfo);
   }
-
-  // Fetch user profile to check if admin
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Update contact info mutation
-  const updateContactMutation = useMutation({
-    mutationFn: async (contactData: { contact_name: string; contact_email: string; contact_phone: string }) => {
-      if (!property?.id) throw new Error('Property ID not found');
-      
-      const { error } = await supabase
-        .from('properties')
-        .update(contactData)
-        .eq('id', property.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      // Invalidate the property query to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ['property', id] });
-      setIsEditingContact(false);
-      toast({
-        title: "Contact updated",
-        description: "Property contact information has been updated successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: `Failed to update contact: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const isAdmin = userProfile?.role === 'admin';
 
   if (isLoading) {
     return (
@@ -157,25 +93,6 @@ const PropertyDetails = () => {
     toggleFavorite(property.id);
   };
 
-  const handleEditContact = () => {
-    if (propertyContactInfo) {
-      setEditedContact({
-        contact_name: propertyContactInfo.contact_name || '',
-        contact_email: propertyContactInfo.contact_email || '',
-        contact_phone: propertyContactInfo.contact_phone || ''
-      });
-    }
-    setIsEditingContact(true);
-  };
-
-  const handleSaveContact = () => {
-    updateContactMutation.mutate(editedContact);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingContact(false);
-    setEditedContact({ contact_name: '', contact_email: '', contact_phone: '' });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -295,57 +212,10 @@ const PropertyDetails = () => {
               {/* Contact Information Card */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Contact Information</CardTitle>
-                    {isAdmin && !isEditingContact && (
-                      <Button variant="outline" size="sm" onClick={handleEditContact}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                  <CardTitle className="text-lg">Contact Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isEditingContact ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="contact_name">Contact Name</Label>
-                        <Input
-                          id="contact_name"
-                          value={editedContact.contact_name}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_name: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="contact_email">Email</Label>
-                        <Input
-                          id="contact_email"
-                          type="email"
-                          value={editedContact.contact_email}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_email: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="contact_phone">Phone</Label>
-                        <Input
-                          id="contact_phone"
-                          value={editedContact.contact_phone}
-                          onChange={(e) => setEditedContact(prev => ({ ...prev, contact_phone: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={handleSaveContact} 
-                          disabled={updateContactMutation.isPending}
-                          size="sm"
-                        >
-                          Save
-                        </Button>
-                        <Button variant="outline" onClick={handleCancelEdit} size="sm">
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : propertyContactInfo && (propertyContactInfo.contact_name || propertyContactInfo.contact_email || propertyContactInfo.contact_phone) ? (
+                  {propertyContactInfo && (propertyContactInfo.contact_name || propertyContactInfo.contact_email || propertyContactInfo.contact_phone) ? (
                     <div className="space-y-3">
                       {propertyContactInfo.contact_name && (
                         <div className="flex items-center">
