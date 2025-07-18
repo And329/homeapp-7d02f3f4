@@ -211,34 +211,34 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
                     <div
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`w-full aspect-[4/3] rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02] relative group ${
+                      className={`w-full aspect-[4/3] rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-200 relative group ${
                         selectedImageIndex === index 
-                          ? 'border-primary ring-4 ring-primary/20 shadow-lg' 
-                          : 'border-border/50 hover:border-primary/50 hover:shadow-md'
+                          ? 'border-primary ring-2 ring-primary/20 shadow-md' 
+                          : 'border-border/50 hover:border-primary/60 hover:shadow-sm'
                       }`}
                     >
                       <img
                         src={image}
                         alt={`${title} thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                       />
                       
-                      {/* Enhanced selected indicator */}
+                      {/* Elegant selected indicator */}
                       {selectedImageIndex === index && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-                            <ImageIcon className="h-4 w-4" />
+                        <div className="absolute inset-0 bg-primary/15 flex items-center justify-center">
+                          <div className="bg-primary text-primary-foreground rounded-full p-1.5 shadow-sm">
+                            <ImageIcon className="h-3 w-3" />
                           </div>
                         </div>
                       )}
                       
-                      {/* Enhanced image number overlay */}
-                      <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-medium">
+                      {/* Subtle image number overlay */}
+                      <div className="absolute top-1.5 left-1.5 bg-black/70 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded font-medium">
                         {index + 1}
                       </div>
 
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                      {/* Subtle hover overlay */}
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                     </div>
                   ))}
                 </div>
