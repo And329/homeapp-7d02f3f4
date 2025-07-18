@@ -46,6 +46,8 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           continue;
         }
 
+        console.log('Starting upload for file:', file.name, 'Type:', file.type, 'Size:', file.size);
+
         // Upload file to Supabase storage
         const uploadResult = await uploadFile(file, {
           maxSize: isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024, // 100MB for videos, 10MB for images
@@ -53,11 +55,15 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           bucket: 'property-media'
         });
 
+        console.log('Upload result:', uploadResult);
+
         if (uploadResult) {
           // Get the public URL for the uploaded file
           const { data } = await supabase.storage
             .from('property-media')
             .getPublicUrl(uploadResult.url);
+
+          console.log('Public URL data:', data);
 
           if (isImage) {
             newImages.push(data.publicUrl);
