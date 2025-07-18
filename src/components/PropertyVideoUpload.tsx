@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Video, Upload, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { useDirectUpload } from '@/hooks/useDirectUpload';
 
 interface PropertyVideoUploadProps {
   videos: string[];
@@ -12,8 +13,7 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
   videos,
   onVideosChange,
 }) => {
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const { uploadFile, isUploading, uploadProgress } = useDirectUpload();
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,80 +30,60 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(0);
+    // Convert FileList to Array and validate
+    const fileArray = Array.from(files);
+    const validFiles: File[] = [];
+
+    for (const file of fileArray) {
+      // Validate file type
+      if (!file.type.startsWith('video/')) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a video file. Supported formats: MP4, WebM, MOV, AVI.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      // Validate file size (max 100MB for better quality)
+      if (file.size > 100 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than 100MB. Please compress the video or use a smaller file.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      // Show compression warning for large files
+      if (file.size > 50 * 1024 * 1024) {
+        toast({
+          title: "Large file detected",
+          description: `${file.name} is quite large (${Math.round(file.size / (1024 * 1024))}MB). Consider compressing for faster loading.`,
+        });
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
 
     try {
-      const newVideos: string[] = [];
+      // Upload files to Supabase storage
+      const uploadedUrls: string[] = [];
       
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // Update progress
-        setUploadProgress((i / files.length) * 100);
-        
-        // Validate file type
-        if (!file.type.startsWith('video/')) {
-          toast({
-            title: "Invalid file type",
-            description: `${file.name} is not a video file. Supported formats: MP4, WebM, MOV, AVI.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Validate file size (max 100MB for better quality)
-        if (file.size > 100 * 1024 * 1024) {
-          toast({
-            title: "File too large",
-            description: `${file.name} is larger than 100MB. Please compress the video or use a smaller file.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        // Show compression warning for large files
-        if (file.size > 50 * 1024 * 1024) {
-          toast({
-            title: "Large file detected",
-            description: `${file.name} is quite large (${Math.round(file.size / (1024 * 1024))}MB). Consider compressing for faster loading.`,
-          });
-        }
-
-        // Convert to base64
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const result = e.target?.result as string;
-            resolve(result);
-          };
-          reader.onerror = () => {
-            reject(new Error(`Failed to read ${file.name}`));
-          };
-          reader.onprogress = (e) => {
-            if (e.lengthComputable) {
-              const fileProgress = (e.loaded / e.total) * 100;
-              const totalProgress = ((i + fileProgress / 100) / files.length) * 100;
-              setUploadProgress(totalProgress);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
-
-        newVideos.push(base64);
+      for (const file of validFiles) {
+        const result = await uploadFile(file, { bucket: 'property-media' });
+        uploadedUrls.push(result.url);
       }
-
-      setUploadProgress(100);
       
-      const updatedVideos = [...videos, ...newVideos];
+      const updatedVideos = [...videos, ...uploadedUrls];
       onVideosChange(updatedVideos);
       
-      if (newVideos.length > 0) {
-        toast({
-          title: "Videos uploaded successfully",
-          description: `${newVideos.length} video(s) uploaded. Total: ${updatedVideos.length}/5 videos.`,
-        });
-      }
+      toast({
+        title: "Videos uploaded successfully",
+        description: `${uploadedUrls.length} video(s) uploaded. Total: ${updatedVideos.length}/5 videos.`,
+      });
 
       // Clear the input
       event.target.value = '';
@@ -114,9 +94,6 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
         description: "Failed to upload videos. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -143,13 +120,13 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
         )}
       </div>
 
-      {uploading && (
+      {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-blue-600">
             <Upload className="h-4 w-4 animate-pulse" />
-            Uploading videos... {Math.round(uploadProgress)}%
+            Uploading videos...
           </div>
-          <Progress value={uploadProgress} className="h-2" />
+          <Progress value={(Object.values(uploadProgress)[0] as any)?.percentage || 0} className="h-2" />
         </div>
       )}
       
@@ -187,9 +164,9 @@ const PropertyVideoUpload: React.FC<PropertyVideoUploadProps> = ({
               accept="video/mp4,video/webm,video/mov,video/avi"
               onChange={handleFileUpload}
               className="hidden"
-              disabled={uploading}
+              disabled={isUploading}
             />
-            {uploading ? (
+            {isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 <span className="text-xs text-gray-500">Processing...</span>
