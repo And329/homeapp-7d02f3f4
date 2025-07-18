@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
-import { Upload, X, Image, Video, AlertTriangle, Loader2 } from 'lucide-react';
+import { Upload, X, Image, Video, AlertTriangle, Loader2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useFileUpload } from '@/hooks/useFileUpload';
+import { Progress } from '@/components/ui/progress';
+import { useDirectUpload } from '@/hooks/useDirectUpload';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMediaUploadProps {
@@ -20,67 +22,86 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
   onVideosChange,
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
   const { toast } = useToast();
-  const { uploadFile } = useFileUpload();
+  const { uploadFile, uploadProgress } = useDirectUpload();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setFileProgress({});
 
     try {
       const filesArray = Array.from(files);
-      console.log(`Starting parallel upload of ${filesArray.length} files`);
+      console.log(`Starting optimized parallel upload of ${filesArray.length} files`);
       
-      // Upload all files in parallel instead of sequentially
-      const uploadPromises = filesArray.map(async (file) => {
-        const isImage = file.type.startsWith('image/');
-        const isVideo = file.type.startsWith('video/');
+      // Process files with concurrency limit to prevent overwhelming the browser
+      const concurrencyLimit = 3;
+      const results = [];
+      
+      for (let i = 0; i < filesArray.length; i += concurrencyLimit) {
+        const batch = filesArray.slice(i, i + concurrencyLimit);
+        
+        const batchPromises = batch.map(async (file, batchIndex) => {
+          const globalIndex = i + batchIndex;
+          const isImage = file.type.startsWith('image/');
+          const isVideo = file.type.startsWith('video/');
 
-        if (!isImage && !isVideo) {
-          console.warn(`Skipping unsupported file: ${file.name}`);
-          return { success: false, error: `${file.name} is not a supported image or video file.` };
-        }
-
-        console.log('Starting upload for file:', file.name, 'Type:', file.type, 'Size:', file.size);
-
-        try {
-          // Upload file to Supabase storage
-          const uploadResult = await uploadFile(file, {
-            maxSize: isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024, // 50MB for videos, 10MB for images
-            allowedTypes: isImage ? ['image/'] : ['video/'],
-            bucket: 'property-media'
-          });
-
-          console.log('Upload result for', file.name, ':', uploadResult);
-          
-          if (!uploadResult) {
-            console.error('Upload failed: uploadResult is null for', file.name);
-            return { success: false, error: `Failed to upload ${file.name}` };
+          if (!isImage && !isVideo) {
+            console.warn(`Skipping unsupported file: ${file.name}`);
+            return { success: false, error: `${file.name} is not a supported image or video file.` };
           }
 
-          // Get the public URL for the uploaded file
-          const { data } = await supabase.storage
-            .from('property-media')
-            .getPublicUrl(uploadResult.url);
+          console.log('Starting optimized upload for file:', file.name, 'Type:', file.type, 'Size:', Math.round(file.size / 1024 / 1024) + 'MB');
 
-          console.log('Public URL data for', file.name, ':', data);
+          // Show compression warning for very large files
+          if (file.size > 50 * 1024 * 1024) {
+            toast({
+              title: "Large file detected",
+              description: `${file.name} is ${Math.round(file.size / 1024 / 1024)}MB. Upload may take a moment.`,
+            });
+          }
 
-          return {
-            success: true,
-            url: data.publicUrl,
-            isImage,
-            fileName: file.name
-          };
-        } catch (error) {
-          console.error('Error uploading file:', file.name, error);
-          return { success: false, error: `Failed to upload ${file.name}: ${error.message}` };
-        }
-      });
+          try {
+            // Use direct upload for better performance
+            const uploadResult = await uploadFile(file, {
+              maxSize: isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024, // 100MB for videos, 20MB for images
+              allowedTypes: isImage ? ['image/'] : ['video/'],
+              bucket: 'property-media'
+            });
 
-      // Wait for all uploads to complete
-      const results = await Promise.all(uploadPromises);
+            console.log('Optimized upload result for', file.name, ':', uploadResult);
+            
+            if (!uploadResult) {
+              console.error('Upload failed: uploadResult is null for', file.name);
+              return { success: false, error: `Failed to upload ${file.name}` };
+            }
+
+            // Get the public URL for the uploaded file
+            const { data } = await supabase.storage
+              .from('property-media')
+              .getPublicUrl(uploadResult.url);
+
+            console.log('Public URL data for', file.name, ':', data);
+
+            return {
+              success: true,
+              url: data.publicUrl,
+              isImage,
+              fileName: file.name
+            };
+          } catch (error) {
+            console.error('Error in optimized upload for file:', file.name, error);
+            return { success: false, error: `Failed to upload ${file.name}: ${error.message}` };
+          }
+        });
+
+        // Wait for this batch to complete before starting the next
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+      }
       
       // Process results
       const newImages: string[] = [];
@@ -122,11 +143,11 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       if (successCount > 0) {
         toast({
           title: "Upload successful",
-          description: `${successCount} file(s) uploaded successfully.`,
+          description: `${successCount} file(s) uploaded successfully using optimized method.`,
         });
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Optimized upload error:', error);
       toast({
         title: "Upload failed",
         description: "There was an error uploading your files. Please try again.",
@@ -134,6 +155,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       });
     } finally {
       setUploading(false);
+      setFileProgress({});
       // Clear the input value to allow re-uploading the same file
       event.target.value = '';
     }
@@ -150,6 +172,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
   };
 
   const totalFiles = images.length + videos.length;
+  const hasActiveUploads = Object.keys(uploadProgress).length > 0;
 
   return (
     <div className="space-y-4">
@@ -164,8 +187,29 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           <Badge variant="outline" className="text-xs">
             {videos.length} Videos
           </Badge>
+          {hasActiveUploads && (
+            <Badge variant="secondary" className="text-xs flex items-center gap-1">
+              <BarChart3 className="h-3 w-3" />
+              Uploading
+            </Badge>
+          )}
         </div>
       </div>
+
+      {/* Upload Progress */}
+      {hasActiveUploads && (
+        <div className="space-y-2">
+          {Object.entries(uploadProgress).map(([fileId, progress]) => (
+            <div key={fileId} className="space-y-1">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Uploading...</span>
+                <span>{progress.percentage}%</span>
+              </div>
+              <Progress value={progress.percentage} className="h-2" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Upload Area */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
@@ -188,20 +232,23 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             <Upload className="h-8 w-8 text-gray-400" />
           )}
           <div className="text-sm font-medium text-gray-900">
-            {uploading ? 'Uploading...' : 'Click to upload photos & videos'}
+            {uploading ? 'Uploading with optimized method...' : 'Click to upload photos & videos'}
           </div>
           <div className="text-xs text-gray-500">
-            Images: JPG, PNG, WebP (max 10MB) • Videos: MP4, WebM, MOV (max 50MB)
+            Images: JPG, PNG, WebP (max 20MB) • Videos: MP4, WebM, MOV (max 100MB)
+          </div>
+          <div className="text-xs text-blue-600 font-medium">
+            ⚡ Using direct upload for faster speeds
           </div>
         </label>
       </div>
 
-      {/* File size warning */}
-      <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-        <div className="text-xs text-amber-800">
-          <strong>Note:</strong> Large video files may take time to upload and process. 
-          Consider compressing videos before upload for better performance.
+      {/* File size and performance info */}
+      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+        <div className="text-xs text-blue-800">
+          <strong>Optimized Upload:</strong> Using direct HTTP upload for faster performance. 
+          Large files are automatically chunked for reliable transfer. Videos over 50MB will show a progress indicator.
         </div>
       </div>
 
