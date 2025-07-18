@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Edit, Image } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Edit } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PropertyMap from '@/components/PropertyMap';
 import PropertyQRCode from '@/components/PropertyQRCode';
+import PropertyPhotoGallery from '@/components/PropertyPhotoGallery';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +25,6 @@ const PropertyDetails = () => {
   const { user } = useAuth();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
   const queryClient = useQueryClient();
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editedContact, setEditedContact] = useState({
     contact_name: '',
@@ -182,58 +182,12 @@ const PropertyDetails = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Property Media Gallery */}
+        {/* Property Photo Gallery */}
         <div className="mb-8">
-          {/* Combined Media */}
-          {(property.images && property.images.length > 0) && (
-            <div>
-              {/* Main Display */}
-              <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4 bg-muted">
-                {property.images && property.images.length > 0 && selectedImageIndex < property.images.length ? (
-                  <>
-                    <img
-                      src={property.images[selectedImageIndex]}
-                      alt={property.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <Image className="h-4 w-4" />
-                      Photo {selectedImageIndex + 1} of {property.images?.length || 0}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-              
-              {/* Media Thumbnails */}
-              {(property.images?.length || 0) > 1 && (
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                  {/* Image Thumbnails */}
-                  {property.images?.map((image, index) => (
-                    <button
-                      key={`image-${index}`}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`aspect-square rounded-md overflow-hidden border-2 transition-colors relative ${
-                        selectedImageIndex === index 
-                          ? 'border-primary' 
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`Property ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-1 right-1">
-                        <Badge variant="secondary" className="text-xs p-1">
-                          <Image className="h-2 w-2" />
-                        </Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <PropertyPhotoGallery 
+            images={property.images || []} 
+            title={property.title}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
