@@ -170,22 +170,6 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
               </div>
             )}
 
-            {/* Display Videos */}
-            {request.videos && request.videos.length > 0 && (
-              <div className="mb-4">
-                <p className="font-medium mb-2">Videos:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {request.videos.map((video, index) => (
-                    <video
-                      key={index}
-                      src={video}
-                      controls
-                      className="w-full h-32 rounded border"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
 
             {request.status === 'deletion_requested' && onApproveDeletion && (
               <div className="flex items-center gap-2 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">

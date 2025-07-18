@@ -63,7 +63,7 @@ export const transformDatabaseProperty = (dbProperty: any): Property => {
     is_hot_deal: dbProperty.is_hot_deal || false,
     amenities,
     images: images.length > 0 ? images : ['/placeholder.svg'],
-    videos: videos || [],
+    
     qr_code: dbProperty.qr_code || '',
     owner_id: dbProperty.owner_id,
     is_approved: dbProperty.is_approved,

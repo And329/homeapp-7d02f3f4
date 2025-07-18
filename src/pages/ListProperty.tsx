@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
-import PropertyVideoUpload from '@/components/PropertyVideoUpload';
+
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import EmiratesSelector from '@/components/EmiratesSelector';
 
@@ -42,7 +42,7 @@ const ListProperty = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [propertyImages, setPropertyImages] = useState<string[]>([]);
-  const [propertyVideos, setPropertyVideos] = useState<string[]>([]);
+  
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [selectedEmirate, setSelectedEmirate] = useState('');
@@ -113,7 +113,7 @@ const ListProperty = () => {
           property_type: data.propertyType,
           amenities: selectedAmenities,
           images: propertyImages,
-          videos: propertyVideos,
+          
           contact_name: data.contactName,
           contact_email: data.contactEmail,
           contact_phone: data.contactPhone || null,
@@ -130,7 +130,7 @@ const ListProperty = () => {
       form.reset();
       setSelectedAmenities([]);
       setPropertyImages([]);
-      setPropertyVideos([]);
+      
       setLatitude(null);
       setLongitude(null);
       setSelectedEmirate('');
@@ -350,11 +350,6 @@ const ListProperty = () => {
                   onImagesChange={setPropertyImages}
                 />
 
-                {/* Videos */}
-                <PropertyVideoUpload
-                  videos={propertyVideos}
-                  onVideosChange={setPropertyVideos}
-                />
 
                 {/* Contact Information */}
                 <div className="border-t pt-6">

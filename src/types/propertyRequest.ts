@@ -16,7 +16,7 @@ export interface PropertyRequest {
   property_type: string | null;
   amenities: any | null; // Json type from Supabase
   images: any | null; // Json type from Supabase  
-  videos: any | null; // Json type from Supabase
+  
   contact_name: string;
   contact_email: string;
   contact_phone: string | null;

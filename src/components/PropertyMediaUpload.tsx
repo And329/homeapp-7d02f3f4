@@ -1,25 +1,19 @@
-
 import React, { useState } from 'react';
-import { Upload, X, Image, Video, AlertTriangle, Loader2, BarChart3 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import { Upload, X, Image, AlertTriangle, Loader2, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
 import { useDirectUpload } from '@/hooks/useDirectUpload';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyMediaUploadProps {
   images: string[];
-  videos: string[];
   onImagesChange: (images: string[]) => void;
-  onVideosChange: (videos: string[]) => void;
 }
 
 const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
   images,
-  videos,
   onImagesChange,
-  onVideosChange,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
@@ -47,17 +41,16 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         const batchPromises = batch.map(async (file, batchIndex) => {
           const globalIndex = i + batchIndex;
           const isImage = file.type.startsWith('image/');
-          const isVideo = file.type.startsWith('video/');
 
-          if (!isImage && !isVideo) {
+          if (!isImage) {
             console.warn(`Skipping unsupported file: ${file.name}`);
-            return { success: false, error: `${file.name} is not a supported image or video file.` };
+            return { success: false, error: `${file.name} is not a supported image file.` };
           }
 
           console.log('Starting optimized upload for file:', file.name, 'Type:', file.type, 'Size:', Math.round(file.size / 1024 / 1024) + 'MB');
 
           // Show compression warning for very large files
-          if (file.size > 50 * 1024 * 1024) {
+          if (file.size > 20 * 1024 * 1024) {
             toast({
               title: "Large file detected",
               description: `${file.name} is ${Math.round(file.size / 1024 / 1024)}MB. Upload may take a moment.`,
@@ -67,8 +60,8 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           try {
             // Use direct upload for better performance
             const uploadResult = await uploadFile(file, {
-              maxSize: isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024, // 100MB for videos, 20MB for images
-              allowedTypes: isImage ? ['image/'] : ['video/'],
+              maxSize: 20 * 1024 * 1024, // 20MB for images
+              allowedTypes: ['image/'],
               bucket: 'property-media'
             });
 
@@ -98,15 +91,12 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       
       // Process results
       const newImages: string[] = [];
-      const newVideos: string[] = [];
       const errors: string[] = [];
 
       results.forEach(result => {
         if (result.success) {
           if (result.isImage) {
             newImages.push(result.url);
-          } else {
-            newVideos.push(result.url);
           }
         } else {
           errors.push(result.error);
@@ -129,18 +119,12 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         console.log('PropertyMediaUpload: Updating images:', newImages);
         onImagesChange([...images, ...newImages]);
       }
-      if (newVideos.length > 0) {
-        console.log('PropertyMediaUpload: Updating videos:', newVideos);
-        console.log('PropertyMediaUpload: Current videos:', videos);
-        console.log('PropertyMediaUpload: New combined videos:', [...videos, ...newVideos]);
-        onVideosChange([...videos, ...newVideos]);
-      }
 
-      const successCount = newImages.length + newVideos.length;
+      const successCount = newImages.length;
       if (successCount > 0) {
         toast({
           title: "Upload successful",
-          description: `${successCount} file(s) uploaded successfully using optimized method.`,
+          description: `${successCount} image(s) uploaded successfully.`,
         });
       }
     } catch (error) {
@@ -163,26 +147,18 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
     onImagesChange(updatedImages);
   };
 
-  const removeVideo = (index: number) => {
-    const updatedVideos = videos.filter((_, i) => i !== index);
-    onVideosChange(updatedVideos);
-  };
-
-  const totalFiles = images.length + videos.length;
+  const totalFiles = images.length;
   const hasActiveUploads = Object.keys(uploadProgress).length > 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium text-gray-700">
-          Photos & Videos
+          Photos
         </label>
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Badge variant="outline" className="text-xs">
             {images.length} Photos
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            {videos.length} Videos
           </Badge>
           {hasActiveUploads && (
             <Badge variant="secondary" className="text-xs flex items-center gap-1">
@@ -212,7 +188,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
         <input
           type="file"
-          accept="image/*,video/*"
+          accept="image/*"
           multiple
           onChange={handleFileUpload}
           className="hidden"
@@ -229,10 +205,10 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             <Upload className="h-8 w-8 text-gray-400" />
           )}
           <div className="text-sm font-medium text-gray-900">
-            {uploading ? 'Uploading with optimized method...' : 'Click to upload photos & videos'}
+            {uploading ? 'Uploading images...' : 'Click to upload photos'}
           </div>
           <div className="text-xs text-gray-500">
-            Images: JPG, PNG, WebP (max 20MB) • Videos: MP4, WebM, MOV (max 100MB)
+            Images: JPG, PNG, WebP (max 20MB each)
           </div>
           <div className="text-xs text-blue-600 font-medium">
             ⚡ Using direct upload for faster speeds
@@ -245,7 +221,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="text-xs text-blue-800">
           <strong>Optimized Upload:</strong> Using direct HTTP upload for faster performance. 
-          Large files are automatically chunked for reliable transfer. Videos over 50MB will show a progress indicator.
+          Large files are automatically chunked for reliable transfer.
         </div>
       </div>
 
@@ -279,37 +255,6 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
               </Button>
             </div>
           ))}
-
-          {/* Videos */}
-          {videos.map((video, index) => (
-            <div key={`video-${index}`} className="relative group">
-              <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                <video
-                  src={video}
-                  className="w-full h-full object-cover"
-                  preload="metadata"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                  <Video className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div className="absolute top-2 left-2">
-                <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                  <Video className="h-3 w-3" />
-                  Video
-                </Badge>
-              </div>
-              <Button
-                type="button"
-                onClick={() => removeVideo(index)}
-                className="absolute top-2 right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                variant="destructive"
-                size="sm"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
         </div>
       )}
 
@@ -317,9 +262,8 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         <div className="text-center py-8 text-gray-500">
           <div className="flex items-center justify-center gap-4 mb-2">
             <Image className="h-6 w-6" />
-            <Video className="h-6 w-6" />
           </div>
-          <p className="text-sm">No photos or videos uploaded yet</p>
+          <p className="text-sm">No photos uploaded yet</p>
         </div>
       )}
     </div>

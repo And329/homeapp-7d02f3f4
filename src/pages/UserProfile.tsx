@@ -279,7 +279,7 @@ const UserProfile = () => {
                         is_hot_deal: false,
                         amenities: Array.isArray(request.amenities) ? request.amenities : [],
                         images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
-                        videos: Array.isArray(request.videos) ? request.videos : [],
+                        
                         qr_code: request.qr_code || '',
                         owner_id: request.user_id,
                         is_approved: request.status === 'approved',

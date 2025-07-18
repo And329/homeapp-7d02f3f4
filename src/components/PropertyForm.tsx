@@ -36,7 +36,6 @@ interface FormData {
   is_hot_deal: boolean;
   amenities: string[];
   images: string[];
-  videos: string[];
   qr_code: string;
   contact_name: string;
   contact_email: string;
@@ -62,7 +61,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     is_hot_deal: false,
     amenities: [],
     images: [],
-    videos: [],
     qr_code: '',
     contact_name: '',
     contact_email: '',
@@ -94,7 +92,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: property.is_hot_deal || false,
         amenities: Array.isArray(property.amenities) ? property.amenities : [],
         images: Array.isArray(property.images) ? property.images : [],
-        videos: Array.isArray(property.videos) ? property.videos : [],
         qr_code: property.qr_code || '',
         contact_name: property.contact_name || '',
         contact_email: property.contact_email || '',
@@ -120,7 +117,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: false,
         amenities: [],
         images: [],
-        videos: [],
         qr_code: '',
         contact_name: '',
         contact_email: '',
@@ -178,7 +174,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         is_hot_deal: formData.is_hot_deal,
         amenities: formData.amenities,
         images: formData.images,
-        videos: formData.videos,
         qr_code: formData.qr_code.trim(),
         contact_name: formData.contact_name.trim(),
         contact_email: formData.contact_email.trim(),
@@ -252,10 +247,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     setFormData(prev => ({ ...prev, images }));
   };
 
-  const handleVideosChange = (videos: string[]) => {
-    console.log('PropertyForm: Videos changed to:', videos.length, 'videos');
-    setFormData(prev => ({ ...prev, videos }));
-  };
 
   const handleEmirateChange = (emirate: string) => {
     console.log('PropertyForm: Emirate changed to:', emirate);
@@ -503,9 +494,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
           <div className="md:col-span-2">
             <PropertyMediaUpload
               images={formData.images}
-              videos={formData.videos}
               onImagesChange={handleImagesChange}
-              onVideosChange={handleVideosChange}
             />
           </div>
 

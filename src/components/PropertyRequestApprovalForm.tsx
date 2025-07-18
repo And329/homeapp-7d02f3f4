@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import PropertyAmenities from '@/components/PropertyAmenities';
 import PropertyImageUpload from '@/components/PropertyImageUpload';
-import PropertyVideoUpload from '@/components/PropertyVideoUpload';
 import PropertyLocationPicker from '@/components/PropertyLocationPicker';
 import QRCodeUpload from '@/components/QRCodeUpload';
 import { PropertyRequest } from '@/types/propertyRequest';
@@ -35,7 +34,6 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     description: request.description || '',
     amenities: request.amenities || [],
     images: request.images || [],
-    videos: request.videos || [],
     qr_code: request.qr_code || '',
     contact_name: request.contact_name || '',
     contact_email: request.contact_email || '',
@@ -73,7 +71,6 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         description: formData.description,
         amenities: formData.amenities,
         images: formData.images,
-        videos: formData.videos,
         qr_code: formData.qr_code,
         contact_name: formData.contact_name,
         contact_email: formData.contact_email,
@@ -117,9 +114,6 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     setFormData(prev => ({ ...prev, qr_code: qrCode }));
   };
 
-  const handleVideosChange = (videos: string[]) => {
-    setFormData(prev => ({ ...prev, videos }));
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -327,10 +321,6 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
             onImagesChange={handleImagesChange}
           />
 
-          <PropertyVideoUpload
-            videos={formData.videos}
-            onVideosChange={handleVideosChange}
-          />
 
           <QRCodeUpload
             qrCode={formData.qr_code}

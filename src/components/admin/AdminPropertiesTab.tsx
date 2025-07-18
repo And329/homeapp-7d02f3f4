@@ -292,7 +292,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               is_hot_deal: property.is_hot_deal || false,
               amenities: Array.isArray(property.amenities) ? property.amenities : [],
               images: Array.isArray(property.images) ? property.images : ['/placeholder.svg'],
-              videos: [],
+              
               qr_code: '',
               owner_id: undefined,
               is_approved: true,

@@ -18,7 +18,7 @@ export interface Property {
   is_hot_deal: boolean;
   amenities: string[];
   images: string[];
-  videos: string[];
+  
   qr_code: string;
   owner_id?: string;
   is_approved?: boolean;
@@ -47,7 +47,7 @@ export interface DatabaseProperty {
   is_hot_deal: boolean | null;
   amenities: any;
   images: any;
-  videos: any;
+  
   qr_code: string | null;
   owner_id: string | null;
   is_approved: boolean | null;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Play, Edit, Image, Video } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail, User, QrCode, Edit, Image } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -185,7 +185,7 @@ const PropertyDetails = () => {
         {/* Property Media Gallery */}
         <div className="mb-8">
           {/* Combined Media */}
-          {((property.images && property.images.length > 0) || (property.videos && property.videos.length > 0)) && (
+          {(property.images && property.images.length > 0) && (
             <div>
               {/* Main Display */}
               <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4 bg-muted">
@@ -198,29 +198,14 @@ const PropertyDetails = () => {
                     />
                     <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
                       <Image className="h-4 w-4" />
-                      Photo {selectedImageIndex + 1} of {(property.images?.length || 0) + (property.videos?.length || 0)}
-                    </div>
-                  </>
-                ) : property.videos && property.videos.length > 0 && (selectedImageIndex >= (property.images?.length || 0)) ? (
-                  <>
-                    <video
-                      controls
-                      className="w-full h-full object-cover"
-                      src={property.videos[selectedImageIndex - (property.images?.length || 0)]}
-                      preload="metadata"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <Play className="h-4 w-4" />
-                      Video {selectedImageIndex - (property.images?.length || 0) + 1} of {(property.images?.length || 0) + (property.videos?.length || 0)}
+                      Photo {selectedImageIndex + 1} of {property.images?.length || 0}
                     </div>
                   </>
                 ) : null}
               </div>
               
               {/* Media Thumbnails */}
-              {((property.images?.length || 0) + (property.videos?.length || 0)) > 1 && (
+              {(property.images?.length || 0) > 1 && (
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                   {/* Image Thumbnails */}
                   {property.images?.map((image, index) => (
@@ -245,36 +230,6 @@ const PropertyDetails = () => {
                       </div>
                     </button>
                   ))}
-                  
-                  {/* Video Thumbnails */}
-                  {property.videos?.map((video, index) => {
-                    const videoIndex = (property.images?.length || 0) + index;
-                    return (
-                      <button
-                        key={`video-${index}`}
-                        onClick={() => setSelectedImageIndex(videoIndex)}
-                        className={`aspect-square rounded-md overflow-hidden border-2 transition-colors relative ${
-                          selectedImageIndex === videoIndex 
-                            ? 'border-primary' 
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <video
-                          src={video}
-                          className="w-full h-full object-cover"
-                          preload="metadata"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                          <Play className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="absolute top-1 right-1">
-                          <Badge variant="secondary" className="text-xs p-1">
-                            <Video className="h-2 w-2" />
-                          </Badge>
-                        </div>
-                      </button>
-                    );
-                  })}
                 </div>
               )}
             </div>

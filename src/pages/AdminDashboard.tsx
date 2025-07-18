@@ -159,7 +159,7 @@ const AdminDashboard = () => {
       is_hot_deal: originalProperty.is_hot_deal || false,
       amenities: Array.isArray(originalProperty.amenities) ? originalProperty.amenities as string[] : [],
       images: Array.isArray(originalProperty.images) ? originalProperty.images as string[] : [],
-      videos: Array.isArray(originalProperty.videos) ? originalProperty.videos as string[] : [],
+      
       qr_code: originalProperty.qr_code || '',
       owner_id: originalProperty.owner_id || undefined,
       is_approved: originalProperty.is_approved || false,
