@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { PropertyRequest } from '@/types/propertyRequest';
-import { Eye, CheckCircle, XCircle, MessageSquare, Trash2 } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, MessageSquare, Trash2, Search } from 'lucide-react';
 
 interface AdminRequestsTabProps {
   propertyRequests: PropertyRequest[];
@@ -36,6 +37,7 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
   onReviewRequest,
   onApproveDeletion,
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -64,6 +66,16 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     );
   }
 
+  // Filter property requests based on search term
+  const filteredRequests = propertyRequests.filter(request =>
+    request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.contact_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (propertyRequests.length === 0) {
     return (
       <Card>
@@ -76,7 +88,25 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {propertyRequests.map((request) => (
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Search requests by title, location, contact, status, or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {filteredRequests.length === 0 && propertyRequests.length > 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-gray-500">No requests match your search.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        filteredRequests.map((request) => (
         <Card key={request.id}>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -242,7 +272,8 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
             )}
           </CardContent>
         </Card>
-      ))}
+        ))
+      )}
     </div>
   );
 };

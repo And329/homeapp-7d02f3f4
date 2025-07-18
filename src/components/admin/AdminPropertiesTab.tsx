@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Map, Edit, Trash2, User } from 'lucide-react';
+import { Plus, Map, Edit, Trash2, User, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -183,6 +183,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   onDeleteProperty,
 }) => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   // Get properties with owner IDs for contact editing
   const { data: propertiesWithOwners } = useQuery({
     queryKey: ['admin-properties-with-owners'],
@@ -206,9 +207,28 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
     navigate(`/properties/${propertyId}`);
   };
 
+  // Filter properties based on search term
+  const filteredProperties = properties.filter(property =>
+    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 space-y-4">
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search properties by title, location, or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
         <Button
           onClick={onAddProperty}
           className="flex items-center gap-2"
@@ -217,20 +237,21 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
           Add New Property
         </Button>
 
-        <Button
-          onClick={() => setShowMap(!showMap)}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Map className="h-4 w-4" />
-          {showMap ? 'Hide Map' : 'Show Map'}
-        </Button>
+          <Button
+            onClick={() => setShowMap(!showMap)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Map className="h-4 w-4" />
+            {showMap ? 'Hide Map' : 'Show Map'}
+          </Button>
+        </div>
       </div>
 
       {showMap && (
         <div className="mb-6">
           <PropertyMap
-            properties={properties.map(p => ({
+            properties={filteredProperties.map(p => ({
               id: p.id,
               title: p.title,
               location: p.location,
@@ -251,7 +272,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => {
+          {filteredProperties.map((property) => {
             const transformedProperty: Property = {
               id: property.id,
               title: property.title || 'Untitled Property',
@@ -321,6 +342,12 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               </div>
             );
           })}
+
+          {filteredProperties.length === 0 && properties.length > 0 && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">No properties match your search.</p>
+            </div>
+          )}
 
           {properties.length === 0 && (
             <div className="col-span-full text-center py-12">
