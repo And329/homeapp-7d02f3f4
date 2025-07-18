@@ -79,16 +79,9 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
               return { success: false, error: `Failed to upload ${file.name}` };
             }
 
-            // Get the public URL for the uploaded file
-            const { data } = await supabase.storage
-              .from('property-media')
-              .getPublicUrl(uploadResult.url);
-
-            console.log('Public URL data for', file.name, ':', data);
-
             return {
               success: true,
-              url: data.publicUrl,
+              url: uploadResult.url, // This is already the full public URL
               isImage,
               fileName: file.name
             };
