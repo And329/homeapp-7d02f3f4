@@ -164,6 +164,9 @@ const AdminDashboard = () => {
       owner_id: originalProperty.owner_id || undefined,
       is_approved: originalProperty.is_approved || false,
       created_at: originalProperty.created_at || undefined,
+      contact_name: originalProperty.contact_name || '',
+      contact_email: originalProperty.contact_email || '',
+      contact_phone: originalProperty.contact_phone || '',
     };
 
     console.log('AdminDashboard: Setting property for edit:', propertyForEdit);
