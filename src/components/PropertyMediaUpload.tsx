@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X, Image, Loader2, BarChart3 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -262,7 +262,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
               </div>
               <div className="absolute top-2 left-2">
                 <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                  <Image className="h-3 w-3" />
+                  <ImageIcon className="h-3 w-3" />
                   Photo
                 </Badge>
               </div>
@@ -283,7 +283,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       {totalFiles === 0 && (
         <div className="text-center py-8 text-gray-500">
           <div className="flex items-center justify-center gap-4 mb-2">
-            <Image className="h-6 w-6" />
+            <ImageIcon className="h-6 w-6" />
           </div>
           <p className="text-sm">No photos uploaded yet</p>
         </div>
