@@ -509,6 +509,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          parking: number | null
           price: number
           property_type: string | null
           qr_code: string | null
@@ -519,6 +520,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           videos: Json | null
+          year_built: number | null
         }
         Insert: {
           amenities?: Json | null
@@ -538,6 +540,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          parking?: number | null
           price: number
           property_type?: string | null
           qr_code?: string | null
@@ -548,6 +551,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           videos?: Json | null
+          year_built?: number | null
         }
         Update: {
           amenities?: Json | null
@@ -567,6 +571,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          parking?: number | null
           price?: number
           property_type?: string | null
           qr_code?: string | null
@@ -577,6 +582,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           videos?: Json | null
+          year_built?: number | null
         }
         Relationships: []
       }

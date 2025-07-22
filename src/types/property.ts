@@ -56,4 +56,5 @@ export interface DatabaseProperty {
   contact_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  admin_notes: string | null;
 }
