@@ -17,11 +17,57 @@ export interface UploadProgress {
   percentage: number;
 }
 
+export interface UploadTiming {
+  compressionTime: number;
+  uploadTime: number;
+  totalTime: number;
+  fileSize: number;
+  compressedSize: number;
+}
+
 export const useDirectUpload = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, UploadProgress>>({});
+
+  const logTiming = (timing: UploadTiming, fileName: string) => {
+    console.log(`Upload Performance for ${fileName}:`, {
+      compressionTime: `${timing.compressionTime}ms`,
+      uploadTime: `${timing.uploadTime}ms`,
+      totalTime: `${timing.totalTime}ms`,
+      originalSize: `${Math.round(timing.fileSize / 1024)}KB`,
+      compressedSize: `${Math.round(timing.compressedSize / 1024)}KB`,
+      compressionRatio: `${Math.round((1 - timing.compressedSize / timing.fileSize) * 100)}%`,
+      uploadSpeed: `${Math.round(timing.compressedSize / 1024 / (timing.uploadTime / 1000))}KB/s`,
+      domain: window.location.hostname
+    });
+  };
+
+  const retryUpload = async (
+    uploadFn: () => Promise<any>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ) => {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await uploadFn();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Upload attempt ${attempt + 1} failed:`, error);
+        
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+          console.log(`Retrying in ${Math.round(delay)}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
+  };
 
   const uploadFile = useCallback(async (
     file: File,
@@ -31,7 +77,8 @@ export const useDirectUpload = () => {
       bucket?: string;
     } = {}
   ): Promise<DirectUploadResult | null> => {
-    console.log('Upload attempt for:', file.name, 'User:', user?.id ? 'logged in' : 'not logged in');
+    const startTime = performance.now();
+    console.log('Upload started for:', file.name, 'Domain:', window.location.hostname, 'Size:', Math.round(file.size / 1024) + 'KB');
     
     if (!user) {
       console.error('No user found - authentication required');
@@ -77,7 +124,7 @@ export const useDirectUpload = () => {
       const filePath = `${user.id}/${fileName}`;
       const fileId = `${file.name}-${Date.now()}`;
 
-      console.log(`Uploading ${file.name} (${Math.round(file.size / 1024 / 1024)}MB) to ${bucket}/${filePath}`);
+      console.log(`Starting upload: ${file.name} (${Math.round(file.size / 1024)}KB) to ${bucket}/${filePath}`);
 
       // Set initial progress
       setUploadProgress(prev => ({
@@ -85,26 +132,89 @@ export const useDirectUpload = () => {
         [fileId]: { loaded: 0, total: file.size, percentage: 0 }
       }));
 
-      // Use Supabase client for optimized upload
-      const { error, data } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
+      let fileToUpload = file;
+      const compressionStart = performance.now();
+      
+      // Only compress large images to avoid unnecessary processing for small files
+      if (file.type.startsWith('image/') && file.size > 5 * 1024 * 1024) { // 5MB threshold
+        console.log('Compressing large image:', file.name);
+        fileToUpload = await new Promise<File>((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = document.createElement('img') as HTMLImageElement;
+          
+          img.onload = () => {
+            const maxSize = 1920;
+            let { width, height } = img;
+            
+            if (width > height && width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            } else if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            ctx?.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            }, 'image/jpeg', 0.8);
+          };
+          
+          img.src = URL.createObjectURL(file);
         });
+      }
+
+      const compressionTime = performance.now() - compressionStart;
+      const uploadStart = performance.now();
+
+      // Optimized upload with retry logic
+      const { error, data } = await retryUpload(async () => {
+        return await supabase.storage
+          .from(bucket)
+          .upload(filePath, fileToUpload, {
+            cacheControl: '3600',
+            upsert: false,
+            // Optimize for better performance
+            duplex: 'half'
+          });
+      });
+
+      const uploadTime = performance.now() - uploadStart;
+      const totalTime = performance.now() - startTime;
+
+      // Log detailed timing information
+      logTiming({
+        compressionTime,
+        uploadTime,
+        totalTime,
+        fileSize: file.size,
+        compressedSize: fileToUpload.size
+      }, file.name);
 
       if (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error after retries:', error);
         throw new Error(error.message);
       }
 
       // Update progress to completion
       setUploadProgress(prev => ({
         ...prev,
-        [fileId]: { loaded: file.size, total: file.size, percentage: 100 }
+        [fileId]: { loaded: fileToUpload.size, total: fileToUpload.size, percentage: 100 }
       }));
 
-      // Clean up progress tracking after a short delay
+      // Clean up progress tracking
       setTimeout(() => {
         setUploadProgress(prev => {
           const { [fileId]: removed, ...rest } = prev;
@@ -112,7 +222,7 @@ export const useDirectUpload = () => {
         });
       }, 1000);
 
-      // Get the public URL for the uploaded file
+      // Get the public URL
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
@@ -124,10 +234,10 @@ export const useDirectUpload = () => {
         size: file.size
       };
 
-      console.log('Upload successful for', file.name);
+      console.log(`Upload completed successfully for ${file.name} in ${Math.round(totalTime)}ms`);
       return result;
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Upload failed after all retries:', error);
       toast({
         title: "Upload failed",
         description: `Failed to upload ${file.name}: ${error.message}`,

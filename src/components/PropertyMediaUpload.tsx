@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X, Image as ImageIcon, Loader2, BarChart3 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, BarChart3, Wifi } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useDirectUpload } from '@/hooks/useDirectUpload';
+import { logNetworkDiagnostics, testSupabaseConnection } from '@/utils/networkDiagnostics';
 
 interface PropertyMediaUploadProps {
   images: string[];
@@ -17,50 +18,29 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
   onImagesChange,
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [connectionLatency, setConnectionLatency] = useState<number | null>(null);
   const { toast } = useToast();
   const { uploadFile, uploadProgress } = useDirectUpload();
 
-  // Compress image before upload
-  const compressImage = (file: File): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = document.createElement('img') as HTMLImageElement;
+  // Test connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      logNetworkDiagnostics();
+      const latency = await testSupabaseConnection();
+      setConnectionLatency(latency);
       
-      img.onload = () => {
-        // Calculate new dimensions (max 1920px width/height)
-        const maxSize = 1920;
-        let { width, height } = img;
-        
-        if (width > height && width > maxSize) {
-          height = (height * maxSize) / width;
-          width = maxSize;
-        } else if (height > maxSize) {
-          width = (width * maxSize) / height;
-          height = maxSize;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress
-        ctx?.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const compressedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          } else {
-            resolve(file);
-          }
-        }, 'image/jpeg', 0.8);
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  };
+      if (latency > 2000) {
+        console.warn('High latency detected:', latency + 'ms');
+        toast({
+          title: "Slow connection detected",
+          description: `Connection latency: ${Math.round(latency)}ms. Uploads may be slower than usual.`,
+          variant: "default",
+        });
+      }
+    };
+    
+    testConnection();
+  }, [toast]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -70,12 +50,13 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 
     try {
       const filesArray = Array.from(files);
-      console.log(`Starting upload of ${filesArray.length} files`);
+      console.log(`Starting batch upload of ${filesArray.length} files on domain: ${window.location.hostname}`);
       
       const results = [];
       
-      // Process files with concurrency limit
-      const concurrencyLimit = 2;
+      // Process files with reduced concurrency for better reliability
+      const concurrencyLimit = window.location.hostname.includes('lovable.dev') ? 3 : 1;
+      console.log(`Using concurrency limit: ${concurrencyLimit}`);
       
       for (let i = 0; i < filesArray.length; i += concurrencyLimit) {
         const batch = filesArray.slice(i, i + concurrencyLimit);
@@ -88,18 +69,10 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             return { success: false, error: `${file.name} is not a supported image file.` };
           }
 
-          console.log('Starting upload for file:', file.name, 'Type:', file.type, 'Size:', Math.round(file.size / 1024 / 1024) + 'MB');
+          console.log(`Processing file: ${file.name} (${Math.round(file.size / 1024)}KB)`);
 
           try {
-            // Compress image if it's large
-            let fileToUpload = file;
-            if (file.size > 2 * 1024 * 1024) { // Compress files larger than 2MB
-              console.log('Compressing large image:', file.name);
-              fileToUpload = await compressImage(file);
-              console.log('Compressed size:', Math.round(fileToUpload.size / 1024 / 1024) + 'MB');
-            }
-
-            const uploadResult = await uploadFile(fileToUpload, {
+            const uploadResult = await uploadFile(file, {
               maxSize: 20 * 1024 * 1024, // 20MB max
               allowedTypes: ['image/'],
               bucket: 'property-media'
@@ -201,6 +174,15 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
               Uploading
             </Badge>
           )}
+          {connectionLatency !== null && (
+            <Badge 
+              variant={connectionLatency > 1000 ? "destructive" : "outline"} 
+              className="text-xs flex items-center gap-1"
+            >
+              <Wifi className="h-3 w-3" />
+              {Math.round(connectionLatency)}ms
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -245,6 +227,11 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           <div className="text-xs text-gray-500">
             Images: JPG, PNG, WebP (max 20MB each)
           </div>
+          {connectionLatency !== null && connectionLatency > 1000 && (
+            <div className="text-xs text-orange-600">
+              Slow connection detected - uploads may take longer
+            </div>
+          )}
         </label>
       </div>
 
