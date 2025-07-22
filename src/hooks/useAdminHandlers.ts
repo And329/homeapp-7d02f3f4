@@ -209,6 +209,8 @@ export const useAdminHandlers = (
           bathrooms: updatedData.bathrooms,
           area: updatedData.area,
           property_type: updatedData.property_type,
+          year_built: updatedData.year_built,
+          parking: updatedData.parking,
           type: updatedData.type,
           description: updatedData.description,
           amenities: updatedData.amenities,

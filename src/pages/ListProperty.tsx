@@ -26,6 +26,8 @@ const propertyRequestSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   emirate: z.string().min(1, 'Emirate is required'),
   area: z.string().min(1, 'Area is required'),
+  yearBuilt: z.string().optional(),
+  parkingSpaces: z.string().optional(),
   bedrooms: z.string().min(1, 'Number of bedrooms is required'),
   bathrooms: z.string().min(1, 'Number of bathrooms is required'),
   type: z.enum(['rent', 'sale']),
@@ -58,6 +60,8 @@ const ListProperty = () => {
       location: '',
       emirate: '',
       area: '',
+      yearBuilt: '',
+      parkingSpaces: '',
       bedrooms: '',
       bathrooms: '',
       type: 'sale',
@@ -107,6 +111,8 @@ const ListProperty = () => {
           latitude: latitude,
           longitude: longitude,
           area: parseInt(data.area),
+          year_built: data.yearBuilt ? parseInt(data.yearBuilt) : null,
+          parking: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
           bedrooms: parseInt(data.bedrooms),
           bathrooms: parseInt(data.bathrooms),
           type: data.type,
@@ -226,7 +232,7 @@ const ListProperty = () => {
                 />
 
                 {/* Property Specifications */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
                     name="price"
@@ -251,16 +257,32 @@ const ListProperty = () => {
                       <FormItem>
                         <FormLabel className="flex items-center">
                           <Square className="h-4 w-4 mr-1" />
-                          Area (sq ft) *
+                          Area (sq m) *
                         </FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="1200" {...field} />
+                          <Input type="number" placeholder="120" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="yearBuilt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Year Built</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1900" max={new Date().getFullYear()} placeholder="2020" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
                     name="bedrooms"
@@ -283,6 +305,20 @@ const ListProperty = () => {
                         <FormLabel>Bathrooms *</FormLabel>
                         <FormControl>
                           <Input type="number" min="0" max="10" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="parkingSpaces"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Parking Spaces</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="2" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

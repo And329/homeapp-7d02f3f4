@@ -30,6 +30,8 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     bathrooms: request.bathrooms?.toString() || '',
     area: request.area?.toString() || '',
     property_type: request.property_type || 'Apartment',
+    year_built: '',
+    parking: '',
     type: request.type || 'rent',
     description: request.description || '',
     amenities: request.amenities || [],
@@ -38,6 +40,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
     contact_name: request.contact_name || '',
     contact_email: request.contact_email || '',
     contact_phone: request.contact_phone || '',
+    admin_notes: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -67,6 +70,8 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         bathrooms: parseInt(formData.bathrooms),
         area: formData.area ? parseInt(formData.area) : null,
         property_type: formData.property_type,
+        year_built: formData.year_built ? parseInt(formData.year_built) : null,
+        parking: formData.parking ? parseInt(formData.parking) : null,
         type: formData.type,
         description: formData.description,
         amenities: formData.amenities,
@@ -75,6 +80,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         contact_name: formData.contact_name,
         contact_email: formData.contact_email,
         contact_phone: formData.contact_phone,
+        admin_notes: formData.admin_notes,
       };
 
       console.log('Submitting approval with data:', updatedData);
@@ -240,7 +246,7 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Area (sq ft)
+                Area (sq m)
               </label>
               <input
                 type="number"
@@ -249,7 +255,38 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
                 onChange={handleChange}
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Property area in square feet"
+                placeholder="Property area in square meters"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year Built
+              </label>
+              <input
+                type="number"
+                name="year_built"
+                value={formData.year_built}
+                onChange={handleChange}
+                min="1900"
+                max={new Date().getFullYear()}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Year the property was built"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Parking Spaces
+              </label>
+              <input
+                type="number"
+                name="parking"
+                value={formData.parking}
+                onChange={handleChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Number of parking spaces"
               />
             </div>
           </div>
@@ -332,6 +369,20 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
             selectedAmenities={formData.amenities}
             onAmenitiesChange={(amenities) => setFormData(prev => ({ ...prev, amenities }))}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Admin Notes (Internal Only)
+            </label>
+            <textarea
+              name="admin_notes"
+              value={formData.admin_notes}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Internal notes for this property (visible only to admins)"
+            />
+          </div>
 
           <div className="flex items-center justify-end space-x-4 pt-4 border-t">
             <Button
