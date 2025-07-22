@@ -25,7 +25,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const img = document.createElement('img') as HTMLImageElement;
       
       img.onload = () => {
         // Calculate new dimensions (max 1920px width/height)
