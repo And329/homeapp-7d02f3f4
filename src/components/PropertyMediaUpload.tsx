@@ -211,7 +211,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             Images: JPG, PNG, WebP (max 20MB each)
           </div>
           <div className="text-xs text-blue-600 font-medium">
-            ⚡ Using direct upload for faster speeds
+            ⚡ Optimized for faster upload speeds
           </div>
         </label>
       </div>
@@ -220,7 +220,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
         <div className="text-xs text-blue-800">
-          <strong>Optimized Upload:</strong> Using direct HTTP upload for faster performance. 
+          <strong>Optimized Upload:</strong> Enhanced upload performance for faster speeds.
           Large files are automatically chunked for reliable transfer.
         </div>
       </div>
