@@ -23,120 +23,6 @@ export const useDirectUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, UploadProgress>>({});
 
-  const getAuthHeaders = useCallback(async () => {
-    if (!user) return null;
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) return null;
-
-    return {
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3cnpwYXd1dmRxamludHloemttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNjkzMDYsImV4cCI6MjA2NTg0NTMwNn0.GnC-m7ke8NG6V_t8CgzHJbhq44lSK_XCXcNnbAs7Ha8'
-    };
-  }, [user]);
-
-  const uploadFileChunked = useCallback(async (
-    file: File,
-    bucket: string,
-    filePath: string,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<boolean> => {
-    const headers = await getAuthHeaders();
-    if (!headers) throw new Error('Authentication failed');
-
-    const chunkSize = 6 * 1024 * 1024; // 6MB chunks
-    const totalChunks = Math.ceil(file.size / chunkSize);
-    
-    // For small files, upload directly
-    if (file.size <= chunkSize) {
-      return uploadFileDirect(file, bucket, filePath, onProgress);
-    }
-
-    console.log(`Uploading large file ${file.name} in ${totalChunks} chunks`);
-
-    // For large files, use resumable upload (simplified approach)
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const xhr = new XMLHttpRequest();
-    
-    return new Promise((resolve, reject) => {
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable && onProgress) {
-          const progress = {
-            loaded: event.loaded,
-            total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100)
-          };
-          onProgress(progress);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(true);
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      });
-
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
-      });
-
-      xhr.open('POST', `https://jwrzpawuvdqjintyhzkm.supabase.co/storage/v1/object/${bucket}/${filePath}`);
-      
-      // Set headers
-      Object.entries(headers).forEach(([key, value]) => {
-        xhr.setRequestHeader(key, value);
-      });
-
-      xhr.send(formData);
-    });
-  }, [getAuthHeaders]);
-
-  const uploadFileDirect = useCallback(async (
-    file: File,
-    bucket: string,
-    filePath: string,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<boolean> => {
-    const headers = await getAuthHeaders();
-    if (!headers) throw new Error('Authentication failed');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    console.log(`Direct upload: ${file.name} to ${bucket}/${filePath}`);
-
-    const response = await fetch(
-      `https://jwrzpawuvdqjintyhzkm.supabase.co/storage/v1/object/${bucket}/${filePath}`,
-      {
-        method: 'POST',
-        headers,
-        body: formData,
-        duplex: 'half'
-      } as RequestInit
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Upload failed:', response.status, errorText);
-      throw new Error(`Upload failed: ${response.status} ${errorText}`);
-    }
-
-    // Simulate progress completion for direct uploads
-    if (onProgress) {
-      onProgress({
-        loaded: file.size,
-        total: file.size,
-        percentage: 100
-      });
-    }
-
-    return true;
-  }, [getAuthHeaders]);
-
   const uploadFile = useCallback(async (
     file: File,
     options: {
@@ -155,7 +41,7 @@ export const useDirectUpload = () => {
     }
 
     const {
-      maxSize = 100 * 1024 * 1024, // 100MB default for direct upload
+      maxSize = 100 * 1024 * 1024, // 100MB default
       allowedTypes,
       bucket = 'property-media'
     } = options;
@@ -188,26 +74,40 @@ export const useDirectUpload = () => {
       const filePath = `${user.id}/${fileName}`;
       const fileId = `${file.name}-${Date.now()}`;
 
-      // Track upload progress
-      const onProgress = (progress: UploadProgress) => {
-        setUploadProgress(prev => ({
-          ...prev,
-          [fileId]: progress
-        }));
-      };
+      console.log(`Uploading ${file.name} (${Math.round(file.size / 1024 / 1024)}MB) to ${bucket}/${filePath}`);
 
-      // Choose upload method based on file size
-      const uploadMethod = file.size > 6 * 1024 * 1024 ? uploadFileChunked : uploadFileDirect;
-      
-      console.log(`Using ${uploadMethod.name} for ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)`);
-      
-      await uploadMethod(file, bucket, filePath, onProgress);
+      // Set initial progress
+      setUploadProgress(prev => ({
+        ...prev,
+        [fileId]: { loaded: 0, total: file.size, percentage: 0 }
+      }));
 
-      // Clean up progress tracking
-      setUploadProgress(prev => {
-        const { [fileId]: removed, ...rest } = prev;
-        return rest;
-      });
+      // Use Supabase client for optimized upload
+      const { error, data } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw new Error(error.message);
+      }
+
+      // Update progress to completion
+      setUploadProgress(prev => ({
+        ...prev,
+        [fileId]: { loaded: file.size, total: file.size, percentage: 100 }
+      }));
+
+      // Clean up progress tracking after a short delay
+      setTimeout(() => {
+        setUploadProgress(prev => {
+          const { [fileId]: removed, ...rest } = prev;
+          return rest;
+        });
+      }, 1000);
 
       // Get the public URL for the uploaded file
       const { data: publicUrlData } = supabase.storage
@@ -221,10 +121,10 @@ export const useDirectUpload = () => {
         size: file.size
       };
 
-      console.log('Direct upload successful for', file.name);
+      console.log('Upload successful for', file.name);
       return result;
     } catch (error) {
-      console.error('Direct upload error:', error);
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: `Failed to upload ${file.name}: ${error.message}`,
@@ -234,7 +134,7 @@ export const useDirectUpload = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [user, toast, uploadFileChunked, uploadFileDirect]);
+  }, [user, toast]);
 
   return {
     uploadFile,

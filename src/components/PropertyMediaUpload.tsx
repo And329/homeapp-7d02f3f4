@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X, Image, AlertTriangle, Loader2, BarChart3 } from 'lucide-react';
+import { Upload, X, Image, Loader2, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -16,30 +17,70 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
   onImagesChange,
 }) => {
   const [uploading, setUploading] = useState(false);
-  const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
   const { toast } = useToast();
   const { uploadFile, uploadProgress } = useDirectUpload();
+
+  // Compress image before upload
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1920px width/height)
+        const maxSize = 1920;
+        let { width, height } = img;
+        
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    setFileProgress({});
 
     try {
       const filesArray = Array.from(files);
-      console.log(`Starting optimized parallel upload of ${filesArray.length} files`);
+      console.log(`Starting upload of ${filesArray.length} files`);
       
-      // Process files with concurrency limit to prevent overwhelming the browser
-      const concurrencyLimit = 3;
       const results = [];
+      
+      // Process files with concurrency limit
+      const concurrencyLimit = 2;
       
       for (let i = 0; i < filesArray.length; i += concurrencyLimit) {
         const batch = filesArray.slice(i, i + concurrencyLimit);
         
-        const batchPromises = batch.map(async (file, batchIndex) => {
-          const globalIndex = i + batchIndex;
+        const batchPromises = batch.map(async (file) => {
           const isImage = file.type.startsWith('image/');
 
           if (!isImage) {
@@ -47,26 +88,23 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
             return { success: false, error: `${file.name} is not a supported image file.` };
           }
 
-          console.log('Starting optimized upload for file:', file.name, 'Type:', file.type, 'Size:', Math.round(file.size / 1024 / 1024) + 'MB');
-
-          // Show compression warning for very large files
-          if (file.size > 20 * 1024 * 1024) {
-            toast({
-              title: "Large file detected",
-              description: `${file.name} is ${Math.round(file.size / 1024 / 1024)}MB. Upload may take a moment.`,
-            });
-          }
+          console.log('Starting upload for file:', file.name, 'Type:', file.type, 'Size:', Math.round(file.size / 1024 / 1024) + 'MB');
 
           try {
-            // Use direct upload for better performance
-            const uploadResult = await uploadFile(file, {
-              maxSize: 20 * 1024 * 1024, // 20MB for images
+            // Compress image if it's large
+            let fileToUpload = file;
+            if (file.size > 2 * 1024 * 1024) { // Compress files larger than 2MB
+              console.log('Compressing large image:', file.name);
+              fileToUpload = await compressImage(file);
+              console.log('Compressed size:', Math.round(fileToUpload.size / 1024 / 1024) + 'MB');
+            }
+
+            const uploadResult = await uploadFile(fileToUpload, {
+              maxSize: 20 * 1024 * 1024, // 20MB max
               allowedTypes: ['image/'],
               bucket: 'property-media'
             });
 
-            console.log('Optimized upload result for', file.name, ':', uploadResult);
-            
             if (!uploadResult) {
               console.error('Upload failed: uploadResult is null for', file.name);
               return { success: false, error: `Failed to upload ${file.name}` };
@@ -74,17 +112,16 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 
             return {
               success: true,
-              url: uploadResult.url, // This is now the full public URL from Supabase storage
+              url: uploadResult.url,
               isImage,
               fileName: file.name
             };
           } catch (error) {
-            console.error('Error in optimized upload for file:', file.name, error);
+            console.error('Error uploading file:', file.name, error);
             return { success: false, error: `Failed to upload ${file.name}: ${error.message}` };
           }
         });
 
-        // Wait for this batch to complete before starting the next
         const batchResults = await Promise.all(batchPromises);
         results.push(...batchResults);
       }
@@ -128,7 +165,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         });
       }
     } catch (error) {
-      console.error('Optimized upload error:', error);
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: "There was an error uploading your files. Please try again.",
@@ -136,8 +173,6 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       });
     } finally {
       setUploading(false);
-      setFileProgress({});
-      // Clear the input value to allow re-uploading the same file
       event.target.value = '';
     }
   };
@@ -210,17 +245,12 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
           <div className="text-xs text-gray-500">
             Images: JPG, PNG, WebP (max 20MB each)
           </div>
-          <div className="text-xs text-blue-600 font-medium">
-            ⚡ Optimized for faster upload speeds
-          </div>
         </label>
       </div>
-
 
       {/* Media Grid */}
       {totalFiles > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {/* Images */}
           {images.map((image, index) => (
             <div key={`image-${index}`} className="relative group">
               <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
