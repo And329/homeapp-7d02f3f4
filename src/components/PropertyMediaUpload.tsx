@@ -216,14 +216,6 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
         </label>
       </div>
 
-      {/* File size and performance info */}
-      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div className="text-xs text-blue-800">
-          <strong>Optimized Upload:</strong> Enhanced upload performance for faster speeds.
-          Large files are automatically chunked for reliable transfer.
-        </div>
-      </div>
 
       {/* Media Grid */}
       {totalFiles > 0 && (
