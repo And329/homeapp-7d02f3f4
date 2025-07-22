@@ -34,6 +34,7 @@ interface AdminProperty {
   location: string;
   bedrooms: number;
   bathrooms: number;
+  area: number | null;
   type: 'rent' | 'sale';
   is_hot_deal: boolean;
   description: string;
@@ -90,6 +91,7 @@ const AdminDashboard = () => {
     location: property.location || 'Unknown Location',
     bedrooms: property.bedrooms || 0,
     bathrooms: property.bathrooms || 0,
+    area: property.area || null,
     type: (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent' as 'rent' | 'sale',
     is_hot_deal: property.is_hot_deal || false,
     description: property.description || '',

@@ -161,7 +161,7 @@ const PropertyDetails = () => {
                 </div>
                 <div className="flex items-center">
                   <Square className="h-4 w-4 mr-1" />
-                  {property.area} sq ft
+                  {property.area ? `${property.area} m²` : 'N/A'}
                 </div>
               </div>
             </div>

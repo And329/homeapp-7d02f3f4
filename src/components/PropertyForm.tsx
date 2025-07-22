@@ -40,6 +40,7 @@ interface FormData {
   contact_name: string;
   contact_email: string;
   contact_phone: string;
+  admin_notes: string;
 }
 
 const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSuccess }) => {
@@ -65,6 +66,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
     contact_name: '',
     contact_email: '',
     contact_phone: '',
+    admin_notes: '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -96,6 +98,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         contact_name: property.contact_name || '',
         contact_email: property.contact_email || '',
         contact_phone: property.contact_phone || '',
+        admin_notes: property.admin_notes || '',
       });
     } else {
       // Reset form for new property
@@ -121,6 +124,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         contact_name: '',
         contact_email: '',
         contact_phone: '',
+        admin_notes: '',
       });
     }
   }, [property]);
@@ -178,6 +182,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         contact_name: formData.contact_name.trim(),
         contact_email: formData.contact_email.trim(),
         contact_phone: formData.contact_phone.trim(),
+        admin_notes: formData.admin_notes.trim(),
       };
 
       console.log('PropertyForm: Data to submit:', dataToSubmit);
@@ -392,7 +397,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Area (sq ft)
+                Area (m²)
               </label>
               <input
                 type="number"
@@ -508,6 +513,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
             selectedAmenities={formData.amenities}
             onAmenitiesChange={(amenities) => setFormData(prev => ({ ...prev, amenities }))}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Admin Notes (Internal Only)
+            </label>
+            <textarea
+              name="admin_notes"
+              value={formData.admin_notes}
+              onChange={handleChange}
+              rows={3}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Internal notes for this property (visible only to admins)"
+            />
+          </div>
 
           <div className="flex items-center">
             <input

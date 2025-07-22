@@ -19,6 +19,7 @@ interface AdminProperty {
   location: string;
   bedrooms: number;
   bathrooms: number;
+  area: number | null;
   type: 'rent' | 'sale';
   is_hot_deal: boolean;
   description: string;
@@ -283,7 +284,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               longitude: property.longitude,
               bedrooms: property.bedrooms || 0,
               bathrooms: property.bathrooms || 0,
-              area: 1000,
+              area: property.area || null,
               property_type: 'Apartment',
               year_built: null,
               parking: null,

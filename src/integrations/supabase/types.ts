@@ -391,6 +391,7 @@ export type Database = {
       }
       properties: {
         Row: {
+          admin_notes: string | null
           amenities: Json | null
           area: number | null
           bathrooms: number | null
@@ -420,6 +421,7 @@ export type Database = {
           year_built: number | null
         }
         Insert: {
+          admin_notes?: string | null
           amenities?: Json | null
           area?: number | null
           bathrooms?: number | null
@@ -449,6 +451,7 @@ export type Database = {
           year_built?: number | null
         }
         Update: {
+          admin_notes?: string | null
           amenities?: Json | null
           area?: number | null
           bathrooms?: number | null

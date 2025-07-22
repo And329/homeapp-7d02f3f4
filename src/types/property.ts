@@ -26,6 +26,7 @@ export interface Property {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  admin_notes?: string;
 }
 
 export interface DatabaseProperty {

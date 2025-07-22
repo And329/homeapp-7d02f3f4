@@ -83,7 +83,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
           <div className="flex items-center">
             <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.area} m²</span>
+            <span>{property.area ? `${property.area} m²` : 'N/A'}</span>
           </div>
         </div>
         
