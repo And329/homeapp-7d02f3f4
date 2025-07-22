@@ -31,7 +31,10 @@ export const useDirectUpload = () => {
       bucket?: string;
     } = {}
   ): Promise<DirectUploadResult | null> => {
+    console.log('Upload attempt for:', file.name, 'User:', user?.id ? 'logged in' : 'not logged in');
+    
     if (!user) {
+      console.error('No user found - authentication required');
       toast({
         title: "Authentication required",
         description: "You must be logged in to upload files.",
