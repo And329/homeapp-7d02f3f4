@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useUnits } from '@/contexts/UnitsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { transformDatabaseProperty } from '@/utils/propertyTransform';
+import { convertPrice } from '@/utils/unitConversion';
 import { Property } from '@/types/property';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -16,12 +18,18 @@ import { Map, Grid } from 'lucide-react';
 
 const Properties = () => {
   const [searchParams] = useSearchParams();
+  const { currency } = useUnits();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>(
     (searchParams.get('type') as 'rent' | 'sale') || 'all'
   );
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  
+  // Initialize price range based on currency
+  const getInitialPriceRange = (): [number, number] => {
+    return currency === 'AED' ? [0, 50000000] : [0, 15000000];
+  };
+  
+  const [priceRange, setPriceRange] = useState<[number, number]>(getInitialPriceRange());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMap, setShowMap] = useState(false);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState(
@@ -61,9 +69,10 @@ const Properties = () => {
     
     const matchesType = typeFilter === 'all' || property.type === typeFilter;
     
-    const matchesPrice = !minPrice && !maxPrice ? true :
-      (!minPrice || property.price >= parseInt(minPrice)) &&
-      (!maxPrice || property.price <= parseInt(maxPrice));
+    // Convert property price to current currency for comparison
+    const propertyPriceInCurrentCurrency = convertPrice(property.price, 'AED', currency);
+    const matchesPrice = propertyPriceInCurrentCurrency >= priceRange[0] && 
+                        propertyPriceInCurrentCurrency <= priceRange[1];
 
     const matchesPropertyType = propertyTypeFilter === 'all' || 
       property.property_type === propertyTypeFilter;
@@ -111,10 +120,8 @@ const Properties = () => {
           setSearchTerm={setSearchTerm}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
-          minPrice={minPrice}
-          setMinPrice={setMinPrice}
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
           viewMode={viewMode}
           setViewMode={setViewMode}
           resultsCount={filteredProperties.length}
