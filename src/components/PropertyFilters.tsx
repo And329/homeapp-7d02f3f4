@@ -183,7 +183,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 onValueChange={handleSliderChange}
                 min={getMinPrice()}
                 max={getMaxPrice()}
-                step={currency === 'AED' ? 10000 : 2500}
+                step={currency === 'AED' ? 1000 : 500}
                 className="w-full"
               />
             </div>
