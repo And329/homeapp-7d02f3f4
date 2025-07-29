@@ -191,6 +191,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         console.log('PropertyForm: Updating existing property with ID:', property.id);
         console.log('PropertyForm: Property owner_id:', property.owner_id);
         console.log('PropertyForm: Property is_approved:', property.is_approved);
+        console.log('PropertyForm: Admin notes being saved:', dataToSubmit.admin_notes);
 
         const { error } = await supabase
           .from('properties')
@@ -201,6 +202,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
           console.error('PropertyForm: Database update error:', error);
           throw new Error(`Update failed: ${error.message}`);
         }
+        
+        console.log('PropertyForm: Admin notes should be saved now');
         
         console.log('PropertyForm: Update successful!');
       } else {
