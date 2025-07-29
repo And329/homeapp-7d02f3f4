@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { validateImageFile, validateDocumentFile } from '@/utils/validation';
 
 export interface FileUploadResult {
   url: string;
@@ -29,6 +30,17 @@ export const useFileUpload = () => {
       toast({
         title: "Invalid file type",
         description: "Please select a valid file type.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Check for potentially dangerous file names
+    const dangerousPatterns = [/\.exe$/i, /\.bat$/i, /\.cmd$/i, /\.scr$/i, /\.vbs$/i, /\.js$/i];
+    if (dangerousPatterns.some(pattern => pattern.test(file.name))) {
+      toast({
+        title: "Security Error",
+        description: "This file type is not allowed for security reasons",
         variant: "destructive",
       });
       return false;
@@ -120,17 +132,41 @@ export const useFileUpload = () => {
   }, [user, toast, validateFile]);
 
   const uploadImage = useCallback((file: File) => {
+    // Use enhanced validation
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return Promise.resolve(null);
+    }
+    
     return uploadFile(file, {
-      maxSize: 5 * 1024 * 1024, // 5MB for images
-      allowedTypes: ['image/']
+      maxSize: 10 * 1024 * 1024, // 10MB for images
+      allowedTypes: ['image/'],
+      bucket: 'property-media'
     });
-  }, [uploadFile]);
+  }, [uploadFile, toast]);
 
   const uploadDocument = useCallback((file: File) => {
+    // Use enhanced validation
+    const validation = validateDocumentFile(file);
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return Promise.resolve(null);
+    }
+    
     return uploadFile(file, {
-      maxSize: 10 * 1024 * 1024, // 10MB for documents
+      maxSize: 25 * 1024 * 1024, // 25MB for documents
+      allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
     });
-  }, [uploadFile]);
+  }, [uploadFile, toast]);
 
   return {
     uploadFile,

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BlogPost } from '@/types/blog';
+import { SafeHtml } from '@/components/ui/safe-html';
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -147,11 +148,10 @@ const BlogPostPage = () => {
 
           {/* Content */}
           <div className="prose prose-lg max-w-none mb-8">
-            <div 
+            <SafeHtml 
+              content={post.content}
               className="text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: post.content.replace(/\n/g, '<br />') 
-              }}
+              allowLineBreaks={true}
             />
           </div>
 

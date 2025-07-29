@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BlogPost } from '@/types/blog';
 import PDFViewer from './PDFViewer';
+import { SafeHtml } from '@/components/ui/safe-html';
 
 interface ExpandableBlogCardProps {
   post: BlogPost;
@@ -72,9 +73,10 @@ const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
         {isExpanded && (
           <div className="space-y-4">
             <div className="prose prose-sm max-w-none">
-              <div 
+              <SafeHtml 
+                content={post.content}
                 className="text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }}
+                allowLineBreaks={true}
               />
             </div>
 

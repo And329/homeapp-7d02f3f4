@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Send } from 'lucide-react';
+import { sanitizeInput } from '@/utils/validation';
 
 const ContactForm: React.FC = () => {
   const { t } = useTranslation();
@@ -31,15 +32,18 @@ const ContactForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Sanitize all input data
+      const sanitizedData = {
+        name: sanitizeInput(formData.name),
+        email: sanitizeInput(formData.email),
+        phone: sanitizeInput(formData.phone),
+        inquiry_type: sanitizeInput(formData.inquiryType),
+        message: sanitizeInput(formData.message)
+      };
+
       const { error } = await supabase
         .from('contact_inquiries')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          inquiry_type: formData.inquiryType,
-          message: formData.message
-        });
+        .insert(sanitizedData);
 
       if (error) throw error;
 
