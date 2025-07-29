@@ -5,8 +5,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUnits } from '@/contexts/UnitsContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Property } from '@/types/property';
+import { convertArea, convertPrice, formatArea, formatPrice } from '@/utils/unitConversion';
 
 interface PropertyCardProps {
   property: Property;
@@ -20,6 +22,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   showContactButton = false
 }) => {
   const { user } = useAuth();
+  const { unitSystem, currency } = useUnits();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -28,6 +31,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   };
 
   const isPropertyFavorited = isFavorite(property.id);
+
+  // Convert units based on user preferences
+  const displayArea = property.area ? convertArea(property.area, 'metric', unitSystem) : null;
+  const displayPrice = convertPrice(property.price, 'AED', currency);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group">
@@ -83,17 +90,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
           <div className="flex items-center">
             <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.area ? `${property.area} m²` : 'N/A'}</span>
+            <span>{displayArea ? formatArea(displayArea, unitSystem) : 'N/A'}</span>
           </div>
         </div>
         
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex-1 min-w-0">
             <p className="text-lg sm:text-xl font-bold text-primary truncate">
-              AED {property.price.toLocaleString()}
-              <span className="text-xs sm:text-sm font-normal text-gray-600 block sm:inline">
-                {property.type === 'rent' ? '/month' : ''}
-              </span>
+              {formatPrice(displayPrice, currency, property.type)}
             </p>
           </div>
         </div>

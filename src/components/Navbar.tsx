@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, User, LogOut, Settings, Home, Building2, BookOpen, Newspaper, Contact, UserPlus, Plus, Info, Users, FileText } from 'lucide-react';
 import MessageNotificationBadge from './MessageNotificationBadge';
 import LanguageSwitcher from './LanguageSwitcher';
+import UnitsToggle from './UnitsToggle';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
@@ -159,11 +160,15 @@ const Navbar = () => {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <nav className="flex flex-col space-y-4 mt-8">
-                    {/* Language Switcher in mobile menu */}
-                    <div className="px-3 py-2 border-b">
+                    {/* Language Switcher and Units Toggle in mobile menu */}
+                    <div className="px-3 py-2 border-b space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">Language / Язык:</span>
                         <LanguageSwitcher />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">Units & Currency:</span>
+                        <UnitsToggle />
                       </div>
                     </div>
 

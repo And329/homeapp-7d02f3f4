@@ -13,13 +13,16 @@ import PropertyPhotoGallery from '@/components/PropertyPhotoGallery';
 import { getPropertyById } from '@/api/properties';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUnits } from '@/contexts/UnitsContext';
 import { useFavorites } from '@/hooks/useFavorites';
+import { convertArea, convertPrice, formatArea, formatPrice } from '@/utils/unitConversion';
 
 const PropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { unitSystem, currency } = useUnits();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
 
   const { data: property, isLoading, error } = useQuery({
@@ -93,6 +96,10 @@ const PropertyDetails = () => {
     toggleFavorite(property.id);
   };
 
+  // Convert units based on user preferences
+  const displayArea = property.area ? convertArea(property.area, 'metric', unitSystem) : null;
+  const displayPrice = convertPrice(property.price, 'AED', currency);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,8 +146,7 @@ const PropertyDetails = () => {
               
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-3xl font-bold text-primary">
-                  AED {property.price.toLocaleString()}
-                  {property.type === 'rent' && '/month'}
+                  {formatPrice(displayPrice, currency, property.type)}
                 </span>
                 {property.is_hot_deal && (
                   <Badge variant="destructive">Hot Deal</Badge>
@@ -161,7 +167,7 @@ const PropertyDetails = () => {
                 </div>
                 <div className="flex items-center">
                   <Square className="h-4 w-4 mr-1" />
-                  {property.area ? `${property.area} m²` : 'N/A'}
+                  {displayArea ? formatArea(displayArea, unitSystem) : 'N/A'}
                 </div>
               </div>
             </div>

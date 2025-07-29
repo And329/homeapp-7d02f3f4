@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUnits } from '@/contexts/UnitsContext';
+import { getPriceLabel } from '@/utils/unitConversion';
+import UnitsToggle from '@/components/UnitsToggle';
 
 interface PropertyFiltersProps {
   searchTerm: string;
@@ -45,6 +48,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   emirateFilter,
   setEmirateFilter
 }) => {
+  const { currency } = useUnits();
   return (
     <Card className="mb-6 sm:mb-8">
       <CardContent className="p-4 sm:p-6">
@@ -119,7 +123,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
             <Input
               type="number"
-              placeholder="Min Price (AED)"
+              placeholder={`Min ${getPriceLabel(currency)}`}
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
               className="text-sm sm:text-base"
@@ -127,7 +131,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
             <Input
               type="number"
-              placeholder="Max Price (AED)"
+              placeholder={`Max ${getPriceLabel(currency)}`}
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
               className="text-sm sm:text-base"
@@ -160,6 +164,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
           <p className="text-xs sm:text-sm text-gray-600">
             {resultsCount} properties found
           </p>
+          <UnitsToggle className="hidden sm:flex" />
         </div>
       </CardContent>
     </Card>
