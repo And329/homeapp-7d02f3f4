@@ -28,6 +28,17 @@ interface AdminProperty {
   longitude: number | null;
   amenities: string[] | null;
   images: string[] | null;
+  emirate: string;
+  property_type: string;
+  year_built: number | null;
+  parking: number | null;
+  qr_code: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  admin_notes: string;
+  owner_id?: string;
+  is_approved: boolean;
 }
 
 interface AdminPropertiesTabProps {
@@ -308,6 +319,18 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   property={transformedProperty} 
                   onClick={() => handleCardClick(property.id)}
                 />
+                
+                {/* Admin Notes Section */}
+                {property.admin_notes && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-lg">
+                    <div className="text-white">
+                      <p className="text-xs font-medium mb-1 opacity-90">Admin Notes:</p>
+                      <p className="text-xs line-clamp-2 opacity-80">
+                        {property.admin_notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Action buttons overlay */}
                 <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
