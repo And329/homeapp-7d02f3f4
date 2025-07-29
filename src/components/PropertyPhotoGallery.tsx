@@ -187,7 +187,7 @@ const PropertyPhotoGallery: React.FC<PropertyPhotoGalleryProps> = ({ images, tit
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-foreground">
                     <Grid3X3 className="h-5 w-5 text-primary" />
-                    <span className="font-display font-medium text-lg">Gallery</span>
+                    <span className="font-semibold text-lg">Gallery</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {images.length} {images.length === 1 ? 'photo' : 'photos'} available
