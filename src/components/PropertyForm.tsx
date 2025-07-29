@@ -135,6 +135,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
     console.log('PropertyForm: Submitting with data:', formData);
     console.log('PropertyForm: Property being edited:', property);
+    console.log('PropertyForm: Admin notes value:', formData.admin_notes);
 
     try {
       // Validate required fields
