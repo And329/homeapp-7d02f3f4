@@ -334,10 +334,6 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <ContactEditDialog 
-                      propertyId={property.id} 
-                      ownerId={ownerId}
-                    />
                     <Button
                       variant="outline"
                       size="sm"
