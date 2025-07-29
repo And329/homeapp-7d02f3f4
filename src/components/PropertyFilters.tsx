@@ -17,6 +17,10 @@ interface PropertyFiltersProps {
   setTypeFilter: (value: 'all' | 'rent' | 'sale') => void;
   priceRange: [number, number];
   setPriceRange: (value: [number, number]) => void;
+  minPrice: string;
+  setMinPrice: (value: string) => void;
+  maxPrice: string;
+  setMaxPrice: (value: string) => void;
   viewMode: 'grid' | 'list';
   setViewMode: (value: 'grid' | 'list') => void;
   resultsCount: number;
@@ -35,6 +39,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   setTypeFilter,
   priceRange,
   setPriceRange,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
   viewMode,
   setViewMode,
   resultsCount,
@@ -66,6 +74,30 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
     }
     return price.toString();
   };
+
+  // Sync manual inputs with slider
+  const handleMinPriceChange = (value: string) => {
+    setMinPrice(value);
+    const numValue = parseInt(value) || 0;
+    if (numValue !== priceRange[0]) {
+      setPriceRange([numValue, priceRange[1]]);
+    }
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    setMaxPrice(value);
+    const numValue = parseInt(value) || getMaxPrice();
+    if (numValue !== priceRange[1]) {
+      setPriceRange([priceRange[0], numValue]);
+    }
+  };
+
+  // Sync slider with manual inputs
+  const handleSliderChange = (value: [number, number]) => {
+    setPriceRange(value);
+    setMinPrice(value[0].toString());
+    setMaxPrice(value[1].toString());
+  };
   return (
     <Card className="mb-6 sm:mb-8">
       <CardContent className="p-4 sm:p-6">
@@ -82,7 +114,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-2 sm:gap-4">
             <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
               <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue placeholder="For Rent/Sale" />
@@ -139,24 +171,39 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             </Select>
 
             {/* Price Range Slider */}
-            <div className="lg:col-span-2 bg-gray-50 rounded-lg p-3">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-700">{getPriceLabel(currency)}</span>
-                  <span className="text-xs text-gray-500">
-                    {currency} {formatPriceDisplay(priceRange[0])} - {formatPriceDisplay(priceRange[1])}
-                  </span>
-                </div>
-                <Slider
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  min={getMinPrice()}
-                  max={getMaxPrice()}
-                  step={currency === 'AED' ? 50000 : 15000}
-                  className="w-full"
-                />
+            <div className="lg:col-span-2 bg-gray-50 rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-700">{getPriceLabel(currency)}</span>
+                <span className="text-xs text-gray-500">
+                  {currency} {formatPriceDisplay(priceRange[0])} - {formatPriceDisplay(priceRange[1])}
+                </span>
               </div>
+              <Slider
+                value={priceRange}
+                onValueChange={handleSliderChange}
+                min={getMinPrice()}
+                max={getMaxPrice()}
+                step={currency === 'AED' ? 50000 : 15000}
+                className="w-full"
+              />
             </div>
+
+            {/* Manual Price Inputs */}
+            <Input
+              type="number"
+              placeholder={`Min ${getPriceLabel(currency)}`}
+              value={minPrice}
+              onChange={(e) => handleMinPriceChange(e.target.value)}
+              className="text-sm sm:text-base"
+            />
+
+            <Input
+              type="number"
+              placeholder={`Max ${getPriceLabel(currency)}`}
+              value={maxPrice}
+              onChange={(e) => handleMaxPriceChange(e.target.value)}
+              className="text-sm sm:text-base"
+            />
 
             <div className="flex gap-1 sm:gap-2 justify-center sm:justify-start">
               <Button

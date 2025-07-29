@@ -30,6 +30,8 @@ const Properties = () => {
   };
   
   const [priceRange, setPriceRange] = useState<[number, number]>(getInitialPriceRange());
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMap, setShowMap] = useState(false);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState(
@@ -122,6 +124,10 @@ const Properties = () => {
           setTypeFilter={setTypeFilter}
           priceRange={priceRange}
           setPriceRange={setPriceRange}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
           viewMode={viewMode}
           setViewMode={setViewMode}
           resultsCount={filteredProperties.length}
