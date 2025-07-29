@@ -73,6 +73,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
 
   useEffect(() => {
     console.log('PropertyForm: useEffect triggered with property:', property);
+    console.log('PropertyForm: Property admin_notes value:', property?.admin_notes);
     if (property) {
       console.log('PropertyForm: Setting form data from property:', property);
       console.log('PropertyForm: Property emirate value:', property.emirate);
