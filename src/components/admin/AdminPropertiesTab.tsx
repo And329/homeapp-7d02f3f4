@@ -319,48 +319,53 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   property={transformedProperty} 
                   onClick={() => handleCardClick(property.id)}
                 />
-                
-                {/* Action buttons overlay */}
-                <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <ContactEditDialog 
-                    propertyId={property.id} 
-                    ownerId={ownerId}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('AdminPropertiesTab: Edit button clicked for property:', property);
-                      console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
-                      onEditProperty(property);
-                    }}
-                    className="bg-white/95 backdrop-blur-sm shadow-md border-white/20 hover:bg-white h-9 w-9 p-0"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteProperty(property.id);
-                    }}
-                    className="bg-white/95 backdrop-blur-sm shadow-md border-white/20 hover:bg-red-50 text-red-600 hover:text-red-700 h-9 w-9 p-0"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
 
-                {/* Admin Notes Section Below Card */}
-                {property.admin_notes && (
-                  <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Admin Notes:</p>
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {property.admin_notes}
-                    </p>
+                {/* Admin Section Below Card */}
+                <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  {/* Admin Notes */}
+                  {property.admin_notes && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-gray-700 mb-1">Admin Notes:</p>
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {property.admin_notes}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <ContactEditDialog 
+                      propertyId={property.id} 
+                      ownerId={ownerId}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('AdminPropertiesTab: Edit button clicked for property:', property);
+                        console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
+                        onEditProperty(property);
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteProperty(property.id);
+                      }}
+                      className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
