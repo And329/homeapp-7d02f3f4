@@ -146,7 +146,7 @@ export const useFileUpload = () => {
     return uploadFile(file, {
       maxSize: 10 * 1024 * 1024, // 10MB for images
       allowedTypes: ['image/'],
-      bucket: 'property-media'
+      bucket: 'chat-attachments' // Use chat-attachments for chat images
     });
   }, [uploadFile, toast]);
 
@@ -164,7 +164,8 @@ export const useFileUpload = () => {
     
     return uploadFile(file, {
       maxSize: 25 * 1024 * 1024, // 25MB for documents
-      allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      bucket: 'chat-attachments' // Use chat-attachments for chat documents
     });
   }, [uploadFile, toast]);
 
