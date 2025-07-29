@@ -43,6 +43,17 @@ interface AdminProperty {
   longitude: number | null;
   amenities: string[] | null;
   images: string[] | null;
+  emirate: string;
+  property_type: string;
+  year_built: number | null;
+  parking: number | null;
+  qr_code: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  admin_notes: string;
+  owner_id?: string;
+  is_approved: boolean;
 }
 
 const AdminDashboard = () => {
@@ -99,7 +110,18 @@ const AdminDashboard = () => {
     latitude: property.latitude || null,
     longitude: property.longitude || null,
     amenities: Array.isArray(property.amenities) ? property.amenities as string[] : [],
-    images: Array.isArray(property.images) ? property.images as string[] : []
+    images: Array.isArray(property.images) ? property.images as string[] : [],
+    emirate: property.emirate || '',
+    property_type: property.property_type || 'Apartment',
+    year_built: property.year_built || null,
+    parking: property.parking || null,
+    qr_code: property.qr_code || '',
+    contact_name: property.contact_name || '',
+    contact_email: property.contact_email || '',
+    contact_phone: property.contact_phone || '',
+    admin_notes: property.admin_notes || '',
+    owner_id: property.owner_id || undefined,
+    is_approved: property.is_approved || false
   }));
 
   // Transform property requests to match expected types
@@ -169,6 +191,7 @@ const AdminDashboard = () => {
       contact_name: originalProperty.contact_name || '',
       contact_email: originalProperty.contact_email || '',
       contact_phone: originalProperty.contact_phone || '',
+      admin_notes: originalProperty.admin_notes || '',
     };
 
     console.log('AdminDashboard: Setting property for edit:', propertyForEdit);
