@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { useUnits } from '@/contexts/UnitsContext';
 import { getPriceLabel, convertPrice } from '@/utils/unitConversion';
 import UnitsToggle from '@/components/UnitsToggle';
@@ -15,8 +14,6 @@ interface PropertyFiltersProps {
   setSearchTerm: (value: string) => void;
   typeFilter: 'all' | 'rent' | 'sale';
   setTypeFilter: (value: 'all' | 'rent' | 'sale') => void;
-  priceRange: [number, number];
-  setPriceRange: (value: [number, number]) => void;
   minPrice: string;
   setMinPrice: (value: string) => void;
   maxPrice: string;
@@ -37,8 +34,6 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
   setSearchTerm,
   typeFilter,
   setTypeFilter,
-  priceRange,
-  setPriceRange,
   minPrice,
   setMinPrice,
   maxPrice,
@@ -55,49 +50,6 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 }) => {
   const { currency } = useUnits();
 
-  // Define price ranges based on currency
-  const getMaxPrice = () => {
-    return currency === 'AED' ? 50000000 : 15000000; // 50M AED or 15M USD
-  };
-
-  const getMinPrice = () => {
-    return 0;
-  };
-
-  const formatPriceDisplay = (price: number) => {
-    if (price === 0) return '0';
-    if (price >= 1000000) {
-      return `${(price / 1000000).toFixed(1)}M`;
-    }
-    if (price >= 1000) {
-      return `${(price / 1000).toFixed(0)}K`;
-    }
-    return price.toString();
-  };
-
-  // Sync manual inputs with slider
-  const handleMinPriceChange = (value: string) => {
-    setMinPrice(value);
-    const numValue = parseInt(value) || 0;
-    if (numValue !== priceRange[0]) {
-      setPriceRange([numValue, priceRange[1]]);
-    }
-  };
-
-  const handleMaxPriceChange = (value: string) => {
-    setMaxPrice(value);
-    const numValue = parseInt(value) || getMaxPrice();
-    if (numValue !== priceRange[1]) {
-      setPriceRange([priceRange[0], numValue]);
-    }
-  };
-
-  // Sync slider with manual inputs
-  const handleSliderChange = (value: [number, number]) => {
-    setPriceRange(value);
-    setMinPrice(value[0].toString());
-    setMaxPrice(value[1].toString());
-  };
   return (
     <Card className="mb-6 sm:mb-8">
       <CardContent className="p-4 sm:p-6">
@@ -114,7 +66,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 sm:gap-4">
             <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
               <SelectTrigger className="text-sm sm:text-base">
                 <SelectValue placeholder="For Rent/Sale" />
@@ -170,30 +122,11 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
               </SelectContent>
             </Select>
 
-            {/* Price Range Slider */}
-            <div className="lg:col-span-2 bg-gray-50 rounded-lg p-3 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-gray-700">{getPriceLabel(currency)}</span>
-                <span className="text-xs text-gray-500">
-                  {currency} {formatPriceDisplay(priceRange[0])} - {formatPriceDisplay(priceRange[1])}
-                </span>
-              </div>
-              <Slider
-                value={priceRange}
-                onValueChange={handleSliderChange}
-                min={getMinPrice()}
-                max={getMaxPrice()}
-                step={currency === 'AED' ? 1000 : 500}
-                className="w-full"
-              />
-            </div>
-
-            {/* Manual Price Inputs */}
             <Input
               type="number"
               placeholder={`Min ${getPriceLabel(currency)}`}
               value={minPrice}
-              onChange={(e) => handleMinPriceChange(e.target.value)}
+              onChange={(e) => setMinPrice(e.target.value)}
               className="text-sm sm:text-base"
             />
 
@@ -201,7 +134,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
               type="number"
               placeholder={`Max ${getPriceLabel(currency)}`}
               value={maxPrice}
-              onChange={(e) => handleMaxPriceChange(e.target.value)}
+              onChange={(e) => setMaxPrice(e.target.value)}
               className="text-sm sm:text-base"
             />
 

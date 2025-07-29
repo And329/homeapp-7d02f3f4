@@ -24,12 +24,6 @@ const Properties = () => {
     (searchParams.get('type') as 'rent' | 'sale') || 'all'
   );
   
-  // Initialize price range based on currency
-  const getInitialPriceRange = (): [number, number] => {
-    return currency === 'AED' ? [0, 50000000] : [0, 15000000];
-  };
-  
-  const [priceRange, setPriceRange] = useState<[number, number]>(getInitialPriceRange());
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -71,10 +65,9 @@ const Properties = () => {
     
     const matchesType = typeFilter === 'all' || property.type === typeFilter;
     
-    // Convert property price to current currency for comparison
-    const propertyPriceInCurrentCurrency = convertPrice(property.price, 'AED', currency);
-    const matchesPrice = propertyPriceInCurrentCurrency >= priceRange[0] && 
-                        propertyPriceInCurrentCurrency <= priceRange[1];
+    const matchesPrice = !minPrice && !maxPrice ? true :
+      (!minPrice || property.price >= parseInt(minPrice)) &&
+      (!maxPrice || property.price <= parseInt(maxPrice));
 
     const matchesPropertyType = propertyTypeFilter === 'all' || 
       property.property_type === propertyTypeFilter;
@@ -122,8 +115,6 @@ const Properties = () => {
           setSearchTerm={setSearchTerm}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
           minPrice={minPrice}
           setMinPrice={setMinPrice}
           maxPrice={maxPrice}
