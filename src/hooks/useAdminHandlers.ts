@@ -228,9 +228,10 @@ export const useAdminHandlers = (
         throw updateError;
       }
 
-      // Then approve the request using the RPC function
+      // Then approve the request using the RPC function with admin notes
       const { data, error } = await supabase.rpc('approve_property_request', {
-        request_id: requestId
+        request_id: requestId,
+        admin_notes_param: updatedData.admin_notes || null
       });
 
       if (error) {
@@ -239,24 +240,6 @@ export const useAdminHandlers = (
       }
 
       console.log('Request approved successfully, created property ID:', data);
-
-      // Update the created property with the QR code and admin notes to ensure they're properly set
-      if (data && (updatedData.qr_code || updatedData.admin_notes)) {
-        const updateData: any = {};
-        if (updatedData.qr_code) updateData.qr_code = updatedData.qr_code;
-        if (updatedData.admin_notes) updateData.admin_notes = updatedData.admin_notes;
-        
-        const { error: updateError } = await supabase
-          .from('properties')
-          .update(updateData)
-          .eq('id', data);
-
-        if (updateError) {
-          console.error('Error updating property with QR code/admin notes:', updateError);
-        } else {
-          console.log('QR code and admin notes updated successfully for property:', data);
-        }
-      }
 
       toast({
         title: "Request approved",

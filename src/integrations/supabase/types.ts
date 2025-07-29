@@ -743,7 +743,9 @@ export type Database = {
         Returns: undefined
       }
       approve_property_request: {
-        Args: { request_id: string }
+        Args:
+          | { request_id: string }
+          | { request_id: string; admin_notes_param?: string }
         Returns: string
       }
       create_admin_conversation: {
