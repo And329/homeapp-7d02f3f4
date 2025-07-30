@@ -23,8 +23,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const isImage = (fileType?: string) => {
+    console.log('File data:', { file_type: message.file_type, file_name: message.file_name, file_url: message.file_url });
     console.log('Checking file type:', fileType);
-    return fileType?.startsWith('image/') || false;
+    const result = fileType?.startsWith('image/') || false;
+    console.log('Is image result:', result);
+    return result;
   };
 
   const handleDownload = async () => {
