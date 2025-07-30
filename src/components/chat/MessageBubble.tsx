@@ -3,6 +3,7 @@ import { Message } from '@/hooks/useChat';
 import FileAttachment from '../FileAttachment';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MessageBubbleProps {
   message: Message;
@@ -23,18 +24,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const isImage = (fileType?: string) => {
-    console.log('File data:', { file_type: message.file_type, file_name: message.file_name, file_url: message.file_url });
-    console.log('Checking file type:', fileType);
-    const result = fileType?.startsWith('image/') || false;
-    console.log('Is image result:', result);
-    return result;
+    return fileType?.startsWith('image/') || false;
+  };
+
+  const getImageUrl = (fileUrl: string) => {
+    // If it's already a full URL, return as is
+    if (fileUrl.startsWith('http')) {
+      return fileUrl;
+    }
+    // Otherwise, construct the Supabase storage URL
+    return `${supabase.storage.from('chat-attachments').getPublicUrl(fileUrl).data.publicUrl}`;
   };
 
   const handleDownload = async () => {
     if (!message.file_url) return;
     
     try {
-      const response = await fetch(message.file_url);
+      const downloadUrl = getImageUrl(message.file_url);
+      const response = await fetch(downloadUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -65,14 +72,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Display file attachment if present */}
         {message.file_url && message.file_name ? (
           <div className="mb-2">
-            {(() => {
-              const shouldShowImage = isImage(message.file_type);
-              console.log('Should show image:', shouldShowImage);
-              return shouldShowImage;
-            })() ? (
+            {isImage(message.file_type) ? (
               <div className="space-y-2">
                 <img 
-                  src={message.file_url} 
+                  src={getImageUrl(message.file_url)} 
                   alt={message.file_name}
                   className="max-w-full max-h-64 rounded-md object-contain"
                 />
