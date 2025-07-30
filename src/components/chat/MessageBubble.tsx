@@ -65,7 +65,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Display file attachment if present */}
         {message.file_url && message.file_name ? (
           <div className="mb-2">
-            {isImage(message.file_type) ? (
+            {(() => {
+              const shouldShowImage = isImage(message.file_type);
+              console.log('Should show image:', shouldShowImage);
+              return shouldShowImage;
+            })() ? (
               <div className="space-y-2">
                 <img 
                   src={message.file_url} 
