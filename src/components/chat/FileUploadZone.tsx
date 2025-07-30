@@ -59,7 +59,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   return (
     <div
       className={`
-        relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors
+        relative border-2 border-dashed rounded-lg p-2 text-center cursor-pointer transition-colors
         ${isDragOver 
           ? 'border-primary bg-primary/5' 
           : 'border-gray-300 hover:border-gray-400'
@@ -79,13 +79,13 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       />
       
       <div className="flex flex-col items-center">
-        <Icon className="h-6 w-6 text-gray-400 mb-2" />
-        <p className="text-sm font-medium text-gray-700 mb-1">
-          Drop {title.toLowerCase()} here
+        <Icon className="h-4 w-4 text-gray-400 mb-1" />
+        <p className="text-xs font-medium text-gray-700 mb-1">
+          Drop {title.toLowerCase()}
         </p>
-        <Button variant="outline" size="sm" type="button">
-          <Upload className="h-4 w-4 mr-2" />
-          Choose {title}
+        <Button variant="outline" size="sm" type="button" className="h-7 px-2 text-xs">
+          <Upload className="h-3 w-3 mr-1" />
+          Choose
         </Button>
       </div>
     </div>
