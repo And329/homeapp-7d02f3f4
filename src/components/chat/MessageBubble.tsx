@@ -23,6 +23,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const isImage = (fileType?: string) => {
+    console.log('Checking file type:', fileType);
     return fileType?.startsWith('image/') || false;
   };
 
