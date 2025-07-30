@@ -39,6 +39,19 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
 
   const handleDownload = async () => {
     try {
+      // If fileUrl is already a full URL, use it directly
+      if (fileUrl.startsWith('http')) {
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.download = fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      // Otherwise, try to download from Supabase storage
       const { data, error } = await supabase.storage
         .from('chat-attachments')
         .download(fileUrl);

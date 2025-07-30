@@ -45,8 +45,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
         ) : null}
         
-        {/* Always display content if it exists */}
-        {message.content && (
+        {/* Only display content if it exists and it's not just the file name */}
+        {message.content && message.content !== message.file_name && (
           <div className="leading-relaxed break-words">{message.content}</div>
         )}
         
