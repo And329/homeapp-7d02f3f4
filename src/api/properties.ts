@@ -179,6 +179,7 @@ export const createProperty = async (propertyData: any): Promise<Property> => {
     contact_name: propertyData.contact_name,
     contact_email: propertyData.contact_email,
     contact_phone: propertyData.contact_phone,
+    admin_notes: propertyData.admin_notes,
     owner_id: user.id,
     is_approved: false,
     created_by: user.id
