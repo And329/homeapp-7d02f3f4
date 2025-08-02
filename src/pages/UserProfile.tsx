@@ -134,7 +134,7 @@ const UserProfile = () => {
 
   // Chat with admin mutation
   const createConversationMutation = useMutation({
-    mutationFn: async (propertyRequestId: string) => {
+    mutationFn: async ({ propertyRequestId, propertyTitle }: { propertyRequestId: string; propertyTitle: string }) => {
       if (!user) throw new Error('User not authenticated');
 
       // Find an admin user
@@ -149,27 +149,54 @@ const UserProfile = () => {
         throw new Error('No admin available for chat');
       }
 
-      // Create conversation with admin
-      const { data: conversation, error: conversationError } = await supabase
+      // Check if conversation already exists
+      const { data: existingConversation } = await supabase
         .from('conversations')
-        .insert({
-          participant_1_id: user.id,
-          participant_2_id: adminUser.id,
-          property_request_id: propertyRequestId,
-          subject: 'Property Support',
-          is_admin_support: true
-        })
-        .select()
+        .select('id')
+        .eq('participant_1_id', user.id)
+        .eq('participant_2_id', adminUser.id)
+        .eq('property_request_id', propertyRequestId)
         .single();
 
-      if (conversationError) throw conversationError;
+      let conversationId;
 
-      return conversation;
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+      } else {
+        // Create new conversation with admin
+        const { data: conversation, error: conversationError } = await supabase
+          .from('conversations')
+          .insert({
+            participant_1_id: user.id,
+            participant_2_id: adminUser.id,
+            property_request_id: propertyRequestId,
+            subject: `Property Support: ${propertyTitle}`,
+            is_admin_support: true
+          })
+          .select()
+          .single();
+
+        if (conversationError) throw conversationError;
+        conversationId = conversation.id;
+      }
+
+      // Send initial message with property details
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content: `Hi, I need help with my property listing: "${propertyTitle}"`
+        });
+
+      if (messageError) throw messageError;
+
+      return { conversationId };
     },
     onSuccess: () => {
       toast({
         title: "Chat started",
-        description: "Conversation with admin has been created. Check the Messages tab.",
+        description: "Conversation with admin has been created with property details. Check the Messages tab.",
       });
       // Refresh conversations
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -209,8 +236,8 @@ const UserProfile = () => {
     }
   };
 
-  const handleChatWithAdmin = (propertyRequestId: string) => {
-    createConversationMutation.mutate(propertyRequestId);
+  const handleChatWithAdmin = (propertyRequestId: string, propertyTitle: string) => {
+    createConversationMutation.mutate({ propertyRequestId, propertyTitle });
   };
 
   if (!user) {
@@ -347,7 +374,7 @@ const UserProfile = () => {
                           <div className="absolute top-4 right-4 z-10 flex gap-2">
                             {getStatusBadge(request.status)}
                             <Button
-                              onClick={() => handleChatWithAdmin(request.id)}
+                              onClick={() => handleChatWithAdmin(request.id, request.title)}
                               variant="outline"
                               size="sm"
                               className="bg-white/90 hover:bg-blue-50 hover:border-blue-200"
