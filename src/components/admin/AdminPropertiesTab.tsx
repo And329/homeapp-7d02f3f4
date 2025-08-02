@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Map, Edit, Trash2, User, Search } from 'lucide-react';
+import { Plus, Map, Edit, Trash2, User, Search, EyeOff, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -196,6 +196,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [hideListings, setHideListings] = useState(false);
   // Get properties with owner IDs for contact editing
   const { data: propertiesWithOwners } = useQuery({
     queryKey: ['admin-properties-with-owners'],
@@ -241,22 +242,33 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
         </div>
 
         <div className="flex items-center justify-between">
-        <Button
-          onClick={onAddProperty}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Property
-        </Button>
-
           <Button
-            onClick={() => setShowMap(!showMap)}
-            variant="outline"
+            onClick={onAddProperty}
             className="flex items-center gap-2"
           >
-            <Map className="h-4 w-4" />
-            {showMap ? 'Hide Map' : 'Show Map'}
+            <Plus className="h-4 w-4" />
+            Add New Property
           </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setHideListings(!hideListings)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {hideListings ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {hideListings ? 'Show Listings' : 'Hide Listings'}
+            </Button>
+            
+            <Button
+              onClick={() => setShowMap(!showMap)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Map className="h-4 w-4" />
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -281,6 +293,10 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading properties...</p>
+        </div>
+      ) : hideListings ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">Property listings are hidden. Click "Show Listings" to view them.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

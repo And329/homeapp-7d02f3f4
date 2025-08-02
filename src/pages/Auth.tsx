@@ -13,8 +13,9 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -63,6 +64,44 @@ const Auth = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    
+    try {
+      const result = await resetPassword(email);
+      
+      if (result.error) {
+        toast({
+          title: "Reset Password Error",
+          description: result.error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Reset email sent!",
+          description: "Please check your email for password reset instructions.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -165,6 +204,25 @@ const Auth = () => {
                 isLogin ? 'Sign in' : 'Create account'
               )}
             </Button>
+            
+            {isLogin && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full py-3"
+                disabled={resetLoading}
+                onClick={handleResetPassword}
+              >
+                {resetLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                    Sending reset email...
+                  </div>
+                ) : (
+                  'Reset Password'
+                )}
+              </Button>
+            )}
           </form>
 
           <div className="mt-6 text-center">
