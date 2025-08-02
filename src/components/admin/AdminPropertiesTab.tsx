@@ -197,6 +197,8 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [hideListings, setHideListings] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   // Get properties with owner IDs for contact editing
   const { data: propertiesWithOwners } = useQuery({
     queryKey: ['admin-properties-with-owners'],
@@ -215,6 +217,32 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
     const property = propertiesWithOwners?.find(p => p.id === propertyId);
     return property?.owner_id || null;
   };
+
+  // Toggle property visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async ({ propertyId, isApproved }: { propertyId: string; isApproved: boolean }) => {
+      const { error } = await supabase
+        .from('properties')
+        .update({ is_approved: !isApproved })
+        .eq('id', propertyId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-properties-with-owners'] });
+      toast({
+        title: "Visibility updated",
+        description: "Property visibility has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to update visibility: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleCardClick = (propertyId: string) => {
     navigate(`/properties/${propertyId}`);
@@ -349,32 +377,56 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                   )}
                   
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-between">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('AdminPropertiesTab: Edit button clicked for property:', property);
+                          console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
+                          onEditProperty(property);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteProperty(property.id);
+                        }}
+                        className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                    
+                    {/* Visibility Toggle */}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('AdminPropertiesTab: Edit button clicked for property:', property);
-                        console.log('AdminPropertiesTab: Calling onEditProperty with:', property);
-                        onEditProperty(property);
+                        toggleVisibilityMutation.mutate({
+                          propertyId: property.id,
+                          isApproved: property.is_approved
+                        });
                       }}
-                      className="flex items-center gap-1"
+                      disabled={toggleVisibilityMutation.isPending}
+                      className={`flex items-center gap-1 ${
+                        property.is_approved 
+                          ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                          : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
-                      <Edit className="h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteProperty(property.id);
-                      }}
-                      className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
+                      {property.is_approved ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      {property.is_approved ? 'Public' : 'Hidden'}
                     </Button>
                   </div>
                 </div>
