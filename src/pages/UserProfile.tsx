@@ -132,6 +132,57 @@ const UserProfile = () => {
     },
   });
 
+  // Chat with admin mutation
+  const createConversationMutation = useMutation({
+    mutationFn: async (propertyRequestId: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      // Find an admin user
+      const { data: adminUser, error: adminError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1)
+        .single();
+
+      if (adminError || !adminUser) {
+        throw new Error('No admin available for chat');
+      }
+
+      // Create conversation with admin
+      const { data: conversation, error: conversationError } = await supabase
+        .from('conversations')
+        .insert({
+          participant_1_id: user.id,
+          participant_2_id: adminUser.id,
+          property_request_id: propertyRequestId,
+          subject: 'Property Support',
+          is_admin_support: true
+        })
+        .select()
+        .single();
+
+      if (conversationError) throw conversationError;
+
+      return conversation;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Chat started",
+        description: "Conversation with admin has been created. Check the Messages tab.",
+      });
+      // Refresh conversations
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to start chat: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { icon: Clock, className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
@@ -156,6 +207,10 @@ const UserProfile = () => {
       console.log('UserProfile: User confirmed deletion request for:', requestId);
       requestDeletionMutation.mutate(requestId);
     }
+  };
+
+  const handleChatWithAdmin = (propertyRequestId: string) => {
+    createConversationMutation.mutate(propertyRequestId);
   };
 
   if (!user) {
@@ -291,6 +346,19 @@ const UserProfile = () => {
                           <PropertyCard property={transformedProperty} />
                           <div className="absolute top-4 right-4 z-10 flex gap-2">
                             {getStatusBadge(request.status)}
+                            <Button
+                              onClick={() => handleChatWithAdmin(request.id)}
+                              variant="outline"
+                              size="sm"
+                              className="bg-white/90 hover:bg-blue-50 hover:border-blue-200"
+                              disabled={createConversationMutation.isPending}
+                            >
+                              {createConversationMutation.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              ) : (
+                                <MessageSquare className="h-4 w-4 text-blue-600" />
+                              )}
+                            </Button>
                             {request.status !== 'deletion_requested' && (
                               <Button
                                 onClick={() => handleRequestDeletion(request.id)}
