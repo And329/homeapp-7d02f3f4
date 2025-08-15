@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -406,6 +406,7 @@ export type Database = {
           id: string
           images: Json | null
           is_approved: boolean
+          is_archived: boolean
           is_hot_deal: boolean | null
           latitude: number | null
           location: string | null
@@ -436,6 +437,7 @@ export type Database = {
           id?: string
           images?: Json | null
           is_approved?: boolean
+          is_archived?: boolean
           is_hot_deal?: boolean | null
           latitude?: number | null
           location?: string | null
@@ -466,6 +468,7 @@ export type Database = {
           id?: string
           images?: Json | null
           is_approved?: boolean
+          is_archived?: boolean
           is_hot_deal?: boolean | null
           latitude?: number | null
           location?: string | null
@@ -744,16 +747,16 @@ export type Database = {
       }
       approve_property_request: {
         Args:
+          | { admin_notes_param?: string; request_id: string }
           | { request_id: string }
-          | { request_id: string; admin_notes_param?: string }
         Returns: string
       }
       create_admin_conversation: {
         Args: {
           p_admin_id: string
-          p_user_id: string
           p_property_request_id?: string
           p_subject?: string
+          p_user_id: string
         }
         Returns: string
       }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Map, Edit, Trash2, User, Search, EyeOff, Eye } from 'lucide-react';
+import { Plus, Map, Edit, Trash2, User, Search, Archive, ArchiveRestore } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -39,6 +39,7 @@ interface AdminProperty {
   admin_notes: string;
   owner_id?: string;
   is_approved: boolean;
+  is_archived: boolean;
 }
 
 interface AdminPropertiesTabProps {
@@ -217,12 +218,12 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
     return property?.owner_id || null;
   };
 
-  // Toggle property visibility mutation
-  const toggleVisibilityMutation = useMutation({
-    mutationFn: async ({ propertyId, isApproved }: { propertyId: string; isApproved: boolean }) => {
+  // Toggle property archive status mutation
+  const toggleArchiveMutation = useMutation({
+    mutationFn: async ({ propertyId, isArchived }: { propertyId: string; isArchived: boolean }) => {
       const { error } = await supabase
         .from('properties')
-        .update({ is_approved: !isApproved })
+        .update({ is_archived: !isArchived })
         .eq('id', propertyId);
 
       if (error) throw error;
@@ -230,14 +231,14 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-properties-with-owners'] });
       toast({
-        title: "Visibility updated",
-        description: "Property visibility has been updated successfully.",
+        title: "Archive status updated",
+        description: "Property archive status has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Failed to update visibility: ${error.message}`,
+        description: `Failed to update archive status: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -393,26 +394,26 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
                       </Button>
                     </div>
                     
-                    {/* Visibility Toggle */}
+                    {/* Archive Toggle */}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleVisibilityMutation.mutate({
+                        toggleArchiveMutation.mutate({
                           propertyId: property.id,
-                          isApproved: property.is_approved
+                          isArchived: property.is_archived
                         });
                       }}
-                      disabled={toggleVisibilityMutation.isPending}
+                      disabled={toggleArchiveMutation.isPending}
                       className={`flex items-center gap-1 ${
-                        property.is_approved 
-                          ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                        property.is_archived 
+                          ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
                           : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      {property.is_approved ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      {property.is_approved ? 'Public' : 'Hidden'}
+                      {property.is_archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                      {property.is_archived ? 'Unarchive' : 'Archive'}
                     </Button>
                   </div>
                 </div>

@@ -45,6 +45,7 @@ const Properties = () => {
         .from('properties')
         .select('*')
         .eq('is_approved', true)
+        .eq('is_archived', false)
         .order('created_at', { ascending: false });
 
       if (error) {

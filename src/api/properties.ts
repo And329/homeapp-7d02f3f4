@@ -30,12 +30,14 @@ export const getProperties = async (): Promise<Property[]> => {
       qr_code,
       owner_id,
       is_approved,
+      is_archived,
       created_at,
       contact_name,
       contact_email,
       contact_phone
     `)
-    .eq('is_approved', true);
+    .eq('is_approved', true)
+    .eq('is_archived', false);
 
   if (error) {
     console.error('API: Error fetching properties:', error);
@@ -79,6 +81,7 @@ export const getPropertyById = async (id: string): Promise<Property | undefined>
       qr_code,
       owner_id,
       is_approved,
+      is_archived,
       created_at,
       contact_name,
       contact_email,
@@ -108,7 +111,8 @@ export const getPropertiesByType = async (type: 'rent' | 'sale'): Promise<Proper
     .from('properties')
     .select('*, owner_id')
     .eq('type', type)
-    .eq('is_approved', true);
+    .eq('is_approved', true)
+    .eq('is_archived', false);
 
   if (error) {
     console.error('API: Error fetching properties by type:', error);
@@ -130,6 +134,7 @@ export const getHotDeals = async (): Promise<Property[]> => {
     .select('*, owner_id')
     .eq('is_hot_deal', true)
     .eq('is_approved', true)
+    .eq('is_archived', false)
     .limit(3);
 
   if (error) {

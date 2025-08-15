@@ -22,6 +22,7 @@ export interface Property {
   qr_code: string;
   owner_id?: string;
   is_approved?: boolean;
+  is_archived?: boolean;
   created_at?: string;
   contact_name?: string;
   contact_email?: string;
@@ -52,6 +53,7 @@ export interface DatabaseProperty {
   qr_code: string | null;
   owner_id: string | null;
   is_approved: boolean | null;
+  is_archived: boolean | null;
   created_at: string | null;
   contact_name: string | null;
   contact_email: string | null;

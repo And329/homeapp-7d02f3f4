@@ -54,6 +54,7 @@ interface AdminProperty {
   admin_notes: string;
   owner_id?: string;
   is_approved: boolean;
+  is_archived: boolean;
 }
 
 const AdminDashboard = () => {
@@ -121,7 +122,8 @@ const AdminDashboard = () => {
     contact_phone: property.contact_phone || '',
     admin_notes: property.admin_notes || '',
     owner_id: property.owner_id || undefined,
-    is_approved: property.is_approved || false
+    is_approved: property.is_approved || false,
+    is_archived: property.is_archived || false
   }));
 
   // Transform property requests to match expected types
