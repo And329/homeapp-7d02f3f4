@@ -27,12 +27,12 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Don't redirect if this is a password reset flow
+    // Don't redirect if this is a password reset flow or if we're updating password
     const type = searchParams.get('type');
-    if (user && type !== 'recovery') {
+    if (user && type !== 'recovery' && !isUpdatingPassword) {
       navigate('/', { replace: true });
     }
-  }, [user, navigate, searchParams]);
+  }, [user, navigate, searchParams, isUpdatingPassword]);
 
   // Check for password reset tokens in URL
   useEffect(() => {
@@ -55,6 +55,7 @@ const Auth = () => {
           });
         } else {
           setIsUpdatingPassword(true);
+          sessionStorage.setItem('isUpdatingPassword', 'true');
           toast({
             title: "Ready to update password",
             description: "Please enter your new password below.",
@@ -63,6 +64,14 @@ const Auth = () => {
       });
     }
   }, [searchParams, toast]);
+
+  // Check if we should be in password update mode on component mount
+  useEffect(() => {
+    const shouldUpdatePassword = sessionStorage.getItem('isUpdatingPassword');
+    if (shouldUpdatePassword === 'true' && user) {
+      setIsUpdatingPassword(true);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +190,8 @@ const Auth = () => {
           title: "Password updated!",
           description: "Your password has been successfully updated.",
         });
-        // Clear the URL parameters and redirect
+        // Clear the session storage and redirect
+        sessionStorage.removeItem('isUpdatingPassword');
         navigate('/', { replace: true });
       }
     } catch (error) {
@@ -229,6 +239,9 @@ const Auth = () => {
           title: "Token verified!",
           description: "You can now set your new password.",
         });
+        
+        // Store in sessionStorage so state persists even if component re-renders
+        sessionStorage.setItem('isUpdatingPassword', 'true');
       }
     } catch (error) {
       toast({
