@@ -13,11 +13,13 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [showManualTokenEntry, setShowManualTokenEntry] = useState(false);
   
   const [searchParams] = useSearchParams();
   const { signIn, signUp, resetPassword, updatePassword, user } = useAuth();
@@ -187,6 +189,52 @@ const Auth = () => {
     }
   };
 
+  const handleVerifyToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !resetToken) {
+      toast({
+        title: "Error",
+        description: "Please enter both email and reset token.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: resetToken,
+        type: 'recovery'
+      });
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setIsUpdatingPassword(true);
+        setShowManualTokenEntry(false);
+        toast({
+          title: "Token verified!",
+          description: "You can now set your new password.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
@@ -199,16 +247,78 @@ const Auth = () => {
             <span className="text-2xl font-bold text-primary">HomeApp</span>
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">
-            {isUpdatingPassword ? 'Update your password' : (isLogin ? 'Sign in to your account' : 'Create your account')}
+            {showManualTokenEntry ? 'Enter Reset Token' : (isUpdatingPassword ? 'Update your password' : (isLogin ? 'Sign in to your account' : 'Create your account'))}
           </h2>
           <p className="mt-2 text-gray-600">
-            {isUpdatingPassword ? 'Enter your new password below' : (isLogin ? 'Welcome back!' : 'Join us today')}
+            {showManualTokenEntry ? 'Enter the token from your email' : (isUpdatingPassword ? 'Enter your new password below' : (isLogin ? 'Welcome back!' : 'Join us today'))}
           </p>
         </div>
 
         {/* Form */}
         <div className="bg-white rounded-xl shadow-lg p-8">
-          {isUpdatingPassword ? (
+          {showManualTokenEntry ? (
+            <form onSubmit={handleVerifyToken} className="space-y-6">
+              <div>
+                <label htmlFor="resetEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="resetEmail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="resetToken" className="block text-sm font-medium text-gray-700 mb-1">
+                  Reset Token
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="resetToken"
+                    type="text"
+                    value={resetToken}
+                    onChange={(e) => setResetToken(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter the token from your email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full py-3"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Verifying token...
+                  </div>
+                ) : (
+                  'Verify Token'
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full py-3"
+                onClick={() => setShowManualTokenEntry(false)}
+              >
+                Back to Login
+              </Button>
+            </form>
+          ) : isUpdatingPassword ? (
             <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div>
                 <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
@@ -369,8 +479,19 @@ const Auth = () => {
             </form>
           )}
 
-          {!isUpdatingPassword && (
-            <div className="mt-6 text-center">
+          {!isUpdatingPassword && !showManualTokenEntry && (
+            <div className="mt-6 text-center space-y-4">
+              {isLogin && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setShowManualTokenEntry(true)}
+                >
+                  Having trouble with the reset link? Enter token manually
+                </Button>
+              )}
+              
               <p className="text-gray-600">
                 {isLogin ? "Don't have an account?" : 'Already have an account?'}
                 <button
