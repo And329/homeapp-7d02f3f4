@@ -29,7 +29,9 @@ const Auth = () => {
   useEffect(() => {
     // Don't redirect if this is a password reset flow or if we're updating password
     const type = searchParams.get('type');
-    if (user && type !== 'recovery' && !isUpdatingPassword) {
+    const shouldUpdatePassword = sessionStorage.getItem('isUpdatingPassword') === 'true';
+    
+    if (user && type !== 'recovery' && !isUpdatingPassword && !shouldUpdatePassword) {
       navigate('/', { replace: true });
     }
   }, [user, navigate, searchParams, isUpdatingPassword]);
@@ -68,8 +70,10 @@ const Auth = () => {
   // Check if we should be in password update mode on component mount
   useEffect(() => {
     const shouldUpdatePassword = sessionStorage.getItem('isUpdatingPassword');
-    if (shouldUpdatePassword === 'true' && user) {
+    if (shouldUpdatePassword === 'true') {
       setIsUpdatingPassword(true);
+      setShowManualTokenEntry(false);
+      setIsLogin(false);
     }
   }, [user]);
 
@@ -233,15 +237,21 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
+        // Immediately show password update form and prevent any redirects
         setIsUpdatingPassword(true);
         setShowManualTokenEntry(false);
+        setIsLogin(false); // Ensure we're not in login mode
+        sessionStorage.setItem('isUpdatingPassword', 'true');
+        
         toast({
           title: "Token verified!",
           description: "You can now set your new password.",
         });
         
-        // Store in sessionStorage so state persists even if component re-renders
-        sessionStorage.setItem('isUpdatingPassword', 'true');
+        // Force the component to stay on password update form
+        setTimeout(() => {
+          setIsUpdatingPassword(true);
+        }, 100);
       }
     } catch (error) {
       toast({
