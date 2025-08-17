@@ -3,10 +3,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AdminTabNavigationProps {
-  activeTab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team' | 'instructions';
-  setActiveTab: (tab: 'properties' | 'requests' | 'content' | 'chats' | 'contact' | 'team' | 'instructions') => void;
+  activeTab: 'properties' | 'requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions';
+  setActiveTab: (tab: 'properties' | 'requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions') => void;
   propertiesCount: number;
   pendingRequestsCount: number;
+  archivedPropertiesCount: number;
   openChatsCount: number;
   contactInquiriesCount: number;
   teamMembersCount?: number;
@@ -17,6 +18,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
   setActiveTab,
   propertiesCount,
   pendingRequestsCount,
+  archivedPropertiesCount,
   openChatsCount,
   contactInquiriesCount,
   teamMembersCount = 0,
@@ -46,6 +48,16 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
             }`}
           >
             Property Requests ({pendingRequestsCount} pending)
+          </button>
+          <button
+            onClick={() => setActiveTab('archive')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'archive'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Archive ({archivedPropertiesCount})
           </button>
           <button
             onClick={() => setActiveTab('content')}

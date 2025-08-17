@@ -18,6 +18,7 @@ import AdminChatsTab from '@/components/admin/AdminChatsTab';
 import AdminContactTab from '@/components/admin/AdminContactTab';
 import AdminTeamTab from '@/components/admin/AdminTeamTab';
 import AdminInstructionsTab from '@/components/admin/AdminInstructionsTab';
+import AdminArchiveTab from '@/components/admin/AdminArchiveTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
@@ -96,7 +97,7 @@ const AdminDashboard = () => {
   } = useAdminQueries(state.selectedConversation, state.selectedChatUserId);
 
   // Transform database properties to AdminProperty format
-  const transformedProperties: AdminProperty[] = rawProperties.map(property => ({
+  const allTransformedProperties: AdminProperty[] = rawProperties.map(property => ({
     id: property.id,
     title: property.title || 'Untitled Property',
     price: property.price || 0,
@@ -125,6 +126,10 @@ const AdminDashboard = () => {
     is_approved: property.is_approved || false,
     is_archived: property.is_archived || false
   }));
+
+  // Separate published and archived properties
+  const transformedProperties = allTransformedProperties.filter(p => !p.is_archived);
+  const archivedProperties = allTransformedProperties.filter(p => p.is_archived);
 
   // Transform property requests to match expected types
   const propertyRequests = rawPropertyRequests.map(request => ({
@@ -238,6 +243,7 @@ const AdminDashboard = () => {
           setActiveTab={state.setActiveTab}
           propertiesCount={transformedProperties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
+          archivedPropertiesCount={archivedProperties.length}
           openChatsCount={conversations.length}
           contactInquiriesCount={contactInquiries.filter(inquiry => inquiry.status === 'new').length}
           teamMembersCount={teamMembersCount}
@@ -272,6 +278,28 @@ const AdminDashboard = () => {
             onSendReply={handlers.handleSendReply}
             onReviewRequest={handlers.handleReviewRequest}
             onApproveDeletion={handlers.handleApproveDeletion}
+          />
+        )}
+
+        {state.activeTab === 'archive' && (
+          <AdminArchiveTab
+            archivedProperties={archivedProperties}
+            propertiesLoading={propertiesLoading}
+            onEditProperty={handleEdit}
+            onDeleteProperty={handleDelete}
+            onUnarchiveProperty={async (id: string) => {
+              const { error } = await supabase
+                .from('properties')
+                .update({ is_archived: false })
+                .eq('id', id);
+              
+              if (error) {
+                console.error('Error unarchiving property:', error);
+                return;
+              }
+              
+              queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+            }}
           />
         )}
 

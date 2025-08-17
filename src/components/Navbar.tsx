@@ -79,6 +79,9 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex items-center space-x-1 sm:space-x-2">
+                {/* Message Notifications */}
+                <MessageNotificationBadge />
+
                 {/* List Property Button - Only icon on mobile */}
                 <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
                   <Link to="/list-property" className="flex items-center space-x-1 sm:space-x-2">
