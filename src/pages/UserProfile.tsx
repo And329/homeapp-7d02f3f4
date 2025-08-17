@@ -12,15 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { PropertyRequest } from '@/types/propertyRequest';
 import { Property } from '@/types/property';
 import PropertyCard from '@/components/PropertyCard';
 import FavoritesList from '@/components/FavoritesList';
-import { ChatInterface } from '@/components/chat/ChatInterface';
 
 const UserProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: userProfile } = useQuery({
@@ -298,7 +299,7 @@ const UserProfile = () => {
         </div>
 
         <Tabs defaultValue="listings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="listings" className="flex items-center space-x-2">
               <Settings className="h-4 w-4" />
               <span>My Listings</span>
@@ -306,10 +307,6 @@ const UserProfile = () => {
             <TabsTrigger value="favorites" className="flex items-center space-x-2">
               <Heart className="h-4 w-4" />
               <span>Favorites</span>
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center space-x-2">
-              <MessageSquare className="h-4 w-4" />
-              <span>Messages</span>
             </TabsTrigger>
           </TabsList>
 
@@ -414,11 +411,30 @@ const UserProfile = () => {
           <TabsContent value="favorites" className="space-y-6">
             <FavoritesList />
           </TabsContent>
-
-          <TabsContent value="messages" className="space-y-6">
-            <ChatInterface />
-          </TabsContent>
         </Tabs>
+
+        {/* Messages Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <MessageSquare className="h-5 w-5" />
+              <span>Messages</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg font-medium mb-2">Manage your conversations</p>
+              <p className="text-gray-400 mb-4">View and respond to messages from support and property inquiries</p>
+              <Button 
+                onClick={() => navigate('/messages')}
+                className="bg-primary hover:bg-blue-700"
+              >
+                Go to Messages
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Footer />
