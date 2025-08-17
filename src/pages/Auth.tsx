@@ -27,10 +27,12 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    // Don't redirect if this is a password reset flow
+    const type = searchParams.get('type');
+    if (user && type !== 'recovery') {
       navigate('/', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   // Check for password reset tokens in URL
   useEffect(() => {
@@ -53,6 +55,10 @@ const Auth = () => {
           });
         } else {
           setIsUpdatingPassword(true);
+          toast({
+            title: "Ready to update password",
+            description: "Please enter your new password below.",
+          });
         }
       });
     }
