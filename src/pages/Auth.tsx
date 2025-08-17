@@ -120,41 +120,8 @@ const Auth = () => {
   };
 
   const handleResetPassword = async () => {
-    if (!email) {
-      toast({
-        title: "Error",
-        description: "Please enter your email address first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setResetLoading(true);
-    
-    try {
-      const result = await resetPassword(email);
-      
-      if (result.error) {
-        toast({
-          title: "Reset Password Error",
-          description: result.error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Reset email sent!",
-          description: "Please check your email for password reset instructions.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setResetLoading(false);
-    }
+    // Instead of sending email, show manual token entry form
+    setShowManualTokenEntry(true);
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -276,10 +243,10 @@ const Auth = () => {
             <span className="text-2xl font-bold text-primary">HomeApp</span>
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">
-            {showManualTokenEntry ? 'Enter Reset Token' : (isUpdatingPassword ? 'Update your password' : (isLogin ? 'Sign in to your account' : 'Create your account'))}
+            {showManualTokenEntry ? 'Enter Reset Code' : (isUpdatingPassword ? 'Update your password' : (isLogin ? 'Sign in to your account' : 'Create your account'))}
           </h2>
           <p className="mt-2 text-gray-600">
-            {showManualTokenEntry ? 'Enter the token from your email' : (isUpdatingPassword ? 'Enter your new password below' : (isLogin ? 'Welcome back!' : 'Join us today'))}
+            {showManualTokenEntry ? 'Click "Reset Password" below first to get a code sent to your email, then enter it here' : (isUpdatingPassword ? 'Enter your new password below' : (isLogin ? 'Welcome back!' : 'Join us today'))}
           </p>
         </div>
 
@@ -307,7 +274,7 @@ const Auth = () => {
 
               <div>
                 <label htmlFor="resetToken" className="block text-sm font-medium text-gray-700 mb-1">
-                  Reset Token
+                  Reset Code
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -317,11 +284,64 @@ const Auth = () => {
                     value={resetToken}
                     onChange={(e) => setResetToken(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Enter the token from your email"
+                    placeholder="Enter the code from your email"
                     required
                   />
                 </div>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full py-3"
+                disabled={resetLoading}
+                onClick={async () => {
+                  if (!email) {
+                    toast({
+                      title: "Error",
+                      description: "Please enter your email address first.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  setResetLoading(true);
+                  
+                  try {
+                    const result = await resetPassword(email);
+                    
+                    if (result.error) {
+                      toast({
+                        title: "Reset Password Error",
+                        description: result.error.message,
+                        variant: "destructive",
+                      });
+                    } else {
+                      toast({
+                        title: "Reset email sent!",
+                        description: "Check your email and enter the code above.",
+                      });
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "An unexpected error occurred. Please try again.",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setResetLoading(false);
+                  }
+                }}
+              >
+                {resetLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                    Sending reset email...
+                  </div>
+                ) : (
+                  'Send Reset Code'
+                )}
+              </Button>
 
               <Button
                 type="submit"
@@ -331,10 +351,10 @@ const Auth = () => {
                 {loading ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Verifying token...
+                    Verifying code...
                   </div>
                 ) : (
-                  'Verify Token'
+                  'Verify Code'
                 )}
               </Button>
 
@@ -492,35 +512,16 @@ const Auth = () => {
                 type="button"
                 variant="outline"
                 className="w-full py-3"
-                disabled={resetLoading}
                 onClick={handleResetPassword}
               >
-                {resetLoading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                    Sending reset email...
-                  </div>
-                ) : (
-                  'Reset Password'
-                )}
+                Reset Password
               </Button>
             )}
             </form>
           )}
 
           {!isUpdatingPassword && !showManualTokenEntry && (
-            <div className="mt-6 text-center space-y-4">
-              {isLogin && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => setShowManualTokenEntry(true)}
-                >
-                  Having trouble with the reset link? Enter token manually
-                </Button>
-              )}
-              
+            <div className="mt-6 text-center">
               <p className="text-gray-600">
                 {isLogin ? "Don't have an account?" : 'Already have an account?'}
                 <button
