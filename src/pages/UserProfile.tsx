@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -261,84 +261,110 @@ const UserProfile = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={userProfile?.profile_picture} alt={userProfile?.full_name} />
-              <AvatarFallback className="bg-primary text-white text-xl">
-                {userProfile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {userProfile?.full_name || 'User'}
-              </h1>
-              <p className="text-gray-600 mb-2">{user.email}</p>
-              {userProfile?.role && (
-                <Badge variant="outline" className="capitalize">
-                  {userProfile.role}
-                </Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <div className="text-center">
-                <div className="font-semibold text-lg text-gray-900">{userRequests.length}</div>
-                <div>Listings</div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-24">
+              <div className="text-center mb-6">
+                <Avatar className="h-24 w-24 mx-auto mb-4">
+                  <AvatarImage src={userProfile?.profile_picture} />
+                  <AvatarFallback className="text-2xl">
+                    {userProfile?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {userProfile?.full_name || 'User'}
+                </h2>
+                <p className="text-gray-600 text-sm">{user?.email}</p>
+                {userProfile?.role && (
+                  <Badge variant="outline" className="capitalize mt-2">
+                    {userProfile.role}
+                  </Badge>
+                )}
               </div>
-              <div className="text-center">
-                <div className="font-semibold text-lg text-gray-900">
-                  {userRequests.filter(req => req.status === 'approved').length}
+              
+              <div className="space-y-3 mb-6">
+                <Button 
+                  onClick={() => navigate('/messages')}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Messages
+                </Button>
+                
+                <Button 
+                  onClick={() => navigate('/list-property')}
+                  className="w-full justify-start"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  List Property
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-center text-sm border-t pt-4">
+                <div>
+                  <div className="font-semibold text-lg text-gray-900">{userRequests.length}</div>
+                  <div className="text-gray-600">Listings</div>
                 </div>
-                <div>Approved</div>
+                <div>
+                  <div className="font-semibold text-lg text-gray-900">
+                    {userRequests.filter(req => req.status === 'approved').length}
+                  </div>
+                  <div className="text-gray-600">Approved</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <Tabs defaultValue="listings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="listings" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
-              <span>My Listings</span>
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="flex items-center space-x-2">
-              <Heart className="h-4 w-4" />
-              <span>Favorites</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
+              <p className="text-gray-600">Manage your properties and account settings</p>
+            </div>
 
-          <TabsContent value="listings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5" />
-                  <span>Property Listings</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {requestsLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading your listings...</p>
-                  </div>
-                ) : userRequests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg font-medium mb-2">No property listings yet</p>
-                    <p className="text-gray-400 mb-4">Start by creating your first property listing!</p>
-                    <Button 
-                      onClick={() => window.location.href = '/list-property'}
-                      className="bg-primary hover:bg-blue-700"
-                    >
-                      List a Property
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {userRequests.map((request) => {
+            <Tabs defaultValue="listings" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="listings" className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>My Listings</span>
+                </TabsTrigger>
+                <TabsTrigger value="favorites" className="flex items-center space-x-2">
+                  <Heart className="h-4 w-4" />
+                  <span>Favorites</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="listings" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Settings className="h-5 w-5" />
+                      <span>Property Listings</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {requestsLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading your listings...</p>
+                      </div>
+                    ) : userRequests.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 text-lg font-medium mb-2">No property listings yet</p>
+                        <p className="text-gray-400 mb-4">Start by creating your first property listing!</p>
+                        <Button 
+                          onClick={() => window.location.href = '/list-property'}
+                          className="bg-primary hover:bg-blue-700"
+                        >
+                          List a Property
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {userRequests.map((request) => {
                       const transformedProperty: Property = {
                         id: request.id,
                         title: request.title,
@@ -401,40 +427,19 @@ const UserProfile = () => {
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="favorites" className="space-y-6">
-            <FavoritesList />
-          </TabsContent>
-        </Tabs>
-
-        {/* Messages Section */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MessageSquare className="h-5 w-5" />
-              <span>Messages</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg font-medium mb-2">Manage your conversations</p>
-              <p className="text-gray-400 mb-4">View and respond to messages from support and property inquiries</p>
-              <Button 
-                onClick={() => navigate('/messages')}
-                className="bg-primary hover:bg-blue-700"
-              >
-                Go to Messages
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <TabsContent value="favorites" className="space-y-6">
+                <FavoritesList />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
 
       <Footer />
