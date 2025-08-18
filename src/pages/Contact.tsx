@@ -54,8 +54,7 @@ const Contact = () => {
                         <h3 className="font-semibold text-gray-900 text-sm md:text-base mb-1">
                           {t('contact.info.phone')}
                         </h3>
-                        <p className="text-gray-600 text-sm break-all">+971 4 123 4567</p>
-                        <p className="text-gray-600 text-sm break-all">+971 50 123 4567</p>
+                        <p className="text-gray-600 text-sm break-all">+971 4 572 5281</p>
                       </div>
                     </div>
                   </CardContent>
@@ -71,8 +70,7 @@ const Contact = () => {
                         <h3 className="font-semibold text-gray-900 text-sm md:text-base mb-1">
                           {t('contact.info.email')}
                         </h3>
-                        <p className="text-gray-600 text-sm break-all">info@homeapp.ae</p>
-                        <p className="text-gray-600 text-sm break-all">support@homeapp.ae</p>
+                        <p className="text-gray-600 text-sm break-all">contact@homeapp.ae</p>
                       </div>
                     </div>
                   </CardContent>
@@ -88,8 +86,8 @@ const Contact = () => {
                         <h3 className="font-semibold text-gray-900 text-sm md:text-base mb-1">
                           {t('contact.info.address')}
                         </h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">Downtown Dubai</p>
-                        <p className="text-gray-600 text-sm leading-relaxed">Dubai, UAE</p>
+                        <p className="text-gray-600 text-sm leading-relaxed">Office 402, Citadel Tower</p>
+                        <p className="text-gray-600 text-sm leading-relaxed">Business Bay, Dubai</p>
                       </div>
                     </div>
                   </CardContent>
@@ -106,7 +104,6 @@ const Contact = () => {
                           {t('contact.info.hours')}
                         </h3>
                         <p className="text-gray-600 text-sm leading-relaxed">Mon - Fri: 9AM - 6PM</p>
-                        <p className="text-gray-600 text-sm leading-relaxed">Sat: 9AM - 4PM</p>
                       </div>
                     </div>
                   </CardContent>
