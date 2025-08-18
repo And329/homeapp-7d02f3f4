@@ -26,7 +26,7 @@ const propertyRequestSchema = z.object({
   price: z.string().min(1, 'Price is required'),
   location: z.string().min(1, 'Location is required'),
   emirate: z.string().min(1, 'Emirate is required'),
-  area: z.string().min(1, 'Area is required'),
+  area: z.string().min(1, 'Area is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Area must be a valid positive number'),
   yearBuilt: z.string().optional(),
   parkingSpaces: z.string().optional(),
   bedrooms: z.string().min(1, 'Number of bedrooms is required'),
