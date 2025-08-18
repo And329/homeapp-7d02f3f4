@@ -55,8 +55,6 @@ const Footer = () => {
               <li><Link to="/information" className="text-gray-300 hover:text-primary transition-colors">Information</Link></li>
               <li><Link to="/instructions" className="text-gray-300 hover:text-primary transition-colors">How to Use</Link></li>
               <li><Link to="/list-property" className="text-gray-300 hover:text-primary transition-colors">List Property</Link></li>
-              <li><span className="text-gray-300">Market Reports</span></li>
-              <li><span className="text-gray-300">Investment Guide</span></li>
             </ul>
           </div>
 
@@ -66,15 +64,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-gray-300">Dubai Marina, UAE</span>
+                <span className="text-gray-300">Office 402, Citadel Tower, Business Bay, Dubai</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-gray-300">+971 4 123 4567</span>
+                <span className="text-gray-300">+971 4 572 5281</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span className="text-gray-300">info@homeapp.ae</span>
+                <span className="text-gray-300">contact@homeapp.ae</span>
               </div>
             </div>
           </div>
