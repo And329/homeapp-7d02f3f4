@@ -72,12 +72,23 @@ const Index = () => {
               Your premier destination for UAE real estate. Discover luxury properties, 
               investment opportunities, and your dream home.
             </p>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-8 max-w-2xl mx-auto animate-fade-in-up">
+              <p className="text-lg font-semibold text-blue-100">
+                🎉 List Your Property for FREE - No Hidden Costs!
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up">
               <Link 
                 to="/properties" 
                 className="bg-white text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors"
               >
                 Explore Properties
+              </Link>
+              <Link 
+                to="/list-property" 
+                className="bg-green-500 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-green-600 transition-colors"
+              >
+                List Your Property FREE
               </Link>
               <Link 
                 to="/contact" 
