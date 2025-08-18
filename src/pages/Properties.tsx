@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUnits } from '@/contexts/UnitsContext';
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Map, Grid } from 'lucide-react';
 
 const Properties = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { currency } = useUnits();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -107,8 +109,8 @@ const Properties = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Property</h1>
-          <p className="text-gray-600">Discover amazing properties for rent and sale</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('properties.title')}</h1>
+          <p className="text-gray-600">{t('properties.subtitle')}</p>
         </div>
 
         <PropertyFilters
@@ -139,7 +141,7 @@ const Properties = () => {
             className="flex items-center gap-2"
           >
             {showMap ? <Grid className="h-4 w-4" /> : <Map className="h-4 w-4" />}
-            {showMap ? 'Show Grid' : 'Show Map'}
+            {showMap ? t('properties.showGrid') : t('properties.showMap')}
           </Button>
         </div>
 

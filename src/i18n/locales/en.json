@@ -111,5 +111,92 @@
     "searchProperties": "Searching Properties",
     "listProperty": "Listing Your Property",
     "contactSupport": "Getting Support"
+  },
+  "home": {
+    "hero": {
+      "title": "Welcome to",
+      "subtitle": "Your premier destination for UAE real estate. Discover luxury properties, investment opportunities, and your dream home.",
+      "freeListingNotice": "🎉 List Your Property for FREE - No Hidden Costs!",
+      "exploreProperties": "Explore Properties",
+      "listPropertyFree": "List Your Property FREE",
+      "contactUs": "Contact Us"
+    },
+    "search": {
+      "title": "Find Your Perfect Property",
+      "location": "Location",
+      "propertyType": "Property Type",
+      "apartment": "Apartment",
+      "villa": "Villa",
+      "townhouse": "Townhouse",
+      "studio": "Studio",
+      "penthouse": "Penthouse",
+      "forRentSale": "For Rent / Sale",
+      "forRent": "For Rent",
+      "forSale": "For Sale",
+      "bedrooms": "Bedrooms",
+      "oneBedroom": "1 Bedroom",
+      "twoBedrooms": "2 Bedrooms",
+      "threeBedrooms": "3 Bedrooms",
+      "fourPlusBedrooms": "4+ Bedrooms",
+      "emirate": "Emirate",
+      "search": "Search"
+    },
+    "emirates": {
+      "dubai": "Dubai",
+      "abuDhabi": "Abu Dhabi",
+      "sharjah": "Sharjah",
+      "ajman": "Ajman",
+      "rasAlKhaimah": "Ras Al Khaimah",
+      "fujairah": "Fujairah",
+      "ummAlQuwain": "Umm Al Quwain"
+    },
+    "hotDeals": {
+      "title": "🔥 Hot Deals",
+      "subtitle": "Don't miss out on these exclusive property offers with special pricing and premium locations",
+      "loading": "Loading hot deals...",
+      "viewAll": "View All Properties"
+    },
+    "features": {
+      "title": "Why Choose HomeApp?",
+      "subtitle": "Your trusted partner in UAE real estate with unmatched expertise and service",
+      "primeLocations": {
+        "title": "Prime Locations",
+        "description": "Access to the most sought-after properties in Dubai, Abu Dhabi, and across the UAE"
+      },
+      "marketExpertise": {
+        "title": "Market Expertise",
+        "description": "Deep understanding of UAE property market trends and investment opportunities"
+      },
+      "trustedService": {
+        "title": "Trusted Service",
+        "description": "RERA-licensed professionals ensuring transparent and secure transactions"
+      }
+    },
+    "explore": {
+      "title": "Explore HomeApp",
+      "subtitle": "Everything you need to make informed real estate decisions",
+      "propertyMap": {
+        "title": "Property Map",
+        "description": "Interactive map of all available properties"
+      },
+      "expertBlog": {
+        "title": "Expert Blog",
+        "description": "Real estate tips and market insights"
+      },
+      "marketNews": {
+        "title": "Market News",
+        "description": "Latest UAE real estate updates"
+      },
+      "expertHelp": {
+        "title": "Get Expert Help",
+        "description": "Speak with our property consultants"
+      }
+    }
+  },
+  "properties": {
+    "title": "Find Your Perfect Property",
+    "subtitle": "Discover amazing properties for rent and sale",
+    "showMap": "Show Map",
+    "showGrid": "Show Grid"
   }
 }
