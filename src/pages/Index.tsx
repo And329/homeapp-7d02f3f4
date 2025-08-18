@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PropertyCard from '../components/PropertyCard';
 import { getHotDeals } from '../data/properties';
+import heroBackground from '../assets/hero-background.jpg';
 
 const Index = () => {
   const { t } = useTranslation();
@@ -64,36 +65,40 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="uae-gradient text-white py-20">
-        <div className="container mx-auto px-4">
+      <section 
+        className="relative text-white py-20 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      >
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up drop-shadow-lg">
               {t('home.hero.title')} <span className="text-blue-200">HomeApp</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto animate-fade-in-up">
+            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto animate-fade-in-up drop-shadow-lg">
               {t('home.hero.subtitle')}
             </p>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-8 max-w-2xl mx-auto animate-fade-in-up">
-              <p className="text-lg font-semibold text-blue-100">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-8 max-w-2xl mx-auto animate-fade-in-up border border-white/20">
+              <p className="text-lg font-semibold text-blue-100 drop-shadow-lg">
                 {t('home.hero.freeListingNotice')}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up">
               <Link 
                 to="/properties" 
-                className="bg-white text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors"
+                className="bg-white text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg"
               >
                 {t('home.hero.exploreProperties')}
               </Link>
               <Link 
                 to="/list-property" 
-                className="bg-green-500 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-green-600 transition-colors"
+                className="bg-green-500 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-green-600 transition-colors shadow-lg"
               >
                 {t('home.hero.listPropertyFree')}
               </Link>
               <Link 
                 to="/contact" 
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-primary transition-colors"
+                className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-primary transition-colors backdrop-blur-sm"
               >
                 {t('home.hero.contactUs')}
               </Link>
