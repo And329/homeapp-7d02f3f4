@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, MapPin, Phone, Mail, Facebook, Instagram, MessageCircle, Video } from 'lucide-react';
+import { Home, MapPin, Phone, Mail, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import TikTokIcon from '@/components/icons/TikTokIcon';
 
 const Footer = () => {
   return (
@@ -27,7 +28,7 @@ const Footer = () => {
                 <Instagram className="h-5 w-5" />
               </a>
               <a href="https://www.tiktok.com/@mzverev_davima?is_from_webapp=1&sender_device=pc" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
-                <Video className="h-5 w-5" />
+                <TikTokIcon className="h-5 w-5" />
               </a>
               <a href="https://t.me/mzverev_davima" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
                 <MessageCircle className="h-5 w-5" />
@@ -68,11 +69,15 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-gray-300">+971 4 572 5281</span>
+                <a href="tel:+97145725281" className="text-gray-300 hover:text-primary transition-colors">
+                  +971 4 572 5281
+                </a>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span className="text-gray-300">contact@homeapp.ae</span>
+                <a href="mailto:contact@homeapp.ae" className="text-gray-300 hover:text-primary transition-colors">
+                  contact@homeapp.ae
+                </a>
               </div>
             </div>
           </div>

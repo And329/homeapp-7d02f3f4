@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Target, Eye, CheckCircle, Facebook, Instagram, Youtube, Mail, MessageCircle, Video } from 'lucide-react';
+import { Building2, Target, Eye, CheckCircle, Facebook, Instagram, Youtube, MessageCircle } from 'lucide-react';
+import TikTokIcon from '@/components/icons/TikTokIcon';
 
 const Information = () => {
   const { t } = useTranslation();
@@ -123,7 +124,7 @@ const Information = () => {
                 className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
               >
                 <div className="p-3 rounded-full bg-gray-900 group-hover:bg-black transition-colors duration-300">
-                  <Video className="h-6 w-6 text-white group-hover:text-white transition-colors duration-300" />
+                  <TikTokIcon className="h-6 w-6 text-white group-hover:text-white" />
                 </div>
                 <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">TikTok</span>
               </a>
