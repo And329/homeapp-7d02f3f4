@@ -44,7 +44,7 @@ export const formatPrice = (price: number, currency: Currency, type?: string): s
   const formattedPrice = `${currencySymbol} ${price.toLocaleString()}`;
   
   if (type === 'rent') {
-    return `${formattedPrice}/month`;
+    return `${formattedPrice}/year`;
   }
   
   return formattedPrice;
