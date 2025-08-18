@@ -338,7 +338,7 @@ const AdminPropertiesTab: React.FC<AdminPropertiesTabProps> = ({
               
               qr_code: '',
               owner_id: undefined,
-              is_approved: true,
+              is_approved: property.is_approved,
               created_at: property.created_at,
             };
 
