@@ -151,16 +151,6 @@ const Information = () => {
                 </div>
                 <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Telegram</span>
               </a>
-              
-              <a
-                href="mailto:contact@example.com"
-                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
-              >
-                <div className="p-3 rounded-full bg-gray-100 group-hover:bg-gray-600 transition-colors duration-300">
-                  <Mail className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-                </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Email</span>
-              </a>
             </div>
           </CardContent>
         </Card>

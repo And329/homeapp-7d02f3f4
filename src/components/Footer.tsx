@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Home, MapPin, Phone, Mail, Facebook, Instagram, MessageCircle, Video } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -20,17 +20,17 @@ const Footer = () => {
               Your trusted partner in UAE real estate. Find your dream property with us.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-primary transition-colors">
+              <a href="https://www.facebook.com/share/15jWd7iVwn/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-primary transition-colors">
+              <a href="https://www.instagram.com/m_zverev_davima?igsh=bGdvcWs4N3lhZ3c0" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-primary transition-colors">
-                <Linkedin className="h-5 w-5" />
+              <a href="https://www.tiktok.com/@mzverev_davima?is_from_webapp=1&sender_device=pc" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
+                <Video className="h-5 w-5" />
+              </a>
+              <a href="https://t.me/mzverev_davima" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-primary transition-colors">
+                <MessageCircle className="h-5 w-5" />
               </a>
             </div>
           </div>
