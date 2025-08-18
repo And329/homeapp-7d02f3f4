@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -41,6 +42,7 @@ const propertyRequestSchema = z.object({
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
 
 const ListProperty = () => {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [propertyImages, setPropertyImages] = useState<string[]>([]);
@@ -88,8 +90,8 @@ const ListProperty = () => {
   const onSubmit = async (data: PropertyRequestForm) => {
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to submit a property listing request.",
+        title: t('listProperty.form.authError'),
+        description: t('listProperty.form.authErrorMessage'),
         variant: "destructive",
       });
       return;
@@ -129,8 +131,8 @@ const ListProperty = () => {
       if (error) throw error;
 
       toast({
-        title: "Property Listing Submitted!",
-        description: "Your property listing request has been submitted for admin review. You'll be notified once it's approved.",
+        title: t('listProperty.form.success'),
+        description: t('listProperty.form.successMessage'),
       });
 
       form.reset();
@@ -143,8 +145,8 @@ const ListProperty = () => {
     } catch (error) {
       console.error('Error submitting property request:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit property listing. Please try again.",
+        title: t('listProperty.form.error'),
+        description: t('listProperty.form.errorMessage'),
         variant: "destructive",
       });
     } finally {
@@ -165,13 +167,13 @@ const ListProperty = () => {
                 <div className="bg-primary text-white p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <Building className="h-8 w-8" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Registration Required</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">{t('listProperty.authRequired.title')}</h1>
                 <p className="text-lg text-gray-600 mb-6">
-                  To list your property on HomeApp, please create an account or sign in.
+                  {t('listProperty.authRequired.message')}
                 </p>
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                   <p className="text-green-700 font-semibold">
-                    🎉 It's completely FREE to list your property!
+                    {t('listProperty.authRequired.freeNotice')}
                   </p>
                 </div>
               </div>
@@ -181,14 +183,14 @@ const ListProperty = () => {
                   onClick={() => window.location.href = '/auth'}
                   className="px-6 py-3"
                 >
-                  Create Account
+                  {t('listProperty.authRequired.createAccount')}
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => window.location.href = '/auth'}
                   className="px-6 py-3"
                 >
-                  Sign In
+                  {t('listProperty.authRequired.signIn')}
                 </Button>
               </div>
             </div>
@@ -208,9 +210,9 @@ const ListProperty = () => {
       <section className="uae-gradient text-white py-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">List Your Property</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('listProperty.title')}</h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Submit your property for listing on HomeApp. Our team will review and approve your submission.
+              {t('listProperty.subtitle')}
             </p>
           </div>
         </div>
@@ -222,7 +224,7 @@ const ListProperty = () => {
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <Building className="h-6 w-6 mr-2 text-primary" />
-              Property Details
+              {t('listProperty.form.propertyDetails')}
             </h2>
             
             <Form {...form}>
@@ -234,9 +236,9 @@ const ListProperty = () => {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Title *</FormLabel>
+                        <FormLabel>{t('listProperty.form.propertyTitle')} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Luxurious 3BR Apartment in Downtown Dubai" {...field} />
+                          <Input placeholder={t('listProperty.form.propertyTitlePlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -248,11 +250,11 @@ const ListProperty = () => {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Listing Type *</FormLabel>
+                        <FormLabel>{t('listProperty.form.listingType')} *</FormLabel>
                         <FormControl>
                           <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
-                            <option value="sale">For Sale</option>
-                            <option value="rent">For Rent</option>
+                            <option value="sale">{t('listProperty.form.forSale')}</option>
+                            <option value="rent">{t('listProperty.form.forRent')}</option>
                           </select>
                         </FormControl>
                         <FormMessage />
@@ -266,10 +268,10 @@ const ListProperty = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description *</FormLabel>
+                      <FormLabel>{t('listProperty.form.description')} *</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Describe your property in detail..."
+                          placeholder={t('listProperty.form.descriptionPlaceholder')}
                           rows={4}
                           {...field} 
                         />
@@ -288,7 +290,7 @@ const ListProperty = () => {
                       <FormItem>
                         <FormLabel className="flex items-center">
                           <DollarSign className="h-4 w-4 mr-1" />
-                          Price (AED) *
+                          {t('listProperty.form.price')} *
                         </FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="5000000" {...field} />
@@ -305,7 +307,7 @@ const ListProperty = () => {
                       <FormItem>
                         <FormLabel className="flex items-center">
                           <Square className="h-4 w-4 mr-1" />
-                          Area (sq m) *
+                          {t('listProperty.form.area')} *
                         </FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="120" {...field} />
@@ -320,7 +322,7 @@ const ListProperty = () => {
                     name="yearBuilt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Year Built</FormLabel>
+                        <FormLabel>{t('listProperty.form.yearBuilt')}</FormLabel>
                         <FormControl>
                           <Input type="number" min="1900" max={new Date().getFullYear()} placeholder="2020" {...field} />
                         </FormControl>
@@ -336,7 +338,7 @@ const ListProperty = () => {
                     name="bedrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bedrooms *</FormLabel>
+                        <FormLabel>{t('listProperty.form.bedrooms')} *</FormLabel>
                         <FormControl>
                           <Input type="number" min="0" max="10" {...field} />
                         </FormControl>
@@ -350,7 +352,7 @@ const ListProperty = () => {
                     name="bathrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bathrooms *</FormLabel>
+                        <FormLabel>{t('listProperty.form.bathrooms')} *</FormLabel>
                         <FormControl>
                           <Input type="number" min="0" max="10" {...field} />
                         </FormControl>
@@ -364,7 +366,7 @@ const ListProperty = () => {
                     name="parkingSpaces"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Parking Spaces</FormLabel>
+                        <FormLabel>{t('listProperty.form.parkingSpaces')}</FormLabel>
                         <FormControl>
                           <Input type="number" min="0" placeholder="2" {...field} />
                         </FormControl>
@@ -402,18 +404,18 @@ const ListProperty = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         <Home className="h-4 w-4 mr-1" />
-                        Property Type *
+                        {t('listProperty.form.propertyType')} *
                       </FormLabel>
                       <FormControl>
                         <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
-                          <option value="Apartment">Apartment</option>
-                          <option value="Villa">Villa</option>
-                          <option value="Townhouse">Townhouse</option>
-                          <option value="Penthouse">Penthouse</option>
-                          <option value="Studio">Studio</option>
-                          <option value="Office">Office</option>
-                          <option value="Shop">Shop</option>
-                          <option value="Warehouse">Warehouse</option>
+                          <option value="Apartment">{t('listProperty.form.apartment')}</option>
+                          <option value="Villa">{t('listProperty.form.villa')}</option>
+                          <option value="Townhouse">{t('listProperty.form.townhouse')}</option>
+                          <option value="Penthouse">{t('listProperty.form.penthouse')}</option>
+                          <option value="Studio">{t('listProperty.form.studio')}</option>
+                          <option value="Office">{t('listProperty.form.office')}</option>
+                          <option value="Shop">{t('listProperty.form.shop')}</option>
+                          <option value="Warehouse">{t('listProperty.form.warehouse')}</option>
                         </select>
                       </FormControl>
                       <FormMessage />
@@ -437,16 +439,16 @@ const ListProperty = () => {
 
                 {/* Contact Information */}
                 <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('listProperty.form.contactInformation')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormField
                       control={form.control}
                       name="contactName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contact Name *</FormLabel>
+                          <FormLabel>{t('listProperty.form.contactName')} *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Full name" {...field} />
+                            <Input placeholder={t('listProperty.form.contactNamePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -458,9 +460,9 @@ const ListProperty = () => {
                       name="contactEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address *</FormLabel>
+                          <FormLabel>{t('listProperty.form.contactEmail')} *</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="your.email@example.com" {...field} />
+                            <Input type="email" placeholder={t('listProperty.form.contactEmailPlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -472,9 +474,9 @@ const ListProperty = () => {
                       name="contactPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>{t('listProperty.form.contactPhone')}</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="+971 50 123 4567" {...field} />
+                            <Input type="tel" placeholder={t('listProperty.form.contactPhonePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -486,12 +488,12 @@ const ListProperty = () => {
                       name="submitterType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>I am the *</FormLabel>
+                          <FormLabel>{t('listProperty.form.submitterType')} *</FormLabel>
                           <FormControl>
                             <select {...field} className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring">
-                              <option value="owner">Property Owner</option>
-                              <option value="broker">Real Estate Broker</option>
-                              <option value="referral">Referral Agent</option>
+                              <option value="owner">{t('listProperty.form.owner')}</option>
+                              <option value="broker">{t('listProperty.form.broker')}</option>
+                              <option value="referral">{t('listProperty.form.referral')}</option>
                             </select>
                           </FormControl>
                           <FormMessage />
@@ -514,7 +516,7 @@ const ListProperty = () => {
                   className="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center"
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  {isSubmitting ? 'Submitting...' : 'Submit Property Listing'}
+                  {isSubmitting ? t('listProperty.form.submitting') : t('listProperty.form.submitButton')}
                 </Button>
 
                 {!user && (

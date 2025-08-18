@@ -198,5 +198,122 @@
     "subtitle": "Discover amazing properties for rent and sale",
     "showMap": "Show Map",
     "showGrid": "Show Grid"
+  },
+  "listProperty": {
+    "title": "List Your Property",
+    "subtitle": "Submit your property for listing on HomeApp. Our team will review and approve your submission.",
+    "authRequired": {
+      "title": "Registration Required",
+      "message": "To list your property on HomeApp, please create an account or sign in.",
+      "freeNotice": "🎉 It's completely FREE to list your property!",
+      "createAccount": "Create Account",
+      "signIn": "Sign In"
+    },
+    "form": {
+      "propertyDetails": "Property Details",
+      "propertyTitle": "Property Title",
+      "propertyTitlePlaceholder": "e.g., Luxurious 3BR Apartment in Downtown Dubai",
+      "listingType": "Listing Type",
+      "forSale": "For Sale",
+      "forRent": "For Rent",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe your property in detail...",
+      "price": "Price (AED)",
+      "area": "Area (sq m)",
+      "yearBuilt": "Year Built",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "parkingSpaces": "Parking Spaces",
+      "propertyType": "Property Type",
+      "apartment": "Apartment",
+      "villa": "Villa",
+      "townhouse": "Townhouse",
+      "penthouse": "Penthouse",
+      "studio": "Studio",
+      "office": "Office",
+      "shop": "Shop",
+      "warehouse": "Warehouse",
+      "contactInformation": "Contact Information",
+      "contactName": "Contact Name",
+      "contactNamePlaceholder": "Full name",
+      "contactEmail": "Email Address",
+      "contactEmailPlaceholder": "your.email@example.com",
+      "contactPhone": "Phone Number",
+      "contactPhonePlaceholder": "+971 XX XXX XXXX",
+      "submitterType": "You are",
+      "owner": "Property Owner",
+      "broker": "Real Estate Broker",
+      "referral": "Referral/Friend",
+      "submitButton": "Submit Property Listing",
+      "submitting": "Submitting...",
+      "success": "Property Listing Submitted!",
+      "successMessage": "Your property listing request has been submitted for admin review. You'll be notified once it's approved.",
+      "error": "Error",
+      "errorMessage": "Failed to submit property listing. Please try again.",
+      "authError": "Authentication Required",
+      "authErrorMessage": "Please sign in to submit a property listing request."
+    }
+  },
+  "instructions": {
+    "title": "How to Use HomeApp",
+    "subtitle": "Step-by-step guide to get the most out of our platform",
+    "gettingStarted": "Getting Started",
+    "searchProperties": "Searching Properties",
+    "listProperty": "Listing Your Property",
+    "contactSupport": "Getting Support",
+    "content": {
+      "gettingStarted": [
+        "Create your free HomeApp account by clicking 'Sign Up'",
+        "Complete your profile with your contact information",
+        "Verify your email address to access all features",
+        "Explore the platform and set up your preferences"
+      ],
+      "searchProperties": [
+        "Browse all properties or use advanced search filters",
+        "Filter by emirate, property type, bedrooms, and price range",
+        "View properties on map or in grid layout",
+        "Save your favorite properties for later viewing"
+      ],
+      "listProperty": [
+        "Click 'List Property' in the navigation menu",
+        "Fill out the comprehensive property information form",
+        "Upload high-quality photos, videos, and documents",
+        "Submit for admin review - properties approved within 24 hours",
+        "Monitor your property status in your profile"
+      ],
+      "contactSupport": [
+        "Use the contact form for general inquiries",
+        "Contact property owners directly through property listings",
+        "Get help from our expert team members",
+        "Access our comprehensive information and news sections"
+      ]
+    },
+    "features": {
+      "title": "Platform Features",
+      "favoritesSystem": {
+        "title": "Favorites System",
+        "description": "Save and organize properties you're interested in for easy access later."
+      },
+      "verifiedListings": {
+        "title": "Verified Listings",
+        "description": "All properties are reviewed and verified by our admin team for accuracy."
+      },
+      "interactiveMaps": {
+        "title": "Interactive Maps",
+        "description": "View properties on interactive maps with precise location details."
+      },
+      "expertTeam": {
+        "title": "Expert Team",
+        "description": "Connect with our professional real estate team for personalized assistance."
+      },
+      "realTimeUpdates": {
+        "title": "Real-time Updates",
+        "description": "Stay informed with the latest property news and market insights."
+      },
+      "comprehensiveInformation": {
+        "title": "Comprehensive Information",
+        "description": "Access detailed property information, photos, videos, and documentation."
+      }
+    }
   }
 }

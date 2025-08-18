@@ -13,76 +13,55 @@ const Instructions = () => {
     {
       title: t('instructions.gettingStarted'),
       icon: UserPlus,
-      content: [
-        "Create your free HomeApp account by clicking 'Sign Up'",
-        "Complete your profile with your contact information",
-        "Verify your email address to access all features",
-        "Explore the platform and set up your preferences"
-      ]
+      content: t('instructions.content.gettingStarted', { returnObjects: true }) as string[]
     },
     {
       title: t('instructions.searchProperties'),
       icon: Search,
-      content: [
-        "Browse all properties or use advanced search filters",
-        "Filter by emirate, property type, bedrooms, and price range",
-        "View properties on map or in grid layout",
-        "Save your favorite properties for later viewing"
-      ]
+      content: t('instructions.content.searchProperties', { returnObjects: true }) as string[]
     },
     {
       title: t('instructions.listProperty'),
       icon: Building2,
-      content: [
-        "Click 'List Property' in the navigation menu",
-        "Fill out the comprehensive property information form",
-        "Upload high-quality photos, videos, and documents",
-        "Submit for admin review - properties approved within 24 hours",
-        "Monitor your property status in your profile"
-      ]
+      content: t('instructions.content.listProperty', { returnObjects: true }) as string[]
     },
     {
       title: t('instructions.contactSupport'),
       icon: MessageCircle,
-      content: [
-        "Use the contact form for general inquiries",
-        "Contact property owners directly through property listings",
-        "Get help from our expert team members",
-        "Access our comprehensive information and news sections"
-      ]
+      content: t('instructions.content.contactSupport', { returnObjects: true }) as string[]
     }
   ];
 
   const features = [
     {
       icon: Star,
-      title: "Favorites System",
-      description: "Save and organize properties you're interested in for easy access later."
+      title: t('instructions.features.favoritesSystem.title'),
+      description: t('instructions.features.favoritesSystem.description')
     },
     {
       icon: Shield,
-      title: "Verified Listings",
-      description: "All properties are reviewed and verified by our admin team for accuracy."
+      title: t('instructions.features.verifiedListings.title'),
+      description: t('instructions.features.verifiedListings.description')
     },
     {
       icon: Map,
-      title: "Interactive Maps",
-      description: "View properties on interactive maps with precise location details."
+      title: t('instructions.features.interactiveMaps.title'),
+      description: t('instructions.features.interactiveMaps.description')
     },
     {
       icon: Users,
-      title: "Expert Team",
-      description: "Connect with our professional real estate team for personalized assistance."
+      title: t('instructions.features.expertTeam.title'),
+      description: t('instructions.features.expertTeam.description')
     },
     {
       icon: Bell,
-      title: "Real-time Updates",
-      description: "Stay informed with the latest property news and market insights."
+      title: t('instructions.features.realTimeUpdates.title'),
+      description: t('instructions.features.realTimeUpdates.description')
     },
     {
       icon: FileText,
-      title: "Comprehensive Information",
-      description: "Access detailed property information, photos, videos, and documentation."
+      title: t('instructions.features.comprehensiveInformation.title'),
+      description: t('instructions.features.comprehensiveInformation.description')
     }
   ];
 
@@ -135,7 +114,7 @@ const Instructions = () => {
         {/* Platform Features */}
         <Card>
           <CardHeader>
-            <CardTitle>Platform Features</CardTitle>
+            <CardTitle>{t('instructions.features.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
