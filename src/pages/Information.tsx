@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Target, Eye, CheckCircle, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail } from 'lucide-react';
+import { Building2, Target, Eye, CheckCircle, Facebook, Instagram, Youtube, Mail, MessageCircle, Video } from 'lucide-react';
 
 const Information = () => {
   const { t } = useTranslation();
@@ -93,7 +93,7 @@ const Information = () => {
           <CardContent>
             <div className="flex justify-center items-center gap-6 flex-wrap">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/share/15jWd7iVwn/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
@@ -105,7 +105,7 @@ const Information = () => {
               </a>
               
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/m_zverev_davima?igsh=bGdvcWs4N3lhZ3c0"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
@@ -117,31 +117,19 @@ const Information = () => {
               </a>
               
               <a
-                href="https://twitter.com"
+                href="https://www.tiktok.com/@mzverev_davima?is_from_webapp=1&sender_device=pc"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
               >
-                <div className="p-3 rounded-full bg-sky-100 group-hover:bg-sky-500 transition-colors duration-300">
-                  <Twitter className="h-6 w-6 text-sky-600 group-hover:text-white transition-colors duration-300" />
+                <div className="p-3 rounded-full bg-gray-900 group-hover:bg-black transition-colors duration-300">
+                  <Video className="h-6 w-6 text-white group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Twitter</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">TikTok</span>
               </a>
               
               <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
-              >
-                <div className="p-3 rounded-full bg-blue-100 group-hover:bg-blue-700 transition-colors duration-300">
-                  <Linkedin className="h-6 w-6 text-blue-700 group-hover:text-white transition-colors duration-300" />
-                </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">LinkedIn</span>
-              </a>
-              
-              <a
-                href="https://youtube.com"
+                href="https://youtube.com/@mzverev_davimare?si=mpjcdlAFLs0mKMp4"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
@@ -150,6 +138,18 @@ const Information = () => {
                   <Youtube className="h-6 w-6 text-red-600 group-hover:text-white transition-colors duration-300" />
                 </div>
                 <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">YouTube</span>
+              </a>
+              
+              <a
+                href="https://t.me/mzverev_davima"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center space-y-2 p-4 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+              >
+                <div className="p-3 rounded-full bg-sky-100 group-hover:bg-sky-500 transition-colors duration-300">
+                  <MessageCircle className="h-6 w-6 text-sky-600 group-hover:text-white transition-colors duration-300" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Telegram</span>
               </a>
               
               <a
