@@ -171,7 +171,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
         longitude: formData.longitude,
         bedrooms: parseInt(formData.bedrooms),
         bathrooms: parseFloat(formData.bathrooms),
-        area: formData.area ? parseInt(formData.area) : null,
+        area: formData.area ? parseFloat(formData.area) : null,
         property_type: formData.property_type,
         year_built: formData.year_built ? parseInt(formData.year_built) : null,
         parking: formData.parking ? parseInt(formData.parking) : null,
@@ -410,6 +410,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ property, onClose, onSucces
                 value={formData.area}
                 onChange={handleChange}
                 min="0"
+                step="0.01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
