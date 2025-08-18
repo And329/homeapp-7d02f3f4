@@ -152,6 +152,54 @@ const ListProperty = () => {
     }
   };
 
+  // Redirect to auth if not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <section className="py-16">
+          <div className="container mx-auto px-4 max-w-2xl text-center">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="mb-6">
+                <div className="bg-primary text-white p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Building className="h-8 w-8" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">Registration Required</h1>
+                <p className="text-lg text-gray-600 mb-6">
+                  To list your property on HomeApp, please create an account or sign in.
+                </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <p className="text-green-700 font-semibold">
+                    🎉 It's completely FREE to list your property!
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => window.location.href = '/auth'}
+                  className="px-6 py-3"
+                >
+                  Create Account
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/auth'}
+                  className="px-6 py-3"
+                >
+                  Sign In
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

@@ -465,6 +465,13 @@ const Auth = () => {
                   required
                 />
               </div>
+              {!isLogin && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                  <p className="text-sm text-amber-700">
+                    📧 <strong>Important:</strong> Please check your spam/junk folder if you don't receive the verification email within a few minutes.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
