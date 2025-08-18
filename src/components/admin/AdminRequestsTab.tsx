@@ -66,14 +66,15 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
     );
   }
 
-  // Filter property requests based on search term
+  // Filter property requests based on search term and exclude approved ones
   const filteredRequests = propertyRequests.filter(request =>
-    request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (request.status === 'pending' || request.status === 'deletion_requested') &&
+    (request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.contact_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.status.toLowerCase().includes(searchTerm.toLowerCase())
+    request.status.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (propertyRequests.length === 0) {
