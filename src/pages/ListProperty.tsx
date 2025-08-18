@@ -112,7 +112,7 @@ const ListProperty = () => {
           emirate: data.emirate,
           latitude: latitude,
           longitude: longitude,
-          area: parseInt(data.area),
+          area: parseFloat(data.area),
           year_built: data.yearBuilt ? parseInt(data.yearBuilt) : null,
           parking: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
           bedrooms: parseInt(data.bedrooms),
@@ -310,7 +310,7 @@ const ListProperty = () => {
                           {t('listProperty.form.area')} *
                         </FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="120" {...field} />
+                          <Input type="number" step="0.01" placeholder="120.50" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
