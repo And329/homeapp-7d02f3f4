@@ -41,6 +41,40 @@ const UserProfile = () => {
     enabled: !!user,
   });
 
+  // Fetch user's approved properties (where admin changes are reflected)
+  const { data: userApprovedProperties = [], isLoading: approvedPropertiesLoading } = useQuery({
+    queryKey: ['user-approved-properties', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('owner_id', user.id)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user approved properties:', error);
+        throw error;
+      }
+
+      return (data || []).map(property => {
+        const type = (property.type === 'rent' || property.type === 'sale') ? property.type : 'rent';
+        
+        return {
+          ...property,
+          type: type as 'rent' | 'sale',
+          images: Array.isArray(property.images) ? property.images.filter((img): img is string => typeof img === 'string') : ['/placeholder.svg'],
+          videos: Array.isArray(property.videos) ? property.videos.filter((video): video is string => typeof video === 'string') : [],
+          amenities: Array.isArray(property.amenities) ? property.amenities.filter((amenity): amenity is string => typeof amenity === 'string') : [],
+        } as Property;
+      });
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user's pending/rejected property requests
   const { data: userRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ['user-property-requests', user?.id],
     queryFn: async () => {
@@ -50,6 +84,7 @@ const UserProfile = () => {
         .from('property_requests')
         .select('*, qr_code')
         .eq('user_id', user.id)
+        .neq('status', 'approved') // Don't show approved ones since they're in properties table
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -304,12 +339,12 @@ const UserProfile = () => {
 
               <div className="grid grid-cols-2 gap-4 text-center text-sm border-t pt-4">
                 <div>
-                  <div className="font-semibold text-lg text-gray-900">{userRequests.length}</div>
+                  <div className="font-semibold text-lg text-gray-900">{userApprovedProperties.length + userRequests.length}</div>
                   <div className="text-gray-600">Listings</div>
                 </div>
                 <div>
                   <div className="font-semibold text-lg text-gray-900">
-                    {userRequests.filter(req => req.status === 'approved').length}
+                    {userApprovedProperties.length}
                   </div>
                   <div className="text-gray-600">Approved</div>
                 </div>
@@ -345,89 +380,125 @@ const UserProfile = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {requestsLoading ? (
+                    {(requestsLoading || approvedPropertiesLoading) ? (
                       <div className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                         <p className="mt-4 text-gray-600">Loading your listings...</p>
                       </div>
-                    ) : userRequests.length === 0 ? (
+                    ) : (userApprovedProperties.length === 0 && userRequests.length === 0) ? (
                       <div className="text-center py-8">
                         <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                         <p className="text-gray-500 text-lg font-medium mb-2">No property listings yet</p>
                         <p className="text-gray-400 mb-4">Start by creating your first property listing!</p>
                         <Button 
-                          onClick={() => window.location.href = '/list-property'}
+                          onClick={() => navigate('/list-property')}
                           className="bg-primary hover:bg-blue-700"
                         >
                           List a Property
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {userRequests.map((request) => {
-                      const transformedProperty: Property = {
-                        id: request.id,
-                        title: request.title,
-                        price: request.price,
-                        location: request.location || '',
-                        emirate: request.emirate || '',
-                        latitude: request.latitude,
-                        longitude: request.longitude,
-                        bedrooms: request.bedrooms || 0,
-                        bathrooms: request.bathrooms || 0,
-                        area: request.area || null,
-                        property_type: request.property_type || 'Apartment',
-                        year_built: null,
-                        parking: null,
-                        type: request.type,
-                        description: request.description || '',
-                        is_hot_deal: false,
-                        amenities: Array.isArray(request.amenities) ? request.amenities : [],
-                        images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
-                        
-                        qr_code: request.qr_code || '',
-                        owner_id: request.user_id,
-                        is_approved: request.status === 'approved',
-                        created_at: request.created_at,
-                      };
-                      
-                      return (
-                        <div key={request.id} className="relative">
-                          <PropertyCard property={transformedProperty} />
-                          <div className="absolute top-4 right-4 z-10 flex gap-2">
-                            {getStatusBadge(request.status)}
-                            <Button
-                              onClick={() => handleChatWithAdmin(request.id, request.title)}
-                              variant="outline"
-                              size="sm"
-                              className="bg-white/90 hover:bg-blue-50 hover:border-blue-200"
-                              disabled={createConversationMutation.isPending}
-                            >
-                              {createConversationMutation.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              ) : (
-                                <MessageSquare className="h-4 w-4 text-blue-600" />
-                              )}
-                            </Button>
-                            {request.status !== 'deletion_requested' && (
-                              <Button
-                                onClick={() => handleRequestDeletion(request.id)}
-                                variant="outline"
-                                size="sm"
-                                className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                                disabled={requestDeletionMutation.isPending}
-                              >
-                                {requestDeletionMutation.isPending ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                                ) : (
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                )}
-                              </Button>
-                            )}
+                      <div className="space-y-6">
+                        {/* Approved Properties */}
+                        {userApprovedProperties.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-green-700 mb-4 flex items-center">
+                              <CheckCircle className="w-5 h-5 mr-2" />
+                              Live Properties
+                            </h3>
+                            <div className="space-y-4">
+                              {userApprovedProperties.map((property) => (
+                                <div key={property.id} className="relative">
+                                  <PropertyCard 
+                                    property={property} 
+                                    onClick={() => navigate(`/property/${property.id}`)}
+                                  />
+                                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                    <Badge className="bg-green-100 text-green-800">
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      Live
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                        })}
+                        )}
+
+                        {/* Pending/Rejected Requests */}
+                        {userRequests.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-orange-700 mb-4 flex items-center">
+                              <Clock className="w-5 h-5 mr-2" />
+                              Pending Requests
+                            </h3>
+                            <div className="space-y-4">
+                              {userRequests.map((request) => {
+                                const transformedProperty: Property = {
+                                  id: request.id,
+                                  title: request.title,
+                                  price: request.price,
+                                  location: request.location || '',
+                                  emirate: request.emirate || '',
+                                  latitude: request.latitude,
+                                  longitude: request.longitude,
+                                  bedrooms: request.bedrooms || 0,
+                                  bathrooms: request.bathrooms || 0,
+                                  area: request.area || null,
+                                  property_type: request.property_type || 'Apartment',
+                                  year_built: null,
+                                  parking: null,
+                                  type: request.type,
+                                  description: request.description || '',
+                                  is_hot_deal: false,
+                                  amenities: Array.isArray(request.amenities) ? request.amenities : [],
+                                  images: Array.isArray(request.images) ? request.images : ['/placeholder.svg'],
+                                  qr_code: request.qr_code || '',
+                                  owner_id: request.user_id,
+                                  is_approved: request.status === 'approved',
+                                  created_at: request.created_at,
+                                };
+                                
+                                return (
+                                  <div key={request.id} className="relative">
+                                    <PropertyCard property={transformedProperty} />
+                                    <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                      {getStatusBadge(request.status)}
+                                      <Button
+                                        onClick={() => handleChatWithAdmin(request.id, request.title)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-white/90 hover:bg-blue-50 hover:border-blue-200"
+                                        disabled={createConversationMutation.isPending}
+                                      >
+                                        {createConversationMutation.isPending ? (
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                        ) : (
+                                          <MessageSquare className="h-4 w-4 text-blue-600" />
+                                        )}
+                                      </Button>
+                                      {request.status !== 'deletion_requested' && (
+                                        <Button
+                                          onClick={() => handleRequestDeletion(request.id)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white/90 hover:bg-red-50 hover:border-red-200"
+                                          disabled={requestDeletionMutation.isPending}
+                                        >
+                                          {requestDeletionMutation.isPending ? (
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                          ) : (
+                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                          )}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
