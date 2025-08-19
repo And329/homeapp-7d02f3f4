@@ -411,7 +411,7 @@ const UserProfile = () => {
                                 <div key={property.id} className="relative">
                                   <PropertyCard 
                                     property={property} 
-                                    onClick={() => navigate(`/property/${property.id}`)}
+                                    onClick={() => navigate(`/properties/${property.id}`)}
                                   />
                                   <div className="absolute top-4 right-4 z-10 flex gap-2">
                                     <Badge className="bg-green-100 text-green-800">
