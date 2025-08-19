@@ -170,7 +170,7 @@ const UserProfile = () => {
 
   // Chat with admin mutation
   const createConversationMutation = useMutation({
-    mutationFn: async ({ propertyRequestId, propertyTitle }: { propertyRequestId: string; propertyTitle: string }) => {
+    mutationFn: async ({ propertyRequestId, propertyTitle }: { propertyRequestId: string | null; propertyTitle: string }) => {
       if (!user) throw new Error('User not authenticated');
 
       // Find an admin user
@@ -185,14 +185,19 @@ const UserProfile = () => {
         throw new Error('No admin available for chat');
       }
 
-      // Check if conversation already exists
-      const { data: existingConversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('participant_1_id', user.id)
-        .eq('participant_2_id', adminUser.id)
-        .eq('property_request_id', propertyRequestId)
-        .single();
+      // Check if conversation already exists (for property requests only)
+      let existingConversation = null;
+      if (propertyRequestId) {
+        const { data } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('participant_1_id', user.id)
+          .eq('participant_2_id', adminUser.id)
+          .eq('property_request_id', propertyRequestId)
+          .single();
+        
+        existingConversation = data;
+      }
 
       let conversationId;
 
@@ -205,7 +210,7 @@ const UserProfile = () => {
           .insert({
             participant_1_id: user.id,
             participant_2_id: adminUser.id,
-            property_request_id: propertyRequestId,
+            property_request_id: propertyRequestId, // This can be null for approved properties
             subject: `Property Support: ${propertyTitle}`,
             is_admin_support: true
           })
@@ -313,7 +318,8 @@ const UserProfile = () => {
 
   // Start chat for approved property (contact admin about property)
   const handleStartChatForProperty = (propertyId: string, propertyTitle: string) => {
-    createConversationMutation.mutate({ propertyRequestId: propertyId, propertyTitle });
+    // For approved properties, we don't pass a property request ID since it's already approved
+    createConversationMutation.mutate({ propertyRequestId: null, propertyTitle: `Support for: ${propertyTitle}` });
   };
 
   if (!user) {
