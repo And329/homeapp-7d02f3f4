@@ -499,7 +499,8 @@ export type Database = {
           approved_by: string | null
           created_at: string
           id: string
-          property_request_id: string
+          property_id: string | null
+          property_request_id: string | null
           reason: string | null
           status: string
           updated_at: string
@@ -510,7 +511,8 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           id?: string
-          property_request_id: string
+          property_id?: string | null
+          property_request_id?: string | null
           reason?: string | null
           status?: string
           updated_at?: string
@@ -521,13 +523,21 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           id?: string
-          property_request_id?: string
+          property_id?: string | null
+          property_request_id?: string | null
           reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "property_deletion_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "property_deletion_requests_property_request_id_fkey"
             columns: ["property_request_id"]
