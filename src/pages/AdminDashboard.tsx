@@ -81,6 +81,20 @@ const AdminDashboard = () => {
     },
   });
 
+  // Fetch deletion requests count
+  const { data: deletionRequestsCount = 0 } = useQuery({
+    queryKey: ['admin-deletion-requests-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('property_deletion_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const {
     properties: rawProperties,
     propertiesLoading,
@@ -244,6 +258,7 @@ const AdminDashboard = () => {
           setActiveTab={state.setActiveTab}
           propertiesCount={transformedProperties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
+          deletionRequestsCount={deletionRequestsCount}
           archivedPropertiesCount={archivedProperties.length}
           openChatsCount={conversations.length}
           contactInquiriesCount={contactInquiries.filter(inquiry => inquiry.status === 'new').length}

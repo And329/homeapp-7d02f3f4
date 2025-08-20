@@ -21,7 +21,7 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
   const { approveDeletion, isApprovingDeletion } = usePropertyDeletion();
 
   // Fetch deletion requests
-  const { data: deletionRequests = [], isLoading: deletionRequestsLoading } = useQuery({
+  const { data: deletionRequests = [], isLoading: deletionRequestsLoading, error: queryError } = useQuery({
     queryKey: ['deletion-requests'],
     queryFn: async () => {
       console.log('AdminDeletionRequestsTab: Fetching deletion requests');
@@ -30,16 +30,16 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
         .from('property_deletion_requests')
         .select(`
           *,
-          property_requests (
+          property_requests!left (
             id,
-            title,
+            title, 
             description,
             price,
             location,
             type,
             property_type,
             contact_name,
-            contact_email,
+            contact_email, 
             contact_phone,
             emirate,
             bedrooms,
@@ -49,10 +49,10 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
             user_id,
             created_at
           ),
-          properties (
+          properties!left (
             id,
             title,
-            description,
+            description, 
             price,
             location,
             type,
@@ -81,9 +81,15 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
       }
 
       console.log('AdminDeletionRequestsTab: Fetched deletion requests:', data);
+      console.log('AdminDeletionRequestsTab: Data length:', data?.length || 0);
       return data as any[];
     },
   });
+
+  // Log query error if any
+  if (queryError) {
+    console.error('AdminDeletionRequestsTab: Query error:', queryError);
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
