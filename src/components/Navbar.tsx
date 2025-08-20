@@ -15,6 +15,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, User, LogOut, Settings, Home, Building2, BookOpen, Newspaper, Contact, UserPlus, Plus, Info, Users, FileText } from 'lucide-react';
 import MessageNotificationBadge from './MessageNotificationBadge';
+import NotificationBadge from './NotificationBadge';
 import LanguageSwitcher from './LanguageSwitcher';
 import UnitsToggle from './UnitsToggle';
 
@@ -79,6 +80,9 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex items-center space-x-1 sm:space-x-2">
+                {/* Notifications */}
+                <NotificationBadge onClick={() => navigate('/profile')} />
+                
                 {/* Message Notifications */}
                 <MessageNotificationBadge onClick={() => navigate('/messages')} />
 
