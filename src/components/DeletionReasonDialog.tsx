@@ -29,6 +29,7 @@ export const DeletionReasonDialog: React.FC<DeletionReasonDialogProps> = ({
   const [reason, setReason] = useState('');
 
   const handleConfirm = () => {
+    console.log('DeletionReasonDialog: handleConfirm called with reason:', reason);
     onConfirm(reason);
     setReason('');
   };

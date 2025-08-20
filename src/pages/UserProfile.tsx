@@ -250,11 +250,13 @@ const UserProfile = () => {
   };
 
   const handleRequestDeletion = (requestId: string, title: string) => {
+    console.log('UserProfile: handleRequestDeletion called with:', requestId, title);
     setDeletionDialog({
       isOpen: true,
       requestId,
       title,
     });
+    console.log('UserProfile: Dialog state set to:', { isOpen: true, requestId, title });
   };
 
   const handleConfirmDeletion = async (reason: string) => {
