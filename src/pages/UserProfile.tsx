@@ -242,39 +242,9 @@ const UserProfile = () => {
     createConversationMutation.mutate({ propertyRequestId, propertyTitle });
   };
 
-  // Delete approved property mutation
-  const deletePropertyMutation = useMutation({
-    mutationFn: async (propertyId: string) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', propertyId)
-        .eq('owner_id', user.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-approved-properties'] });
-      toast({
-        title: "Property deleted",
-        description: "Your property has been deleted successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error deleting property",
-        description: error.message || 'Failed to delete property. Please try again.',
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleDeleteProperty = (propertyId: string) => {
-    if (window.confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
-      deletePropertyMutation.mutate(propertyId);
-    }
+  const handleDeleteProperty = (propertyId: string, propertyTitle: string) => {
+    // Use deletion request system for all properties
+    handleRequestDeletion(propertyId, propertyTitle);
   };
 
   // Start chat for approved property (contact admin about property)
@@ -441,22 +411,22 @@ const UserProfile = () => {
                                         <MessageCircle className="h-4 w-4 text-blue-600" />
                                       )}
                                     </Button>
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteProperty(property.id);
-                                      }}
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                                      disabled={deletePropertyMutation.isPending}
-                                    >
-                                      {deletePropertyMutation.isPending ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                                      ) : (
-                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                      )}
-                                    </Button>
+                                     <Button
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         handleDeleteProperty(property.id, property.title || 'Property');
+                                       }}
+                                       variant="outline"
+                                       size="sm"
+                                       className="bg-white/90 hover:bg-red-50 hover:border-red-200"
+                                       disabled={isRequestingDeletion}
+                                     >
+                                       {isRequestingDeletion ? (
+                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                       ) : (
+                                         <Trash2 className="h-4 w-4 text-red-600" />
+                                       )}
+                                     </Button>
                                   </div>
                                 </div>
                               ))}
