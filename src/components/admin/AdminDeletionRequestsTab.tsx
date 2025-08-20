@@ -67,10 +67,6 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
             images,
             owner_id,
             created_at
-          ),
-          profiles!property_deletion_requests_user_id_fkey (
-            full_name,
-            email
           )
         `)
         .order('created_at', { ascending: false });
@@ -80,9 +76,26 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
         throw error;
       }
 
-      console.log('AdminDeletionRequestsTab: Fetched deletion requests:', data);
-      console.log('AdminDeletionRequestsTab: Data length:', data?.length || 0);
-      return data as any[];
+      // Manually fetch user profiles for each deletion request
+      const requestsWithProfiles = await Promise.all(
+        (data || []).map(async (request) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', request.user_id)
+            .single();
+          
+          return {
+            ...request,
+            status: request.status as 'pending' | 'approved' | 'rejected',
+            profiles: profile
+          };
+        })
+      );
+
+      console.log('AdminDeletionRequestsTab: Fetched deletion requests:', requestsWithProfiles);
+      console.log('AdminDeletionRequestsTab: Data length:', requestsWithProfiles?.length || 0);
+      return requestsWithProfiles;
     },
   });
 
