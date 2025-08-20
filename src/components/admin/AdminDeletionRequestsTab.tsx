@@ -16,6 +16,7 @@ interface AdminDeletionRequestsTabProps {
 export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> = ({
   onApproveDeletion
 }) => {
+  console.log('AdminDeletionRequestsTab: Component rendered');
   const [searchQuery, setSearchQuery] = useState('');
   const { approveDeletion, isApprovingDeletion } = usePropertyDeletion();
 
