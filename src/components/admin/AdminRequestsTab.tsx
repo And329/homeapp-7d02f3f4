@@ -153,6 +153,13 @@ const AdminRequestsTab: React.FC<AdminRequestsTabProps> = ({
                 <p className="text-gray-700 mt-1">{request.description}</p>
               </div>
             )}
+
+            {request.user_message && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p className="text-sm font-medium text-blue-800 mb-1">Message from User:</p>
+                <p className="text-sm text-blue-700">{request.user_message}</p>
+              </div>
+            )}
             
             {request.status === 'deletion_requested' && request.deletion_reason && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">

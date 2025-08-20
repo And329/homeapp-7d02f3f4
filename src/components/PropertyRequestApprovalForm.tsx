@@ -137,6 +137,13 @@ const PropertyRequestApprovalForm: React.FC<PropertyRequestApprovalFormProps> = 
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {request.user_message && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">Message from User:</h3>
+              <p className="text-sm text-blue-700">{request.user_message}</p>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
