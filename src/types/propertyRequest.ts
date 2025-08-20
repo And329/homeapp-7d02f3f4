@@ -27,4 +27,5 @@ export interface PropertyRequest {
   approved_by: string | null;
   approved_at: string | null;
   qr_code: string | null;
+  deletion_reason: string | null;
 }

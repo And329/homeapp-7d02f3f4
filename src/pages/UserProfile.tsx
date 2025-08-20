@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings, Plus, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,12 +17,30 @@ import { PropertyRequest } from '@/types/propertyRequest';
 import { Property } from '@/types/property';
 import PropertyCard from '@/components/PropertyCard';
 import FavoritesList from '@/components/FavoritesList';
+import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
+import UnifiedChat from '@/components/UnifiedChat';
+import ContactAdminButton from '@/components/ContactAdminButton';
+import { DeletionReasonDialog } from '@/components/DeletionReasonDialog';
+import { usePropertyDeletion } from '@/hooks/usePropertyDeletion';
 
 const UserProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showChatUserId, setShowChatUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deletionDialog, setDeletionDialog] = useState<{
+    isOpen: boolean;
+    requestId: string;
+    title: string;
+  }>({
+    isOpen: false,
+    requestId: '',
+    title: '',
+  });
+
+  const { requestDeletion, isRequestingDeletion } = usePropertyDeletion();
 
   const { data: userProfile } = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -127,46 +145,7 @@ const UserProfile = () => {
     enabled: !!user,
   });
 
-  const requestDeletionMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      if (!user) throw new Error('User not authenticated');
-
-      console.log('UserProfile: Creating deletion request for:', requestId);
-      
-      // Create a deletion request for admin approval
-      const { error } = await supabase
-        .from('property_requests')
-        .update({ 
-          status: 'deletion_requested',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', requestId)
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('UserProfile: Error creating deletion request:', error);
-        throw new Error(`Failed to request deletion: ${error.message}`);
-      }
-
-      console.log('UserProfile: Deletion request created successfully');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
-      
-      toast({
-        title: "Deletion requested",
-        description: "Your deletion request has been sent to admin for approval.",
-      });
-    },
-    onError: (error: any) => {
-      console.error('UserProfile: Failed to request deletion:', error);
-      toast({
-        title: "Error requesting deletion",
-        description: error.message || 'Failed to request deletion. Please try again.',
-        variant: "destructive",
-      });
-    },
-  });
+  // Delete the old requestDeletionMutation since we're using the hook now
 
   // Chat with admin mutation
   const createConversationMutation = useMutation({
@@ -270,10 +249,24 @@ const UserProfile = () => {
     );
   };
 
-  const handleRequestDeletion = (requestId: string) => {
-    if (window.confirm('Are you sure you want to request deletion of this listing? An admin will need to approve this request.')) {
-      console.log('UserProfile: User confirmed deletion request for:', requestId);
-      requestDeletionMutation.mutate(requestId);
+  const handleRequestDeletion = (requestId: string, title: string) => {
+    setDeletionDialog({
+      isOpen: true,
+      requestId,
+      title,
+    });
+  };
+
+  const handleConfirmDeletion = async (reason: string) => {
+    console.log('UserProfile: User confirmed deletion request for:', deletionDialog.requestId, 'with reason:', reason);
+    try {
+      await requestDeletion({ 
+        propertyRequestId: deletionDialog.requestId, 
+        reason 
+      });
+      setDeletionDialog({ isOpen: false, requestId: '', title: '' });
+    } catch (error) {
+      console.error('Failed to request deletion:', error);
     }
   };
 
@@ -557,13 +550,13 @@ const UserProfile = () => {
                                       </Button>
                                       {request.status !== 'deletion_requested' && (
                                         <Button
-                                          onClick={() => handleRequestDeletion(request.id)}
+                                          onClick={() => handleRequestDeletion(request.id, request.title)}
                                           variant="outline"
                                           size="sm"
                                           className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                                          disabled={requestDeletionMutation.isPending}
+                                          disabled={isRequestingDeletion}
                                         >
-                                          {requestDeletionMutation.isPending ? (
+                                          {isRequestingDeletion ? (
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                                           ) : (
                                             <Trash2 className="h-4 w-4 text-red-600" />
@@ -589,6 +582,26 @@ const UserProfile = () => {
             </Tabs>
           </div>
         </div>
+
+        {showChatUserId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+            <div className="flex items-center justify-center min-h-screen p-4">
+              <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl h-[80vh]">
+                <UnifiedChat 
+                  onClose={() => setShowChatUserId(null)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DeletionReasonDialog
+          isOpen={deletionDialog.isOpen}
+          onClose={() => setDeletionDialog({ isOpen: false, requestId: '', title: '' })}
+          onConfirm={handleConfirmDeletion}
+          isLoading={isRequestingDeletion}
+          propertyTitle={deletionDialog.title}
+        />
       </div>
 
       <Footer />

@@ -505,6 +505,7 @@ export type Database = {
           contact_name: string
           contact_phone: string | null
           created_at: string
+          deletion_reason: string | null
           description: string | null
           emirate: string | null
           id: string
@@ -537,6 +538,7 @@ export type Database = {
           contact_name: string
           contact_phone?: string | null
           created_at?: string
+          deletion_reason?: string | null
           description?: string | null
           emirate?: string | null
           id?: string
@@ -569,6 +571,7 @@ export type Database = {
           contact_name?: string
           contact_phone?: string | null
           created_at?: string
+          deletion_reason?: string | null
           description?: string | null
           emirate?: string | null
           id?: string
@@ -776,7 +779,9 @@ export type Database = {
         Returns: string
       }
       request_property_deletion: {
-        Args: { property_request_id: string }
+        Args:
+          | { deletion_reason_param?: string; property_request_id: string }
+          | { property_request_id: string }
         Returns: undefined
       }
       upsert_setting: {

@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,11 +7,12 @@ export const usePropertyDeletion = () => {
   const queryClient = useQueryClient();
 
   const requestDeletionMutation = useMutation({
-    mutationFn: async (propertyRequestId: string) => {
-      console.log('usePropertyDeletion: Requesting deletion for property request:', propertyRequestId);
+    mutationFn: async ({ propertyRequestId, reason }: { propertyRequestId: string; reason?: string }) => {
+      console.log('usePropertyDeletion: Requesting deletion for property request:', propertyRequestId, 'with reason:', reason);
       
       const { error } = await supabase.rpc('request_property_deletion', {
-        property_request_id: propertyRequestId
+        property_request_id: propertyRequestId,
+        deletion_reason_param: reason || null
       });
 
       if (error) {
