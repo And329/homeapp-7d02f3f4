@@ -10,9 +10,9 @@ export const usePropertyDeletion = () => {
     mutationFn: async ({ propertyRequestId, reason }: { propertyRequestId: string; reason?: string }) => {
       console.log('usePropertyDeletion: Requesting deletion for property request:', propertyRequestId, 'with reason:', reason);
       
-      const { error } = await supabase.rpc('request_property_deletion', {
-        property_request_id: propertyRequestId,
-        deletion_reason_param: reason || null
+      const { data, error } = await supabase.rpc('request_property_deletion_new', {
+        property_request_id_param: propertyRequestId,
+        reason_param: reason || null
       });
 
       if (error) {
@@ -20,7 +20,8 @@ export const usePropertyDeletion = () => {
         throw error;
       }
 
-      console.log('usePropertyDeletion: Deletion request successful');
+      console.log('usePropertyDeletion: Deletion request successful, ID:', data);
+      return data;
     },
     onSuccess: () => {
       toast({
@@ -29,6 +30,7 @@ export const usePropertyDeletion = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['user-property-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['deletion-requests'] });
     },
     onError: (error: any) => {
       console.error('usePropertyDeletion: Failed to request deletion:', error);
@@ -41,11 +43,11 @@ export const usePropertyDeletion = () => {
   });
 
   const approveDeletionMutation = useMutation({
-    mutationFn: async (propertyRequestId: string) => {
-      console.log('usePropertyDeletion: Approving deletion for property request:', propertyRequestId);
+    mutationFn: async (deletionRequestId: string) => {
+      console.log('usePropertyDeletion: Approving deletion request:', deletionRequestId);
       
-      const { error } = await supabase.rpc('approve_property_deletion', {
-        property_request_id: propertyRequestId
+      const { error } = await supabase.rpc('approve_property_deletion_new', {
+        deletion_request_id_param: deletionRequestId
       });
 
       if (error) {
@@ -63,6 +65,7 @@ export const usePropertyDeletion = () => {
       queryClient.invalidateQueries({ queryKey: ['property-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['deletion-requests'] });
     },
     onError: (error: any) => {
       console.error('usePropertyDeletion: Failed to approve deletion:', error);

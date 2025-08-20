@@ -13,6 +13,7 @@ import MapboxTokenSettings from '@/components/MapboxTokenSettings';
 import AdminTabNavigation from '@/components/admin/AdminTabNavigation';
 import AdminPropertiesTab from '@/components/admin/AdminPropertiesTab';
 import AdminRequestsTab from '@/components/admin/AdminRequestsTab';
+import { AdminDeletionRequestsTab } from '@/components/admin/AdminDeletionRequestsTab';
 import AdminContentTab from '@/components/admin/AdminContentTab';
 import AdminChatsTab from '@/components/admin/AdminChatsTab';
 import AdminContactTab from '@/components/admin/AdminContactTab';
@@ -279,6 +280,10 @@ const AdminDashboard = () => {
             onReviewRequest={handlers.handleReviewRequest}
             onApproveDeletion={handlers.handleApproveDeletion}
           />
+        )}
+
+        {state.activeTab === 'deletion-requests' && (
+          <AdminDeletionRequestsTab />
         )}
 
         {state.activeTab === 'archive' && (

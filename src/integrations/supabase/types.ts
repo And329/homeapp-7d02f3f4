@@ -493,6 +493,50 @@ export type Database = {
           },
         ]
       }
+      property_deletion_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          property_request_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          property_request_id: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          property_request_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_deletion_requests_property_request_id_fkey"
+            columns: ["property_request_id"]
+            isOneToOne: false
+            referencedRelation: "property_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_requests: {
         Row: {
           amenities: Json | null
@@ -751,6 +795,10 @@ export type Database = {
         Args: { property_request_id: string }
         Returns: undefined
       }
+      approve_property_deletion_new: {
+        Args: { deletion_request_id_param: string }
+        Returns: undefined
+      }
       approve_property_request: {
         Args:
           | { admin_notes_param?: string; request_id: string }
@@ -783,6 +831,10 @@ export type Database = {
           | { deletion_reason_param?: string; property_request_id: string }
           | { property_request_id: string }
         Returns: undefined
+      }
+      request_property_deletion_new: {
+        Args: { property_request_id_param: string; reason_param?: string }
+        Returns: string
       }
       upsert_setting: {
         Args: { setting_key: string; setting_value: string }

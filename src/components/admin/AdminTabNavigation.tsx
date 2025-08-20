@@ -3,8 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AdminTabNavigationProps {
-  activeTab: 'properties' | 'requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions';
-  setActiveTab: (tab: 'properties' | 'requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions') => void;
+  activeTab: 'properties' | 'requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions';
+  setActiveTab: (tab: 'properties' | 'requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'instructions') => void;
   propertiesCount: number;
   pendingRequestsCount: number;
   archivedPropertiesCount: number;
@@ -48,6 +48,16 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
             }`}
           >
             Property Requests ({pendingRequestsCount} pending)
+          </button>
+          <button
+            onClick={() => setActiveTab('deletion-requests')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'deletion-requests'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Deletion Requests
           </button>
           <button
             onClick={() => setActiveTab('archive')}
