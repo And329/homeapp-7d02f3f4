@@ -152,52 +152,17 @@ const UserProfile = () => {
     mutationFn: async ({ propertyRequestId, propertyTitle }: { propertyRequestId: string | null; propertyTitle: string }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Find an admin user
-      const { data: adminUser, error: adminError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1)
-        .single();
+      // Use the RPC function to create admin conversation
+      const { data: conversationId, error } = await supabase.rpc('create_admin_conversation', {
+        p_admin_id: 'b8f20b8b-d80d-4ff6-a19f-46ea6c9da714', // Use the admin ID from database
+        p_user_id: user.id,
+        p_property_request_id: propertyRequestId,
+        p_subject: `Property Support: ${propertyTitle}`
+      });
 
-      if (adminError || !adminUser) {
-        throw new Error('No admin available for chat');
-      }
-
-      // Check if conversation already exists (for property requests only)
-      let existingConversation = null;
-      if (propertyRequestId) {
-        const { data } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('participant_1_id', user.id)
-          .eq('participant_2_id', adminUser.id)
-          .eq('property_request_id', propertyRequestId)
-          .single();
-        
-        existingConversation = data;
-      }
-
-      let conversationId;
-
-      if (existingConversation) {
-        conversationId = existingConversation.id;
-      } else {
-        // Create new conversation with admin
-        const { data: conversation, error: conversationError } = await supabase
-          .from('conversations')
-          .insert({
-            participant_1_id: user.id,
-            participant_2_id: adminUser.id,
-            property_request_id: propertyRequestId, // This can be null for approved properties
-            subject: `Property Support: ${propertyTitle}`,
-            is_admin_support: true
-          })
-          .select()
-          .single();
-
-        if (conversationError) throw conversationError;
-        conversationId = conversation.id;
+      if (error) {
+        console.error('Error creating admin conversation:', error);
+        throw error;
       }
 
       // Send initial message with property details
@@ -551,13 +516,17 @@ const UserProfile = () => {
                                         )}
                                       </Button>
                                       {request.status !== 'deletion_requested' && (
-                                        <Button
-                                          onClick={() => handleRequestDeletion(request.id, request.title)}
-                                          variant="outline"
-                                          size="sm"
-                                          className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                                          disabled={isRequestingDeletion}
-                                        >
+                                       <Button
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           console.log('Bin icon clicked for request:', request.id, request.title);
+                                           handleRequestDeletion(request.id, request.title);
+                                         }}
+                                         variant="outline"
+                                         size="sm"
+                                         className="bg-white/90 hover:bg-red-50 hover:border-red-200"
+                                         disabled={isRequestingDeletion}
+                                       >
                                           {isRequestingDeletion ? (
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                                           ) : (
