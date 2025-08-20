@@ -22,6 +22,7 @@ import UnifiedChat from '@/components/UnifiedChat';
 import ContactAdminButton from '@/components/ContactAdminButton';
 import { DeletionReasonDialog } from '@/components/DeletionReasonDialog';
 import { usePropertyDeletion } from '@/hooks/usePropertyDeletion';
+import NotificationsList from '@/components/NotificationsList';
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -344,7 +345,7 @@ const UserProfile = () => {
             </div>
 
             <Tabs defaultValue="listings" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="listings" className="flex items-center space-x-2">
                   <Settings className="h-4 w-4" />
                   <span>My Listings</span>
@@ -352,6 +353,10 @@ const UserProfile = () => {
                 <TabsTrigger value="favorites" className="flex items-center space-x-2">
                   <Heart className="h-4 w-4" />
                   <span>Favorites</span>
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center space-x-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Notifications</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -527,6 +532,10 @@ const UserProfile = () => {
 
               <TabsContent value="favorites" className="space-y-6">
                 <FavoritesList />
+              </TabsContent>
+
+              <TabsContent value="notifications" className="space-y-6">
+                <NotificationsList />
               </TabsContent>
             </Tabs>
           </div>
