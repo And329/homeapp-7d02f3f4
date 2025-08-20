@@ -12,6 +12,8 @@ export interface PropertyRequest {
   bathrooms: number | null;
   area: number | null;
   emirate: string | null;
+  year_built: number | null;
+  parking: number | null;
   type: 'rent' | 'sale';
   property_type: string | null;
   amenities: any | null; // Json type from Supabase
