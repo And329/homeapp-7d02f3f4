@@ -832,6 +832,14 @@ export type Database = {
           | { property_request_id: string }
         Returns: undefined
       }
+      request_property_deletion_enhanced: {
+        Args: {
+          property_id_param?: string
+          property_request_id_param?: string
+          reason_param?: string
+        }
+        Returns: string
+      }
       request_property_deletion_new: {
         Args: { property_request_id_param: string; reason_param?: string }
         Returns: string

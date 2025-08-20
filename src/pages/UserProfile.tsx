@@ -33,11 +33,15 @@ const UserProfile = () => {
   const [deletionDialog, setDeletionDialog] = useState<{
     isOpen: boolean;
     requestId: string;
+    propertyId?: string;
     title: string;
+    isLiveProperty: boolean;
   }>({
     isOpen: false,
     requestId: '',
+    propertyId: '',
     title: '',
+    isLiveProperty: false,
   });
 
   const { requestDeletion, isRequestingDeletion } = usePropertyDeletion();
@@ -214,25 +218,28 @@ const UserProfile = () => {
     );
   };
 
-  const handleRequestDeletion = (requestId: string, title: string) => {
-    console.log('UserProfile: handleRequestDeletion called with:', requestId, title);
+  const handleRequestDeletion = (requestId: string, title: string, isLiveProperty: boolean = false) => {
+    console.log('UserProfile: handleRequestDeletion called with:', requestId, title, 'isLiveProperty:', isLiveProperty);
     setDeletionDialog({
       isOpen: true,
-      requestId,
+      requestId: isLiveProperty ? '' : requestId,
+      propertyId: isLiveProperty ? requestId : '',
       title,
+      isLiveProperty,
     });
-    console.log('UserProfile: Dialog state set to:', { isOpen: true, requestId, title });
+    console.log('UserProfile: Dialog state set to:', { isOpen: true, requestId, title, isLiveProperty });
   };
 
   const handleConfirmDeletion = async (reason: string) => {
-    console.log('UserProfile: User confirmed deletion request for:', deletionDialog.requestId, 'with reason:', reason);
+    console.log('UserProfile: User confirmed deletion request for:', deletionDialog, 'with reason:', reason);
     try {
       const result = await requestDeletion({ 
-        propertyRequestId: deletionDialog.requestId, 
+        propertyRequestId: deletionDialog.isLiveProperty ? undefined : deletionDialog.requestId,
+        propertyId: deletionDialog.isLiveProperty ? deletionDialog.propertyId : undefined,
         reason 
       });
       console.log('UserProfile: Deletion request completed successfully:', result);
-      setDeletionDialog({ isOpen: false, requestId: '', title: '' });
+      setDeletionDialog({ isOpen: false, requestId: '', propertyId: '', title: '', isLiveProperty: false });
     } catch (error) {
       console.error('UserProfile: Failed to request deletion:', error);
     }
@@ -243,8 +250,8 @@ const UserProfile = () => {
   };
 
   const handleDeleteProperty = (propertyId: string, propertyTitle: string) => {
-    // Use deletion request system for all properties
-    handleRequestDeletion(propertyId, propertyTitle);
+    // Use deletion request system for live properties
+    handleRequestDeletion(propertyId, propertyTitle, true);
   };
 
   // Start chat for approved property (contact admin about property)
@@ -541,7 +548,7 @@ const UserProfile = () => {
           isOpen={deletionDialog.isOpen}
           onClose={() => {
             console.log('UserProfile: Closing deletion dialog');
-            setDeletionDialog({ isOpen: false, requestId: '', title: '' });
+            setDeletionDialog({ isOpen: false, requestId: '', propertyId: '', title: '', isLiveProperty: false });
           }}
           onConfirm={handleConfirmDeletion}
           isLoading={isRequestingDeletion}

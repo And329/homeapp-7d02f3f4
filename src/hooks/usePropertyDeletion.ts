@@ -7,11 +7,16 @@ export const usePropertyDeletion = () => {
   const queryClient = useQueryClient();
 
   const requestDeletionMutation = useMutation({
-    mutationFn: async ({ propertyRequestId, reason }: { propertyRequestId: string; reason?: string }) => {
-      console.log('usePropertyDeletion: Requesting deletion for property request:', propertyRequestId, 'with reason:', reason);
+    mutationFn: async ({ propertyRequestId, propertyId, reason }: { 
+      propertyRequestId?: string; 
+      propertyId?: string; 
+      reason?: string 
+    }) => {
+      console.log('usePropertyDeletion: Requesting deletion for:', { propertyRequestId, propertyId, reason });
       
-      const { data, error } = await supabase.rpc('request_property_deletion_new', {
-        property_request_id_param: propertyRequestId,
+      const { data, error } = await supabase.rpc('request_property_deletion_enhanced', {
+        property_request_id_param: propertyRequestId || null,
+        property_id_param: propertyId || null,
         reason_param: reason || null
       });
 
