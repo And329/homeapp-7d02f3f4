@@ -227,13 +227,14 @@ const UserProfile = () => {
   const handleConfirmDeletion = async (reason: string) => {
     console.log('UserProfile: User confirmed deletion request for:', deletionDialog.requestId, 'with reason:', reason);
     try {
-      await requestDeletion({ 
+      const result = await requestDeletion({ 
         propertyRequestId: deletionDialog.requestId, 
         reason 
       });
+      console.log('UserProfile: Deletion request completed successfully:', result);
       setDeletionDialog({ isOpen: false, requestId: '', title: '' });
     } catch (error) {
-      console.error('Failed to request deletion:', error);
+      console.error('UserProfile: Failed to request deletion:', error);
     }
   };
 
@@ -568,7 +569,10 @@ const UserProfile = () => {
 
         <DeletionReasonDialog
           isOpen={deletionDialog.isOpen}
-          onClose={() => setDeletionDialog({ isOpen: false, requestId: '', title: '' })}
+          onClose={() => {
+            console.log('UserProfile: Closing deletion dialog');
+            setDeletionDialog({ isOpen: false, requestId: '', title: '' });
+          }}
           onConfirm={handleConfirmDeletion}
           isLoading={isRequestingDeletion}
           propertyTitle={deletionDialog.title}
