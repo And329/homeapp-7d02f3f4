@@ -29,7 +29,7 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
         .from('property_deletion_requests')
         .select(`
           *,
-          property_requests!inner (
+          property_requests (
             id,
             title,
             description,
@@ -47,6 +47,29 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
             images,
             user_id,
             created_at
+          ),
+          properties (
+            id,
+            title,
+            description,
+            price,
+            location,
+            type,
+            property_type,
+            contact_name,
+            contact_email,
+            contact_phone,
+            emirate,
+            bedrooms,
+            bathrooms,
+            area,
+            images,
+            owner_id,
+            created_at
+          ),
+          profiles!property_deletion_requests_user_id_fkey (
+            full_name,
+            email
           )
         `)
         .order('created_at', { ascending: false });
@@ -87,14 +110,14 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
 
   // Filter deletion requests based on search query
   const filteredRequests = deletionRequests.filter(request => {
-    const property = request.property_requests;
+    const property = request.property_requests || request.properties;
     const searchLower = searchQuery.toLowerCase();
     
     return (
-      property.title?.toLowerCase().includes(searchLower) ||
-      property.contact_name?.toLowerCase().includes(searchLower) ||
-      property.contact_email?.toLowerCase().includes(searchLower) ||
-      property.location?.toLowerCase().includes(searchLower) ||
+      property?.title?.toLowerCase().includes(searchLower) ||
+      property?.contact_name?.toLowerCase().includes(searchLower) ||
+      property?.contact_email?.toLowerCase().includes(searchLower) ||
+      property?.location?.toLowerCase().includes(searchLower) ||
       request.reason?.toLowerCase().includes(searchLower)
     );
   });
@@ -144,7 +167,8 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
           </Card>
         ) : (
           filteredRequests.map((deletionRequest) => {
-            const property = deletionRequest.property_requests;
+            const property = deletionRequest.property_requests || deletionRequest.properties;
+            const isLiveProperty = !!deletionRequest.properties;
             const statusInfo = getStatusColor(deletionRequest.status);
             const StatusIcon = statusInfo.icon;
 
@@ -153,9 +177,14 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold">
-                      {property.title}
+                      {property?.title || 'Unknown Property'}
                     </CardTitle>
                     <div className="flex items-center space-x-2">
+                      {isLiveProperty && (
+                        <Badge variant="outline" className="text-xs">
+                          Live Property
+                        </Badge>
+                      )}
                       <Badge 
                         className={`${statusInfo.bg} ${statusInfo.text} border-0`}
                       >
@@ -168,33 +197,51 @@ export const AdminDeletionRequestsTab: React.FC<AdminDeletionRequestsTabProps> =
 
                 <CardContent className="space-y-4">
                   {/* Property Details */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Price:</span> AED {property.price.toLocaleString()}
+                  {property && (
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Price:</span> AED {property.price?.toLocaleString() || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Type:</span> {property.type || 'N/A'} · {property.property_type || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Location:</span> {property.location || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Beds/Baths:</span> {property.bedrooms || 0}/{property.bathrooms || 0}
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-medium">Type:</span> {property.type} · {property.property_type}
-                    </div>
-                    <div>
-                      <span className="font-medium">Location:</span> {property.location}
-                    </div>
-                    <div>
-                      <span className="font-medium">Beds/Baths:</span> {property.bedrooms}/{property.bathrooms}
-                    </div>
-                  </div>
+                  )}
 
                   {/* Contact Information */}
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <User className="h-4 w-4 mr-2 text-gray-600" />
-                      <span className="font-medium text-sm">Contact Information</span>
+                  {property && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <User className="h-4 w-4 mr-2 text-gray-600" />
+                        <span className="font-medium text-sm">Contact Information</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <p><strong>Name:</strong> {property.contact_name || 'N/A'}</p>
+                        <p><strong>Email:</strong> {property.contact_email || 'N/A'}</p>
+                        {property.contact_phone && <p><strong>Phone:</strong> {property.contact_phone}</p>}
+                      </div>
                     </div>
-                    <div className="text-sm space-y-1">
-                      <p><strong>Name:</strong> {property.contact_name}</p>
-                      <p><strong>Email:</strong> {property.contact_email}</p>
-                      {property.contact_phone && <p><strong>Phone:</strong> {property.contact_phone}</p>}
+                  )}
+
+                  {/* User Information */}
+                  {deletionRequest.profiles && (
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <User className="h-4 w-4 mr-2 text-blue-600" />
+                        <span className="font-medium text-sm">Requested By</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <p><strong>Name:</strong> {deletionRequest.profiles.full_name || 'N/A'}</p>
+                        <p><strong>Email:</strong> {deletionRequest.profiles.email || 'N/A'}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Deletion Reason */}
                   {deletionRequest.reason && (
