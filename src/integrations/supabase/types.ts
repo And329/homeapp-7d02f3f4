@@ -522,6 +522,7 @@ export type Database = {
           type: string
           updated_at: string | null
           user_id: string | null
+          user_message: string | null
           videos: Json | null
           year_built: number | null
         }
@@ -553,6 +554,7 @@ export type Database = {
           type: string
           updated_at?: string | null
           user_id?: string | null
+          user_message?: string | null
           videos?: Json | null
           year_built?: number | null
         }
@@ -584,6 +586,7 @@ export type Database = {
           type?: string
           updated_at?: string | null
           user_id?: string | null
+          user_message?: string | null
           videos?: Json | null
           year_built?: number | null
         }

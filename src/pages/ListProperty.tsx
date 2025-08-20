@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building, MapPin, DollarSign, Home, Send, Square } from 'lucide-react';
+import { Building, MapPin, DollarSign, Home, Send, Square, MessageSquare } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ const propertyRequestSchema = z.object({
   contactEmail: z.string().email('Valid email is required'),
   contactPhone: z.string().optional(),
   submitterType: z.enum(['owner', 'broker', 'referral']),
+  userMessage: z.string().optional(),
 });
 
 type PropertyRequestForm = z.infer<typeof propertyRequestSchema>;
@@ -72,6 +73,7 @@ const ListProperty = () => {
       contactEmail: user?.email || '',
       contactPhone: '',
       submitterType: 'owner',
+      userMessage: '',
     },
   });
 
@@ -126,6 +128,7 @@ const ListProperty = () => {
           contact_email: data.contactEmail,
           contact_phone: data.contactPhone || null,
           submitter_type: data.submitterType,
+          user_message: data.userMessage || null,
         });
 
       if (error) throw error;
@@ -501,6 +504,30 @@ const ListProperty = () => {
                       )}
                     />
                   </div>
+                </div>
+
+                {/* Message for Admin */}
+                <div className="border-t pt-6">
+                  <FormField
+                    control={form.control}
+                    name="userMessage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Message for Admin (Optional)
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Leave a message or special instructions for our admin team..."
+                            rows={3}
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="bg-blue-50 p-4 rounded-lg">
