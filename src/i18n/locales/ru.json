@@ -229,6 +229,21 @@
       "propertyType": "Тип недвижимости",
       "apartment": "Квартира",
       "villa": "Вилла",
+      "bed": "спальн.",
+      "bath": "ванн.",
+      "hotDeal": "Горячее предложение",
+      "for": "На",
+      "sale": "продажу",
+      "rent": "аренду"
+    },
+    "propertyStatus": {
+      "live": "В продаже",
+      "archived": "Архивировано",
+      "pending": "Ожидание",
+      "approved": "Одобрено",
+      "rejected": "Отклонено"
+    },
+    "form": {
       "townhouse": "Таунхаус",
       "penthouse": "Пентхаус",
       "studio": "Студия",

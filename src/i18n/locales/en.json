@@ -227,6 +227,21 @@
       "propertyType": "Property Type",
       "apartment": "Apartment",
       "villa": "Villa",
+      "bed": "bed",
+      "bath": "bath",
+      "hotDeal": "Hot Deal",
+      "for": "For",
+      "sale": "Sale",
+      "rent": "Rent"
+    },
+    "propertyStatus": {
+      "live": "Live",
+      "archived": "Archived",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "form": {
       "townhouse": "Townhouse",
       "penthouse": "Penthouse",
       "studio": "Studio",

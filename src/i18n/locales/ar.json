@@ -226,6 +226,21 @@
       "propertyType": "نوع العقار",
       "apartment": "شقة",
       "villa": "فيلا",
+      "bed": "غرفة",
+      "bath": "حمام",
+      "hotDeal": "عرض مميز",
+      "for": "للـ",
+      "sale": "بيع",
+      "rent": "إيجار"
+    },
+    "propertyStatus": {
+      "live": "متاح",
+      "archived": "مؤرشف",
+      "pending": "قيد المراجعة",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض"
+    },
+    "form": {
       "townhouse": "منزل متداخل",
       "penthouse": "بنتهاوس",
       "studio": "استوديو",

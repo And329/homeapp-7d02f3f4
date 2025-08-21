@@ -393,7 +393,7 @@ const UserProfile = () => {
                           <div>
                             <h3 className="text-lg font-semibold text-green-700 mb-4 flex items-center">
                               <CheckCircle className="w-5 h-5 mr-2" />
-                              Live Properties
+                              Approved Properties
                             </h3>
                             <div className="space-y-4">
                               {userApprovedProperties.map((property) => (
@@ -402,44 +402,48 @@ const UserProfile = () => {
                                     property={property} 
                                     onClick={() => navigate(`/properties/${property.id}`)}
                                   />
-                                  <div className="absolute top-4 right-4 z-10 flex gap-2">
-                                    <Badge className="bg-green-100 text-green-800">
-                                      <CheckCircle className="w-3 h-3 mr-1" />
-                                      Live
-                                    </Badge>
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleStartChatForProperty(property.id, property.title || 'Property');
-                                      }}
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-white/90 hover:bg-blue-50 hover:border-blue-200"
-                                      disabled={createConversationMutation.isPending}
-                                    >
-                                      {createConversationMutation.isPending ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                      ) : (
-                                        <MessageCircle className="h-4 w-4 text-blue-600" />
-                                      )}
-                                    </Button>
-                                     <Button
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         handleDeleteProperty(property.id, property.title || 'Property');
-                                       }}
-                                       variant="outline"
-                                       size="sm"
-                                       className="bg-white/90 hover:bg-red-50 hover:border-red-200"
-                                       disabled={isRequestingDeletion}
-                                     >
-                                       {isRequestingDeletion ? (
-                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                                       ) : (
-                                         <Trash2 className="h-4 w-4 text-red-600" />
-                                       )}
-                                     </Button>
-                                  </div>
+                                   <div className="absolute top-4 right-4 z-10 flex gap-1 flex-col">
+                                     <div className="flex gap-1 mb-1">
+                                       <Badge className={property.is_archived ? "bg-gray-100 text-gray-800" : "bg-green-100 text-green-800"}>
+                                         <CheckCircle className="w-3 h-3 mr-1" />
+                                         {property.is_archived ? 'Archived' : 'Live'}
+                                       </Badge>
+                                     </div>
+                                     <div className="flex gap-1">
+                                       <Button
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleStartChatForProperty(property.id, property.title || 'Property');
+                                         }}
+                                         variant="outline"
+                                         size="sm"
+                                         className="bg-white/90 hover:bg-blue-50 hover:border-blue-200 h-7 px-2"
+                                         disabled={createConversationMutation.isPending}
+                                       >
+                                         {createConversationMutation.isPending ? (
+                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                                         ) : (
+                                           <MessageCircle className="h-3 w-3 text-blue-600" />
+                                         )}
+                                       </Button>
+                                       <Button
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleDeleteProperty(property.id, property.title || 'Property');
+                                         }}
+                                         variant="outline"
+                                         size="sm"
+                                         className="bg-white/90 hover:bg-red-50 hover:border-red-200 h-7 px-2"
+                                         disabled={isRequestingDeletion}
+                                       >
+                                         {isRequestingDeletion ? (
+                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                                         ) : (
+                                           <Trash2 className="h-3 w-3 text-red-600" />
+                                         )}
+                                       </Button>
+                                     </div>
+                                   </div>
                                 </div>
                               ))}
                             </div>

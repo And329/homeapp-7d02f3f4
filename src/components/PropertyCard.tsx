@@ -9,6 +9,7 @@ import { useUnits } from '@/contexts/UnitsContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Property } from '@/types/property';
 import { convertArea, convertPrice, formatArea, formatPrice } from '@/utils/unitConversion';
+import { useTranslation } from 'react-i18next';
 
 interface PropertyCardProps {
   property: Property;
@@ -24,6 +25,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   const { user } = useAuth();
   const { unitSystem, currency } = useUnits();
   const { isFavorite, toggleFavorite, isToggling } = useFavorites();
+  const { t } = useTranslation();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,11 +48,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         />
         {property.is_hot_deal && (
           <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs">
-            Hot Deal
+            {t('listProperty.hotDeal')}
           </Badge>
         )}
-        <Badge className="absolute top-2 right-8 sm:right-2 bg-blue-500 text-white capitalize text-xs">
-          For {property.type}
+        <Badge className="absolute top-2 right-12 bg-blue-500 text-white capitalize text-xs">
+          {t('listProperty.for')} {t(`listProperty.${property.type}`)}
         </Badge>
         
         {/* Favorite Button with red color when favorited */}
@@ -82,11 +84,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3">
           <div className="flex items-center">
             <Bed className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.bedrooms} bed</span>
+            <span>{property.bedrooms} {t('listProperty.bed')}</span>
           </div>
           <div className="flex items-center">
             <Bath className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.bathrooms} bath</span>
+            <span>{property.bathrooms} {t('listProperty.bath')}</span>
           </div>
           <div className="flex items-center">
             <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
