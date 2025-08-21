@@ -51,8 +51,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             {t('listProperty.hotDeal')}
           </Badge>
         )}
-        <Badge className="absolute top-2 right-12 bg-blue-500 text-white capitalize text-xs">
-          {t('listProperty.for')} {t(`listProperty.${property.type}`)}
+        <Badge className="absolute top-2 right-2 bg-blue-500 text-white capitalize text-xs">
+          {property.type === 'sale' ? t('propertyCard.forSale') : t('propertyCard.forRent')}
         </Badge>
         
         {/* Favorite Button with red color when favorited */}

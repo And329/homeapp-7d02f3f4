@@ -402,7 +402,7 @@ const UserProfile = () => {
                                     property={property} 
                                     onClick={() => navigate(`/properties/${property.id}`)}
                                   />
-                                   <div className="absolute top-16 right-2 z-10 flex gap-1 flex-col">
+                                   <div className="absolute top-2 left-2 z-10 flex gap-1 flex-col">
                                      <div className="flex gap-1 mb-2">
                                        <Badge className={property.is_archived ? "bg-gray-100 text-gray-800" : "bg-green-100 text-green-800"}>
                                          <CheckCircle className="w-3 h-3 mr-1" />
