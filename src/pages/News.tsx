@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, ExternalLink, Tag } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -20,6 +21,7 @@ interface NewsArticle {
 }
 
 const News = () => {
+  const { t } = useTranslation();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -51,7 +53,7 @@ const News = () => {
   }, [toast]);
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Draft';
+    if (!dateString) return t('news.draft');
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -72,9 +74,9 @@ const News = () => {
       <section className="uae-gradient text-white py-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Real Estate News</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('news.title')}</h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Stay informed with the latest real estate news and market updates from Dubai and the UAE.
+              {t('news.subtitle')}
             </p>
           </div>
         </div>
@@ -89,8 +91,8 @@ const News = () => {
             </div>
           ) : articles.length === 0 ? (
             <div className="text-center py-12">
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No news articles yet</h3>
-              <p className="text-gray-500">Check back soon for the latest real estate news!</p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">{t('news.noArticles')}</h3>
+              <p className="text-gray-500">{t('news.noArticlesDescription')}</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -142,7 +144,7 @@ const News = () => {
                       )}
                       
                       <button className="text-primary font-semibold hover:text-primary/80 transition-colors">
-                        Read Full Article
+                        {t('news.readFullArticle')}
                       </button>
                     </div>
                   </div>

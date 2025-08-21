@@ -88,8 +88,8 @@ const Information = () => {
         {/* Social Media Links */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Connect With Us</CardTitle>
-            <p className="text-center text-muted-foreground">Follow us on social media for the latest updates</p>
+            <CardTitle className="text-center">{t('social.connectWithUs')}</CardTitle>
+            <p className="text-center text-muted-foreground">{t('social.followDescription')}</p>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center items-center gap-6 flex-wrap">
@@ -102,7 +102,7 @@ const Information = () => {
                 <div className="p-3 rounded-full bg-blue-100 group-hover:bg-blue-500 transition-colors duration-300">
                   <Facebook className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Facebook</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">{t('social.facebook')}</span>
               </a>
               
               <a
@@ -114,7 +114,7 @@ const Information = () => {
                 <div className="p-3 rounded-full bg-pink-100 group-hover:bg-gradient-to-r group-hover:from-purple-500 group-hover:to-pink-500 transition-all duration-300">
                   <Instagram className="h-6 w-6 text-pink-600 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Instagram</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">{t('social.instagram')}</span>
               </a>
               
               <a
@@ -126,7 +126,7 @@ const Information = () => {
                 <div className="p-3 rounded-full bg-gray-900 group-hover:bg-black transition-colors duration-300">
                   <TikTokIcon className="h-6 w-6 text-white group-hover:text-white" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">TikTok</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">{t('social.tiktok')}</span>
               </a>
               
               <a
@@ -138,7 +138,7 @@ const Information = () => {
                 <div className="p-3 rounded-full bg-red-100 group-hover:bg-red-600 transition-colors duration-300">
                   <Youtube className="h-6 w-6 text-red-600 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">YouTube</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">{t('social.youtube')}</span>
               </a>
               
               <a
@@ -150,7 +150,7 @@ const Information = () => {
                 <div className="p-3 rounded-full bg-sky-100 group-hover:bg-sky-500 transition-colors duration-300">
                   <MessageCircle className="h-6 w-6 text-sky-600 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">Telegram</span>
+                <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors duration-300">{t('social.telegram')}</span>
               </a>
             </div>
           </CardContent>

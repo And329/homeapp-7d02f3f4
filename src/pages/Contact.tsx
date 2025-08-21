@@ -86,8 +86,7 @@ const Contact = () => {
                         <h3 className="font-semibold text-gray-900 text-sm md:text-base mb-1">
                           {t('contact.info.address')}
                         </h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">Office 402, Citadel Tower</p>
-                        <p className="text-gray-600 text-sm leading-relaxed">Business Bay, Dubai</p>
+                        <p className="text-gray-600 text-sm leading-relaxed">{t('footer.address')}</p>
                       </div>
                     </div>
                   </CardContent>

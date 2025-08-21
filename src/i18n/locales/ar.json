@@ -253,6 +253,64 @@
       "authErrorMessage": "يرجى تسجيل الدخول لتقديم طلب إدراج عقار."
     }
   },
+  "footer": {
+    "companyDescription": "شريكك الموثوق في العقارات الإماراتية. اعثر على عقار أحلامك معنا.",
+    "quickLinks": "روابط سريعة",
+    "resources": "الموارد",
+    "contactInfo": "معلومات التواصل",
+    "address": "مكتب 402، برج القلعة، الخليج التجاري، دبي",
+    "copyright": "© 2025 HomeApp. جميع الحقوق محفوظة. رخصة العقارات: RERA-12345"
+  },
+  "filters": {
+    "searchPlaceholder": "البحث بالعنوان أو الموقع...",
+    "forRentSale": "للإيجار/للبيع",
+    "allTypes": "جميع الأنواع",
+    "forRent": "للإيجار",
+    "forSale": "للبيع",
+    "propertyType": "نوع العقار",
+    "allPropertyTypes": "جميع أنواع العقارات",
+    "apartment": "شقة",
+    "villa": "فيلا",
+    "townhouse": "تاون هاوس",
+    "studio": "ستوديو",
+    "penthouse": "بنتهاوس",
+    "bedrooms": "غرف النوم",
+    "anyBedrooms": "أي عدد من غرف النوم",
+    "oneBedroom": "غرفة نوم واحدة",
+    "twoBedrooms": "غرفتا نوم",
+    "threeBedrooms": "3 غرف نوم",
+    "fourPlusBedrooms": "4+ غرف نوم",
+    "emirate": "الإمارة",
+    "allEmirates": "جميع الإمارات",
+    "minPrice": "الحد الأدنى",
+    "maxPrice": "الحد الأقصى",
+    "propertiesFound": "عقار موجود"
+  },
+  "blog": {
+    "title": "مدونة العقارات",
+    "subtitle": "ابق على اطلاع بأحدث الرؤى والاتجاهات والأخبار من سوق العقارات في دبي.",
+    "loading": "جار التحميل...",
+    "noPosts": "لا توجد مقالات في المدونة بعد",
+    "noPostsDescription": "تحقق مرة أخرى قريباً لمحتوى العقارات المثير!"
+  },
+  "news": {
+    "title": "أخبار العقارات",
+    "subtitle": "ابق مطلعاً على آخر أخبار العقارات وتحديثات السوق من دبي والإمارات العربية المتحدة.",
+    "loading": "جار التحميل...",
+    "noArticles": "لا توجد مقالات إخبارية بعد",
+    "noArticlesDescription": "تحقق مرة أخرى قريباً لآخر أخبار العقارات!",
+    "readFullArticle": "قراءة المقال كاملاً",
+    "draft": "مسودة"
+  },
+  "social": {
+    "connectWithUs": "تواصل معنا",
+    "followDescription": "تابعنا على وسائل التواصل الاجتماعي للحصول على آخر التحديثات",
+    "facebook": "فيسبوك",
+    "instagram": "إنستغرام",
+    "tiktok": "تيك توك",
+    "youtube": "يوتيوب",
+    "telegram": "تيليجرام"
+  },
   "instructions": {
     "title": "كيفية استخدام HomeApp",
     "subtitle": "دليل خطوة بخطوة للاستفادة القصوى من منصتنا",

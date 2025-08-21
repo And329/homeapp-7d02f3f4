@@ -254,6 +254,64 @@
       "authErrorMessage": "Please sign in to submit a property listing request."
     }
   },
+  "footer": {
+    "companyDescription": "Your trusted partner in UAE real estate. Find your dream property with us.",
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "contactInfo": "Contact Info",
+    "address": "Office 402, Citadel Tower, Business Bay, Dubai",
+    "copyright": "© 2025 HomeApp. All rights reserved. Real Estate License: RERA-12345"
+  },
+  "filters": {
+    "searchPlaceholder": "Search by title or location...",
+    "forRentSale": "For Rent/Sale",
+    "allTypes": "All Types",
+    "forRent": "For Rent",
+    "forSale": "For Sale",
+    "propertyType": "Property Type",
+    "allPropertyTypes": "All Property Types",
+    "apartment": "Apartment",
+    "villa": "Villa", 
+    "townhouse": "Townhouse",
+    "studio": "Studio",
+    "penthouse": "Penthouse",
+    "bedrooms": "Bedrooms",
+    "anyBedrooms": "Any Bedrooms",
+    "oneBedroom": "1 Bedroom",
+    "twoBedrooms": "2 Bedrooms",
+    "threeBedrooms": "3 Bedrooms",
+    "fourPlusBedrooms": "4+ Bedrooms",
+    "emirate": "Emirate",
+    "allEmirates": "All Emirates",
+    "minPrice": "Min",
+    "maxPrice": "Max",
+    "propertiesFound": "properties found"
+  },
+  "blog": {
+    "title": "Real Estate Blog",
+    "subtitle": "Stay updated with the latest insights, trends, and news from Dubai's real estate market.",
+    "loading": "Loading...",
+    "noPosts": "No blog posts yet",
+    "noPostsDescription": "Check back soon for exciting real estate content!"
+  },
+  "news": {
+    "title": "Real Estate News",
+    "subtitle": "Stay informed with the latest real estate news and market updates from Dubai and the UAE.",
+    "loading": "Loading...",
+    "noArticles": "No news articles yet",
+    "noArticlesDescription": "Check back soon for the latest real estate news!",
+    "readFullArticle": "Read Full Article",
+    "draft": "Draft"
+  },
+  "social": {
+    "connectWithUs": "Connect With Us",
+    "followDescription": "Follow us on social media for the latest updates",
+    "facebook": "Facebook",
+    "instagram": "Instagram", 
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "telegram": "Telegram"
+  },
   "instructions": {
     "title": "How to Use HomeApp",
     "subtitle": "Step-by-step guide to get the most out of our platform",
