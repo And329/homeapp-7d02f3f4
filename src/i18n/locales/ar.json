@@ -208,6 +208,13 @@
       "createAccount": "إنشاء حساب",
       "signIn": "تسجيل الدخول"
     },
+    "propertyStatus": {
+      "live": "متاح",
+      "archived": "مؤرشف",
+      "pending": "قيد المراجعة",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض"
+    },
     "form": {
       "propertyDetails": "تفاصيل العقار",
       "propertyTitle": "عنوان العقار",
@@ -226,27 +233,18 @@
       "propertyType": "نوع العقار",
       "apartment": "شقة",
       "villa": "فيلا",
-      "bed": "غرفة",
-      "bath": "حمام",
-      "hotDeal": "عرض مميز",
-      "for": "للـ",
-      "sale": "بيع",
-      "rent": "إيجار"
-    },
-    "propertyStatus": {
-      "live": "متاح",
-      "archived": "مؤرشف",
-      "pending": "قيد المراجعة",
-      "approved": "موافق عليه",
-      "rejected": "مرفوض"
-    },
-    "form": {
       "townhouse": "منزل متداخل",
       "penthouse": "بنتهاوس",
       "studio": "استوديو",
       "office": "مكتب",
       "shop": "محل",
       "warehouse": "مستودع",
+      "bed": "غرفة",
+      "bath": "حمام",
+      "hotDeal": "عرض مميز",
+      "for": "للـ",
+      "sale": "بيع",
+      "rent": "إيجار",
       "contactInformation": "معلومات الاتصال",
       "contactName": "اسم جهة الاتصال",
       "contactNamePlaceholder": "الاسم الكامل",
