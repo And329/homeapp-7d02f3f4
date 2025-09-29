@@ -2,14 +2,22 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LandingPage as LandingPageType } from '@/types/landingPage';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
-import { Check, MapPin, Calendar, Maximize2, Bed, Bath } from 'lucide-react';
+import { Check, MapPin, Calendar, Maximize2, Bed, Bath, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import PropertyQRCode from '@/components/PropertyQRCode';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function LandingPage() {
   const { slug } = useParams();
@@ -82,6 +90,7 @@ export default function LandingPage() {
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed'
         }}
+        key="hero-section"
       >
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
@@ -320,21 +329,65 @@ export default function LandingPage() {
             </div>
           )}
 
+          {landingPage.floor_plans && landingPage.floor_plans.length > 0 && (
+            <div className="mb-16">
+              <h3 className="text-3xl font-bold mb-6">Floor Plans</h3>
+              <Carousel className="w-full max-w-5xl mx-auto">
+                <CarouselContent>
+                  {landingPage.floor_plans.map((plan, idx) => (
+                    <CarouselItem key={idx}>
+                      <Card className="p-4">
+                        <img 
+                          src={plan} 
+                          alt={`Floor Plan ${idx + 1}`} 
+                          className="w-full h-auto object-contain rounded-lg" 
+                        />
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            </div>
+          )}
+
           {landingPage.gallery_images && landingPage.gallery_images.length > 0 && (
-            <div>
+            <div className="mb-16">
               <h3 className="text-3xl font-bold mb-6">Gallery</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {landingPage.gallery_images.map((image, idx) => (
-                  <div key={idx} className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
-                    <img 
-                      src={image} 
-                      alt={`Gallery ${idx + 1}`} 
-                      className="w-full h-72 object-cover transition-transform duration-300 group-hover:scale-110" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
-              </div>
+              <Carousel className="w-full max-w-5xl mx-auto">
+                <CarouselContent>
+                  {landingPage.gallery_images.map((image, idx) => (
+                    <CarouselItem key={idx} className="md:basis-1/2 lg:basis-1/3">
+                      <Card className="overflow-hidden group">
+                        <div className="relative aspect-video">
+                          <img 
+                            src={image} 
+                            alt={`Gallery ${idx + 1}`} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            </div>
+          )}
+
+          {landingPage.qr_code && (
+            <div className="text-center">
+              <h3 className="text-3xl font-bold mb-6">Scan for More Details</h3>
+              <Card className="inline-block p-8">
+                <PropertyQRCode 
+                  qrCode={landingPage.qr_code}
+                  propertyTitle={landingPage.title}
+                />
+                <p className="mt-4 text-muted-foreground">Scan to get detailed property brochure</p>
+              </Card>
             </div>
           )}
         </div>

@@ -12,6 +12,8 @@ export interface LandingPage {
   features?: string[];
   amenities?: string[];
   gallery_images?: string[];
+  floor_plans?: string[];
+  qr_code?: string;
   bedrooms?: string;
   bathrooms?: string;
   area_from?: string;

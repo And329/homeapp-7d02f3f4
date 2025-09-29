@@ -10,6 +10,7 @@ import { LandingPage } from '@/types/landingPage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Plus, Trash2 } from 'lucide-react';
 import PropertyMediaUpload from './PropertyMediaUpload';
+import QRCodeUpload from './QRCodeUpload';
 
 interface LandingPageFormProps {
   onClose: () => void;
@@ -26,6 +27,8 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
   const [newAmenity, setNewAmenity] = useState('');
   const [newBudget, setNewBudget] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [floorPlans, setFloorPlans] = useState<string[]>([]);
+  const [qrCode, setQrCode] = useState('');
 
   useEffect(() => {
     if (editingPage) {
@@ -36,6 +39,8 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
       setAmenities(editingPage.amenities || []);
       setBudgetOptions(editingPage.budget_options || []);
       setGalleryImages(editingPage.gallery_images || []);
+      setFloorPlans(editingPage.floor_plans || []);
+      setQrCode(editingPage.qr_code || '');
     }
   }, [editingPage, setValue]);
 
@@ -46,6 +51,8 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
       amenities,
       budget_options: budgetOptions,
       gallery_images: galleryImages,
+      floor_plans: floorPlans,
+      qr_code: qrCode,
       starting_price: data.starting_price ? parseInt(data.starting_price) : null
     };
 
@@ -184,6 +191,40 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <Label>Floor Plans</Label>
+            <PropertyMediaUpload 
+              images={floorPlans}
+              onImagesChange={setFloorPlans}
+            />
+            {floorPlans.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {floorPlans.map((url, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={url} alt="" className="w-20 h-20 object-cover rounded" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-0 right-0 opacity-0 group-hover:opacity-100"
+                      onClick={() => setFloorPlans(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label>QR Code</Label>
+            <QRCodeUpload 
+              qrCode={qrCode}
+              onQRCodeChange={setQrCode}
+            />
           </div>
 
           <div>

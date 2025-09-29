@@ -299,6 +299,7 @@ export type Database = {
           description: string | null
           developer: string | null
           features: Json | null
+          floor_plans: Json | null
           gallery_images: Json | null
           hero_image: string | null
           id: string
@@ -307,6 +308,7 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           payment_plan: string | null
+          qr_code: string | null
           slug: string
           starting_price: number | null
           subtitle: string | null
@@ -327,6 +329,7 @@ export type Database = {
           description?: string | null
           developer?: string | null
           features?: Json | null
+          floor_plans?: Json | null
           gallery_images?: Json | null
           hero_image?: string | null
           id?: string
@@ -335,6 +338,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           payment_plan?: string | null
+          qr_code?: string | null
           slug: string
           starting_price?: number | null
           subtitle?: string | null
@@ -355,6 +359,7 @@ export type Database = {
           description?: string | null
           developer?: string | null
           features?: Json | null
+          floor_plans?: Json | null
           gallery_images?: Json | null
           hero_image?: string | null
           id?: string
@@ -363,6 +368,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           payment_plan?: string | null
+          qr_code?: string | null
           slug?: string
           starting_price?: number | null
           subtitle?: string | null
