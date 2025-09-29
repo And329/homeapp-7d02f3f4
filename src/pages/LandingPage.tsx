@@ -22,6 +22,7 @@ import {
 export default function LandingPage() {
   const { slug } = useParams();
   const { toast } = useToast();
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -281,9 +282,15 @@ export default function LandingPage() {
 
           {landingPage.description && (
             <div className="mb-16">
-              <h3 className="text-3xl font-bold mb-6">About the Property</h3>
-              <Card className="p-8 bg-muted/50">
-                <p className="text-lg leading-relaxed whitespace-pre-line">{landingPage.description}</p>
+              <h3 className="text-3xl font-bold mb-6 text-center">About the Development</h3>
+              <Card className="p-8 bg-gradient-to-br from-muted/30 to-muted/60 border-none shadow-lg">
+                <div className="max-w-4xl mx-auto">
+                  {landingPage.description.split('\n\n').map((paragraph, idx) => (
+                    <p key={idx} className="text-lg leading-relaxed mb-4 last:mb-0 text-foreground/90">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
               </Card>
             </div>
           )}
@@ -322,25 +329,42 @@ export default function LandingPage() {
 
           {landingPage.payment_plan && (
             <div className="mb-16">
-              <h3 className="text-3xl font-bold mb-6">Flexible Payment Plan</h3>
-              <Card className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-                <p className="text-lg leading-relaxed whitespace-pre-line font-medium">{landingPage.payment_plan}</p>
+              <h3 className="text-3xl font-bold mb-6 text-center">Investment Opportunity</h3>
+              <Card className="p-10 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 shadow-xl">
+                <div className="max-w-3xl mx-auto">
+                  {landingPage.payment_plan.split('\n\n').map((section, idx) => (
+                    <div key={idx} className="mb-6 last:mb-0">
+                      {section.split('\n').map((line, lineIdx) => {
+                        if (line.startsWith('💰') || line.startsWith('✨')) {
+                          return <h4 key={lineIdx} className="text-2xl font-bold mb-4 text-primary">{line}</h4>;
+                        }
+                        return <p key={lineIdx} className="text-lg leading-relaxed mb-2">{line}</p>;
+                      })}
+                    </div>
+                  ))}
+                </div>
               </Card>
             </div>
           )}
 
           {landingPage.floor_plans && landingPage.floor_plans.length > 0 && (
             <div className="mb-16">
-              <h3 className="text-3xl font-bold mb-6">Floor Plans</h3>
+              <h3 className="text-3xl font-bold mb-8 text-center">Floor Plans</h3>
               <Carousel className="w-full max-w-5xl mx-auto">
                 <CarouselContent>
                   {landingPage.floor_plans.map((plan, idx) => (
                     <CarouselItem key={idx}>
-                      <Card className="p-4">
+                      <Card className="p-6 bg-muted/30">
+                        <div className="flex items-center justify-center mb-4">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <FileText className="h-5 w-5" />
+                            <span className="font-medium">Floor Plan {idx + 1} of {landingPage.floor_plans!.length}</span>
+                          </div>
+                        </div>
                         <img 
                           src={plan} 
                           alt={`Floor Plan ${idx + 1}`} 
-                          className="w-full h-auto object-contain rounded-lg" 
+                          className="w-full h-auto object-contain rounded-lg bg-white p-4" 
                         />
                       </Card>
                     </CarouselItem>
@@ -354,39 +378,90 @@ export default function LandingPage() {
 
           {landingPage.gallery_images && landingPage.gallery_images.length > 0 && (
             <div className="mb-16">
-              <h3 className="text-3xl font-bold mb-6">Gallery</h3>
-              <Carousel className="w-full max-w-5xl mx-auto">
-                <CarouselContent>
-                  {landingPage.gallery_images.map((image, idx) => (
-                    <CarouselItem key={idx} className="md:basis-1/2 lg:basis-1/3">
-                      <Card className="overflow-hidden group">
-                        <div className="relative aspect-video">
-                          <img 
-                            src={image} 
-                            alt={`Gallery ${idx + 1}`} 
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+              <h3 className="text-3xl font-bold mb-8 text-center">Property Gallery</h3>
+              <div className="max-w-6xl mx-auto">
+                {/* Main Featured Image */}
+                <Card className="overflow-hidden mb-4 group">
+                  <div className="relative aspect-video">
+                    <img 
+                      src={landingPage.gallery_images[selectedGalleryImage]} 
+                      alt={`Gallery ${selectedGalleryImage + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    
+                    {/* Navigation Arrows */}
+                    {landingPage.gallery_images.length > 1 && (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg"
+                          onClick={() => setSelectedGalleryImage(prev => 
+                            prev === 0 ? landingPage.gallery_images!.length - 1 : prev - 1
+                          )}
+                        >
+                          <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg"
+                          onClick={() => setSelectedGalleryImage(prev => 
+                            prev === landingPage.gallery_images!.length - 1 ? 0 : prev + 1
+                          )}
+                        >
+                          <ChevronRight className="h-6 w-6" />
+                        </Button>
+                      </>
+                    )}
+                    
+                    {/* Image Counter */}
+                    <div className="absolute bottom-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium">
+                      {selectedGalleryImage + 1} / {landingPage.gallery_images.length}
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Thumbnail Grid */}
+                {landingPage.gallery_images.length > 1 && (
+                  <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {landingPage.gallery_images.map((image, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedGalleryImage(idx)}
+                        className={`relative aspect-square rounded-lg overflow-hidden transition-all ${
+                          selectedGalleryImage === idx 
+                            ? 'ring-4 ring-primary scale-105' 
+                            : 'hover:scale-105 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <img 
+                          src={image} 
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {landingPage.qr_code && (
-            <div className="text-center">
-              <h3 className="text-3xl font-bold mb-6">Scan for More Details</h3>
-              <Card className="inline-block p-8">
+            <div className="text-center pt-8">
+              <h3 className="text-3xl font-bold mb-6">Get Detailed Brochure</h3>
+              <Card className="inline-block p-10 shadow-2xl bg-gradient-to-br from-card to-muted/30">
                 <PropertyQRCode 
                   qrCode={landingPage.qr_code}
                   propertyTitle={landingPage.title}
+                  className="mb-6"
                 />
-                <p className="mt-4 text-muted-foreground">Scan to get detailed property brochure</p>
+                <div className="space-y-2">
+                  <p className="text-xl font-semibold">Scan to Download</p>
+                  <p className="text-muted-foreground max-w-sm">Get comprehensive property details, payment plans, and exclusive offers delivered to your device</p>
+                </div>
               </Card>
             </div>
           )}
