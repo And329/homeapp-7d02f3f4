@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, QrCode, Upload } from 'lucide-react';
+import { X, QrCode, Upload, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useDirectUpload } from '@/hooks/useDirectUpload';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface QRCodeUploadProps {
   qrCode: string;
@@ -87,9 +88,24 @@ const QRCodeUpload: React.FC<QRCodeUploadProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        QR Code Image {required && '*'}
-      </label>
+      <div className="flex items-center gap-2 mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          QR Code Image {required && '*'}
+        </label>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">
+                QR codes are required for UAE legal compliance (RERA/DLD regulations). 
+                The QR code should link to the official property listing or verification page.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <p className="text-xs text-gray-500 mb-3">
         Upload a QR code image for property legal compliance as required by UAE law.
       </p>
