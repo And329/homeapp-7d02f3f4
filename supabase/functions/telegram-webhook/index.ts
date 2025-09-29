@@ -14,8 +14,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check or manual ping support
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ ok: true, message: 'telegram-webhook alive' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
-    console.log('Telegram webhook called');
+    console.log('Telegram webhook called', req.method);
 
     if (!TELEGRAM_BOT_TOKEN) {
       console.error('Missing Telegram bot token');
@@ -28,8 +36,10 @@ serve(async (req) => {
     const update = await req.json();
     console.log('Received update:', JSON.stringify(update));
 
-    // Check if this is a message with /start command
-    if (update.message && update.message.text === '/start') {
+    const text: string = update?.message?.text || '';
+
+    // Check if this is a message with /start command (supports payloads like "/start 123")
+    if (update.message && text.startsWith('/start')) {
       const chatId = update.message.chat.id;
       const userName = update.message.from.first_name || 'there';
       
