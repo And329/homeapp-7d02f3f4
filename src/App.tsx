@@ -23,6 +23,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserProfile from "./pages/UserProfile";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
 import { CookieConsent } from "@/components/CookieConsent";
 import './i18n';
 
@@ -50,6 +51,7 @@ function App() {
               <Route path="/team" element={<Team />} />
               <Route path="/instructions" element={<Instructions />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/landing/:slug" element={<LandingPage />} />
               <Route path="/list-property" element={<ListProperty />} />
               <Route
                 path="/admin"

@@ -20,6 +20,7 @@ import AdminContactTab from '@/components/admin/AdminContactTab';
 import AdminTeamTab from '@/components/admin/AdminTeamTab';
 import AdminInstructionsTab from '@/components/admin/AdminInstructionsTab';
 import AdminArchiveTab from '@/components/admin/AdminArchiveTab';
+import { AdminLandingPagesTab } from '@/components/admin/AdminLandingPagesTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
@@ -365,6 +366,10 @@ const AdminDashboard = () => {
 
         {state.activeTab === 'instructions' && (
           <AdminInstructionsTab />
+        )}
+
+        {state.activeTab === 'landing-pages' && (
+          <AdminLandingPagesTab />
         )}
       </div>
 

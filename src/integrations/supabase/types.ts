@@ -247,6 +247,131 @@ export type Database = {
           },
         ]
       }
+      landing_page_leads: {
+        Row: {
+          budget: string | null
+          created_at: string
+          email: string
+          id: string
+          landing_page_id: string | null
+          name: string
+          whatsapp: string | null
+        }
+        Insert: {
+          budget?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          landing_page_id?: string | null
+          name: string
+          whatsapp?: string | null
+        }
+        Update: {
+          budget?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          landing_page_id?: string | null
+          name?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_leads_landing_page_id_fkey"
+            columns: ["landing_page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_pages: {
+        Row: {
+          amenities: Json | null
+          area_from: string | null
+          area_to: string | null
+          bathrooms: string | null
+          bedrooms: string | null
+          budget_options: Json | null
+          completion_date: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          developer: string | null
+          features: Json | null
+          gallery_images: Json | null
+          hero_image: string | null
+          id: string
+          is_active: boolean
+          location: string | null
+          meta_description: string | null
+          meta_title: string | null
+          payment_plan: string | null
+          slug: string
+          starting_price: number | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          amenities?: Json | null
+          area_from?: string | null
+          area_to?: string | null
+          bathrooms?: string | null
+          bedrooms?: string | null
+          budget_options?: Json | null
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          developer?: string | null
+          features?: Json | null
+          gallery_images?: Json | null
+          hero_image?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          payment_plan?: string | null
+          slug: string
+          starting_price?: number | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          amenities?: Json | null
+          area_from?: string | null
+          area_to?: string | null
+          bathrooms?: string | null
+          bedrooms?: string | null
+          budget_options?: Json | null
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          developer?: string | null
+          features?: Json | null
+          gallery_images?: Json | null
+          hero_image?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          payment_plan?: string | null
+          slug?: string
+          starting_price?: number | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
