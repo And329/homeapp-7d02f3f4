@@ -84,11 +84,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3">
           <div className="flex items-center">
             <Bed className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.bedrooms} {t('listProperty.bed')}</span>
+            <span>{property.bedrooms}</span>
           </div>
           <div className="flex items-center">
             <Bath className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-            <span>{property.bathrooms} {t('listProperty.bath')}</span>
+            <span>{property.bathrooms}</span>
           </div>
           <div className="flex items-center">
             <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
