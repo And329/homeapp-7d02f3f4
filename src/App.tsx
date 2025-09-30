@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Properties from "./pages/Properties";
 import PropertyDetails from "./pages/PropertyDetails";
+import Projects from "./pages/Projects";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import News from "./pages/News";
@@ -43,6 +44,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetails />} />
+              <Route path="/projects" element={<Projects />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/news" element={<News />} />

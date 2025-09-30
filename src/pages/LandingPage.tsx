@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { Check, MapPin, Calendar, Maximize2, Bed, Bath, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import PropertyQRCode from '@/components/PropertyQRCode';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import {
   Carousel,
   CarouselContent,
@@ -82,6 +84,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       {/* Hero Section */}
       <section 
         className="relative min-h-screen flex items-center justify-center py-20"
@@ -482,10 +485,12 @@ export default function LandingPage() {
             className="text-lg px-8 py-6 hover:scale-105 transition-transform shadow-xl"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
-            Register Your Interest
+          Register Your Interest
           </Button>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 }

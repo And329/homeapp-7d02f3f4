@@ -36,6 +36,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: t('navbar.home'), icon: Home },
     { path: '/properties', label: t('navbar.properties'), icon: Building2 },
+    { path: '/projects', label: 'Projects', icon: Building2 },
     { path: '/blog', label: t('navbar.blog'), icon: BookOpen },
     { path: '/news', label: t('navbar.news'), icon: Newspaper },
     { path: '/information', label: t('navbar.information'), icon: Info },

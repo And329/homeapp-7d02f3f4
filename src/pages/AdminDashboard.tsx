@@ -368,7 +368,7 @@ const AdminDashboard = () => {
           <AdminInstructionsTab />
         )}
 
-        {state.activeTab === 'landing-pages' && (
+        {state.activeTab === 'projects' && (
           <AdminLandingPagesTab />
         )}
       </div>

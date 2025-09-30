@@ -69,7 +69,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
     } else {
       toast({
         title: "Success",
-        description: `Landing page ${editingPage ? 'updated' : 'created'} successfully`
+        description: `Project ${editingPage ? 'updated' : 'created'} successfully`
       });
       onClose();
     }
@@ -82,7 +82,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
   return (
     <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{editingPage ? 'Edit' : 'Create'} Landing Page</CardTitle>
+        <CardTitle>{editingPage ? 'Edit' : 'Create'} Project</CardTitle>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -354,7 +354,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
 
           <div className="flex gap-2">
             <Button type="submit">
-              {editingPage ? 'Update' : 'Create'} Landing Page
+              {editingPage ? 'Update' : 'Create'} Project
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

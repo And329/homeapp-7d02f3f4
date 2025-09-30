@@ -71,13 +71,13 @@ export const AdminLandingPagesTab = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Failed to update landing page status",
+        description: "Failed to update project status",
         variant: "destructive"
       });
     } else {
       toast({
         title: "Success",
-        description: `Landing page ${!currentStatus ? 'activated' : 'deactivated'}`
+        description: `Project ${!currentStatus ? 'activated' : 'deactivated'}`
       });
       refetch();
     }
@@ -94,13 +94,13 @@ export const AdminLandingPagesTab = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Failed to delete landing page",
+        description: "Failed to delete project",
         variant: "destructive"
       });
     } else {
       toast({
         title: "Success",
-        description: "Landing page deleted successfully"
+        description: "Project deleted successfully"
       });
       refetch();
     }
@@ -122,12 +122,12 @@ export const AdminLandingPagesTab = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Landing Pages</h2>
-          <p className="text-muted-foreground">Create and manage property landing pages for lead generation</p>
+          <h2 className="text-2xl font-bold">Off-Plan Projects</h2>
+          <p className="text-muted-foreground">Create and manage off-plan development projects for lead generation</p>
         </div>
         <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Landing Page
+          Create Project
         </Button>
       </div>
 
@@ -211,9 +211,9 @@ export const AdminLandingPagesTab = () => {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Landing Page</AlertDialogTitle>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this landing page? This action cannot be undone.
+              Are you sure you want to delete this project? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
