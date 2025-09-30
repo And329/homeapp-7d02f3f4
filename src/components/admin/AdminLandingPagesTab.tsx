@@ -44,6 +44,24 @@ export const AdminLandingPagesTab = () => {
     }
   });
 
+  const { data: leadsCount } = useQuery({
+    queryKey: ['landing-page-leads-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('landing_page_leads')
+        .select('landing_page_id');
+      
+      if (error) throw error;
+      
+      // Count leads per landing page
+      const counts: Record<string, number> = {};
+      data?.forEach(lead => {
+        counts[lead.landing_page_id] = (counts[lead.landing_page_id] || 0) + 1;
+      });
+      return counts;
+    }
+  });
+
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     const { error } = await supabase
       .from('landing_pages')
@@ -149,7 +167,9 @@ export const AdminLandingPagesTab = () => {
                     {page.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
-                <TableCell>-</TableCell>
+                <TableCell>
+                  <span className="font-medium">{leadsCount?.[page.id] || 0}</span>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
