@@ -77,9 +77,7 @@ serve(async (req) => {
 *Phone:* ${record.contact_phone || 'N/A'}
 
 *Request ID:* \`${record.id}\`
-*Submitted:* ${new Date(record.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dubai' })} GST
-
-[View in Admin Panel](https://jwrzpawuvdqjintyhzkm.lovable.app/admin)`;
+*Submitted:* ${new Date(record.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dubai' })} GST`;
 
     // Send to Telegram
     const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
