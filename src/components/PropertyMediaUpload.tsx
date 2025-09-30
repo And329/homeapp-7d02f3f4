@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X, Image as ImageIcon, Loader2, BarChart3, Wifi } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, BarChart3, Wifi, GripVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
 }) => {
   const [uploading, setUploading] = useState(false);
   const [connectionLatency, setConnectionLatency] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const { uploadFile, uploadProgress } = useDirectUpload();
 
@@ -155,6 +156,31 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
     onImagesChange(updatedImages);
   };
 
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newImages = [...images];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove from old position
+    newImages.splice(draggedIndex, 1);
+    // Insert at new position
+    newImages.splice(index, 0, draggedImage);
+    
+    setDraggedIndex(index);
+    onImagesChange(newImages);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const totalFiles = images.length;
   const hasActiveUploads = Object.keys(uploadProgress).length > 0;
 
@@ -239,7 +265,14 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
       {totalFiles > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((image, index) => (
-            <div key={`image-${index}`} className="relative group">
+            <div 
+              key={`image-${index}`} 
+              className={`relative group cursor-move ${draggedIndex === index ? 'opacity-50' : ''}`}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+            >
               <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                 <img
                   src={image}
@@ -247,10 +280,10 @@ const PropertyMediaUpload: React.FC<PropertyMediaUploadProps> = ({
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute top-2 left-2">
+              <div className="absolute top-2 left-2 flex items-center gap-1">
                 <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                  <ImageIcon className="h-3 w-3" />
-                  Photo
+                  <GripVertical className="h-3 w-3" />
+                  {index + 1}
                 </Badge>
               </div>
               <Button
