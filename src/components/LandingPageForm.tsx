@@ -220,7 +220,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
           </div>
 
           <div>
-            <Label>QR Code</Label>
+            <Label>QR Code (Legal Requirements)</Label>
             <QRCodeUpload 
               qrCode={qrCode}
               onQRCodeChange={setQrCode}

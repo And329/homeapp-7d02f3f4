@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, ExternalLink, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
+import { Plus, ExternalLink, Eye, EyeOff, Trash2, Edit, Users } from 'lucide-react';
 import { LandingPageForm } from '@/components/LandingPageForm';
 import { useToast } from '@/hooks/use-toast';
-import { LandingPage } from '@/types/landingPage';
+import { LandingPage, LandingPageLead } from '@/types/landingPage';
 import {
   Table,
   TableBody,
@@ -24,11 +24,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const AdminLandingPagesTab = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<LandingPage | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewingLeadsId, setViewingLeadsId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: landingPages, refetch } = useQuery({
@@ -60,6 +67,22 @@ export const AdminLandingPagesTab = () => {
       });
       return counts;
     }
+  });
+
+  const { data: leads } = useQuery({
+    queryKey: ['landing-page-leads', viewingLeadsId],
+    queryFn: async () => {
+      if (!viewingLeadsId) return [];
+      const { data, error } = await supabase
+        .from('landing_page_leads')
+        .select('*')
+        .eq('landing_page_id', viewingLeadsId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as LandingPageLead[];
+    },
+    enabled: !!viewingLeadsId
   });
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -168,7 +191,15 @@ export const AdminLandingPagesTab = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="font-medium">{leadsCount?.[page.id] || 0}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingLeadsId(page.id)}
+                    className="font-medium hover:text-primary"
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    {leadsCount?.[page.id] || 0}
+                  </Button>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -222,6 +253,44 @@ export const AdminLandingPagesTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewingLeadsId} onOpenChange={() => setViewingLeadsId(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Project Leads</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {leads && leads.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>WhatsApp</TableHead>
+                    <TableHead>Budget</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.name}</TableCell>
+                      <TableCell>{lead.email}</TableCell>
+                      <TableCell>{lead.whatsapp || '-'}</TableCell>
+                      <TableCell>{lead.budget || '-'}</TableCell>
+                      <TableCell>{new Date(lead.created_at).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No leads yet for this project
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
