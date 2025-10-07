@@ -65,7 +65,7 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
     queryKey: ['admin-blog-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('blog_posts')
+        .from('admin_blog_posts')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -78,7 +78,7 @@ export const useAdminQueries = (selectedConversation: string | null, selectedCha
     queryKey: ['admin-news-articles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('news_articles')
+        .from('admin_news_articles')
         .select('*')
         .order('created_at', { ascending: false });
 
