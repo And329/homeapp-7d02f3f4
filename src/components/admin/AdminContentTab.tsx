@@ -1,7 +1,20 @@
 
-import React from 'react';
-import { FileText, Newspaper, File } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Newspaper, File, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdminContentTabProps {
   blogPosts: any[];
@@ -20,6 +33,49 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
   onCreateBlogPost,
   onCreateNewsArticle,
 }) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'blog' | 'news'; title: string } | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleDeleteClick = (id: string, type: 'blog' | 'news', title: string) => {
+    setItemToDelete({ id, type, title });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      const table = itemToDelete.type === 'blog' ? 'admin_blog_posts' : 'admin_news_articles';
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', itemToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${itemToDelete.type === 'blog' ? 'Blog post' : 'News article'} deleted successfully.`,
+      });
+
+      // Invalidate queries to refresh the lists
+      queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-news-articles'] });
+    } catch (error) {
+      console.error('Error deleting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete item.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
   return (
     <>
       <div className="mb-6 flex items-center gap-4">
@@ -50,7 +106,17 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
             <div className="space-y-4">
               {blogPosts.map((post: any) => (
                 <div key={post.id} className="bg-white p-4 rounded-lg shadow border">
-                  <h4 className="font-medium text-gray-900">{post.title}</h4>
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 flex-1">{post.title}</h4>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteClick(post.id, 'blog', post.title)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">{post.excerpt || 'No excerpt'}</p>
                   {post.pdf_attachment && (
                     <div className="flex items-center gap-2 mt-2">
@@ -89,7 +155,17 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
             <div className="space-y-4">
               {newsArticles.map((article: any) => (
                 <div key={article.id} className="bg-white p-4 rounded-lg shadow border">
-                  <h4 className="font-medium text-gray-900">{article.title}</h4>
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 flex-1">{article.title}</h4>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteClick(article.id, 'news', article.title)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">{article.excerpt || 'No excerpt'}</p>
                   {article.source && (
                     <p className="text-xs text-gray-500 mt-1">Source: {article.source}</p>
@@ -115,6 +191,23 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
           )}
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{itemToDelete?.title}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
