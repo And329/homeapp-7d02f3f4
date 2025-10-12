@@ -48,7 +48,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         />
         {property.is_hot_deal && (
           <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs">
-            {t('listProperty.hotDeal')}
+            {t('listProperty.form.hotDeal')}
           </Badge>
         )}
         <Badge className="absolute top-2 right-2 bg-blue-500 text-white capitalize text-xs">
