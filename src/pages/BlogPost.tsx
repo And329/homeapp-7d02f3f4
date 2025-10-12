@@ -16,8 +16,6 @@ const BlogPostPage = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pdfContent, setPdfContent] = useState<string>('');
-  const [parsingPdf, setParsingPdf] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,11 +32,6 @@ const BlogPostPage = () => {
 
         if (error) throw error;
         setPost(data);
-        
-        // Parse PDF if available
-        if (data.pdf_attachment) {
-          parsePdfContent(data.pdf_attachment);
-        }
       } catch (error) {
         console.error('Error fetching blog post:', error);
         toast({
@@ -53,34 +46,6 @@ const BlogPostPage = () => {
 
     fetchPost();
   }, [slug, toast]);
-
-  const parsePdfContent = async (pdfUrl: string) => {
-    setParsingPdf(true);
-    try {
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'document.pdf', { type: 'application/pdf' });
-      
-      // Use FormData to send the file
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Call edge function to parse PDF
-      const { data, error } = await supabase.functions.invoke('parse-pdf', {
-        body: formData,
-      });
-
-      if (error) throw error;
-      if (data?.content) {
-        setPdfContent(data.content);
-      }
-    } catch (error) {
-      console.error('Error parsing PDF:', error);
-      // Silently fail - we'll still show the PDF viewer
-    } finally {
-      setParsingPdf(false);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -195,31 +160,13 @@ const BlogPostPage = () => {
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <FileText className="h-6 w-6 text-destructive" />
-                Document Content
+                Attached Document
               </h2>
-              
-              {parsingPdf ? (
-                <div className="flex items-center justify-center py-12 bg-muted/20 rounded-xl">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-                    <p className="text-sm text-muted-foreground">Converting PDF to readable format...</p>
-                  </div>
-                </div>
-              ) : pdfContent ? (
-                <div className="bg-gradient-to-br from-background to-muted/10 border-2 border-border rounded-xl p-8 shadow-lg">
-                  <SafeHtml 
-                    content={pdfContent}
-                    className="prose prose-lg max-w-none"
-                    allowLineBreaks={true}
-                  />
-                </div>
-              ) : (
-                <PDFViewer 
-                  pdfUrl={post.pdf_attachment} 
-                  title={`${post.title} - Document`}
-                  className="shadow-lg"
-                />
-              )}
+              <PDFViewer 
+                pdfUrl={post.pdf_attachment} 
+                title={`${post.title} - Document`}
+                className="shadow-lg"
+              />
             </div>
           )}
         </article>

@@ -12,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -76,6 +78,38 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
     }
   };
 
+  const handleStatusToggle = async (id: string, currentStatus: string, type: 'blog' | 'news') => {
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+    
+    try {
+      const table = type === 'blog' ? 'admin_blog_posts' : 'admin_news_articles';
+      const { error } = await supabase
+        .from(table)
+        .update({ 
+          status: newStatus,
+          ...(newStatus === 'published' && { published_at: new Date().toISOString() })
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${type === 'blog' ? 'Blog post' : 'News article'} ${newStatus === 'published' ? 'published' : 'unpublished'} successfully.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['admin-blog-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-news-articles'] });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="mb-6 flex items-center gap-4">
@@ -124,14 +158,17 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
                       <span className="text-xs text-gray-500">PDF attachment included</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      post.status === 'published' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {post.status}
-                    </span>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={`blog-status-${post.id}`}
+                        checked={post.status === 'published'}
+                        onCheckedChange={() => handleStatusToggle(post.id, post.status, 'blog')}
+                      />
+                      <Label htmlFor={`blog-status-${post.id}`} className="text-sm cursor-pointer">
+                        {post.status === 'published' ? 'Published' : 'Draft'}
+                      </Label>
+                    </div>
                     <span className="text-xs text-gray-500">
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
@@ -170,14 +207,17 @@ const AdminContentTab: React.FC<AdminContentTabProps> = ({
                   {article.source && (
                     <p className="text-xs text-gray-500 mt-1">Source: {article.source}</p>
                   )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      article.status === 'published' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {article.status}
-                    </span>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id={`news-status-${article.id}`}
+                        checked={article.status === 'published'}
+                        onCheckedChange={() => handleStatusToggle(article.id, article.status, 'news')}
+                      />
+                      <Label htmlFor={`news-status-${article.id}`} className="text-sm cursor-pointer">
+                        {article.status === 'published' ? 'Published' : 'Draft'}
+                      </Label>
+                    </div>
                     <span className="text-xs text-gray-500">
                       {new Date(article.created_at).toLocaleDateString()}
                     </span>

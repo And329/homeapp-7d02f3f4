@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BlogPost } from '@/types/blog';
-import PDFViewer from './PDFViewer';
 import { SafeHtml } from '@/components/ui/safe-html';
 
 interface ExpandableBlogCardProps {
@@ -79,13 +78,6 @@ const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
                 allowLineBreaks={true}
               />
             </div>
-
-            {post.pdf_attachment && (
-              <PDFViewer 
-                pdfUrl={post.pdf_attachment} 
-                title={`${post.title} - Document`}
-              />
-            )}
           </div>
          )}
 
