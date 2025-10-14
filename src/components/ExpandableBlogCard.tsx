@@ -69,46 +69,14 @@ const ExpandableBlogCard: React.FC<ExpandableBlogCardProps> = ({ post }) => {
           </p>
         )}
 
-        {isExpanded && (
-          <div className="space-y-4">
-            <div className="prose prose-sm max-w-none">
-              <SafeHtml 
-                content={post.content}
-                className="text-gray-700 leading-relaxed"
-                allowLineBreaks={true}
-              />
-            </div>
-          </div>
-         )}
-
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-1 mt-4 flex items-center justify-center gap-2"
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Show Less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Read More
-              </>
-            )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/blog/${post.slug}`)}
-            className="mt-4 flex items-center justify-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Full Post
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/blog/${post.slug}`)}
+          className="mt-4 flex items-center justify-center gap-2"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Full Post
+        </Button>
       </CardContent>
     </Card>
   );
