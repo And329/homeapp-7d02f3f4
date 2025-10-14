@@ -47,14 +47,14 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex justify-between items-center h-16 gap-1 sm:gap-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
+          <Link to="/" className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <span className="font-bold text-xl text-gray-900">HomeApp</span>
+            <span className="font-bold text-base sm:text-xl text-gray-900">HomeApp</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -73,22 +73,22 @@ const Navbar = () => {
           </div>
 
           {/* Right side - Language Switcher, Auth buttons/User menu */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* Language Switcher - Hidden on very small screens */}
-            <div className="hidden xs:block">
+          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+            {/* Language Switcher - Hidden on mobile */}
+            <div className="hidden sm:block">
               <LanguageSwitcher />
             </div>
 
             {user ? (
-              <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 {/* Notifications */}
                 <NotificationBadge onClick={() => navigate('/profile')} />
                 
                 {/* Message Notifications */}
                 <MessageNotificationBadge onClick={() => navigate('/messages')} />
 
-                {/* List Property Button - Only icon on mobile */}
-                <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
+                {/* List Property Button - Hidden on mobile */}
+                <Button asChild variant="outline" size="sm" className="hidden sm:flex px-2 sm:px-3">
                   <Link to="/list-property" className="flex items-center space-x-1 sm:space-x-2">
                     <Plus className="h-4 w-4" />
                     <span className="hidden lg:inline">{t('navbar.listProperty')}</span>
@@ -99,11 +99,11 @@ const Navbar = () => {
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
+                    <Button variant="ghost" className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full p-0">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={profile?.profile_picture || ''} alt={profile?.full_name || ''} />
                         <AvatarFallback>
-                          <User className="h-4 w-4" />
+                          <User className="h-3 w-3 sm:h-4 sm:w-4" />
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -145,12 +145,12 @@ const Navbar = () => {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <Button asChild variant="ghost" size="sm" className="px-2 sm:px-3 text-xs sm:text-sm">
+              <div className="flex items-center gap-1">
+                <Button asChild variant="ghost" size="sm" className="px-1.5 sm:px-3 text-xs sm:text-sm h-7 sm:h-9">
                   <Link to="/auth">{t('navbar.login')}</Link>
                 </Button>
-                <Button asChild size="sm" className="px-2 sm:px-3 text-xs sm:text-sm">
-                  <Link to="/auth" className="flex items-center space-x-1">
+                <Button asChild size="sm" className="px-1.5 sm:px-3 text-xs sm:text-sm h-7 sm:h-9">
+                  <Link to="/auth" className="flex items-center gap-1">
                     <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="whitespace-nowrap">{t('navbar.signup')}</span>
                   </Link>
@@ -159,10 +159,10 @@ const Navbar = () => {
             )}
 
             {/* Mobile menu trigger */}
-            <div className="md:hidden ml-1">
+            <div className="md:hidden">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="px-2">
+                  <Button variant="ghost" size="sm" className="px-1.5 h-7 sm:h-9">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
