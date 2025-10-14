@@ -29,6 +29,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [floorPlans, setFloorPlans] = useState<string[]>([]);
   const [qrCode, setQrCode] = useState('');
+  const [heroImage, setHeroImage] = useState('');
 
   useEffect(() => {
     if (editingPage) {
@@ -41,6 +42,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
       setGalleryImages(editingPage.gallery_images || []);
       setFloorPlans(editingPage.floor_plans || []);
       setQrCode(editingPage.qr_code || '');
+      setHeroImage(editingPage.hero_image || '');
     }
   }, [editingPage, setValue]);
 
@@ -53,6 +55,7 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
       gallery_images: galleryImages,
       floor_plans: floorPlans,
       qr_code: qrCode,
+      hero_image: heroImage,
       starting_price: data.starting_price ? parseInt(data.starting_price) : null
     };
 
@@ -156,15 +159,33 @@ export const LandingPageForm = ({ onClose, editingPage }: LandingPageFormProps) 
             <Textarea {...register('payment_plan')} rows={3} placeholder="20% Down Payment&#10;40% During Construction&#10;40% On Completion" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="hero_image">Hero Image URL</Label>
-              <Input {...register('hero_image')} placeholder="https://..." />
-            </div>
-            <div>
-              <Label htmlFor="video_url">Video URL</Label>
-              <Input {...register('video_url')} placeholder="https://youtube.com/..." />
-            </div>
+          <div>
+            <Label>Hero Image</Label>
+            <PropertyMediaUpload 
+              images={heroImage ? [heroImage] : []}
+              onImagesChange={(urls) => setHeroImage(urls[0] || '')}
+            />
+            {heroImage && (
+              <div className="mt-2">
+                <div className="relative group inline-block">
+                  <img src={heroImage} alt="Hero" className="w-full max-w-md h-48 object-cover rounded" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                    onClick={() => setHeroImage('')}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="video_url">Video URL (YouTube, etc.)</Label>
+            <Input {...register('video_url')} placeholder="https://youtube.com/..." />
           </div>
 
           <div>
