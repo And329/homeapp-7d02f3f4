@@ -1,4 +1,3 @@
-
 {
   "navbar": {
     "home": "Home",
@@ -76,7 +75,7 @@
     "contactInquiries": "Contact Inquiries",
     "inquiryStatus": {
       "new": "New",
-      "in_progress": "In Progress", 
+      "in_progress": "In Progress",
       "resolved": "Resolved"
     },
     "updateStatus": "Update Status",
@@ -93,7 +92,7 @@
     "services": "Our Services",
     "servicesList": {
       "buying": "Property Buying Assistance",
-      "selling": "Property Selling Support", 
+      "selling": "Property Selling Support",
       "renting": "Rental Services",
       "consultation": "Real Estate Consultation",
       "valuation": "Property Valuation",
@@ -273,7 +272,7 @@
     "resources": "Resources",
     "contactInfo": "Contact Info",
     "address": "Office 402, Citadel Tower, Business Bay, Dubai",
-    "copyright": "© 2025 HomeApp. All rights reserved. Real Estate License: RERA-12345"
+    "copyright": "© 2025 HomeApp. All rights reserved."
   },
   "filters": {
     "searchPlaceholder": "Search by title or location...",
@@ -284,7 +283,7 @@
     "propertyType": "Property Type",
     "allPropertyTypes": "All Property Types",
     "apartment": "Apartment",
-    "villa": "Villa", 
+    "villa": "Villa",
     "townhouse": "Townhouse",
     "studio": "Studio",
     "penthouse": "Penthouse",
@@ -320,7 +319,7 @@
     "connectWithUs": "Connect With Us",
     "followDescription": "Follow us on social media for the latest updates",
     "facebook": "Facebook",
-    "instagram": "Instagram", 
+    "instagram": "Instagram",
     "tiktok": "TikTok",
     "youtube": "YouTube",
     "telegram": "Telegram"
