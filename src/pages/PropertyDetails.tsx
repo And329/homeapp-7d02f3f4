@@ -105,87 +105,88 @@ const PropertyDetails = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Property Photo Gallery */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8 -mx-3 sm:mx-0">
           <PropertyPhotoGallery 
             images={property.images || []} 
             title={property.title}
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Property Header */}
-            <div className="mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {property.location}
+            <div className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 sm:mb-4 gap-3">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 leading-tight">{property.title}</h1>
+                  <div className="flex items-center text-gray-600 mb-2 text-sm sm:text-base">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">{property.location}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start">
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={handleFavoriteToggle}
                     disabled={isToggling}
+                    className="text-xs sm:text-sm h-8 sm:h-9"
                   >
-                    <Heart className={`h-4 w-4 mr-1 ${isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                    {isFavorite(property.id) ? 'Saved' : 'Save'}
+                    <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 ${isFavorite(property.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                    <span className="hidden xs:inline">{isFavorite(property.id) ? 'Saved' : 'Save'}</span>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleShare}>
-                    <Share2 className="h-4 w-4 mr-1" />
-                    Share
+                  <Button variant="outline" size="sm" onClick={handleShare} className="text-xs sm:text-sm h-8 sm:h-9">
+                    <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden xs:inline">Share</span>
                   </Button>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-3xl font-bold text-primary">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
                   {formatPrice(displayPrice, currency, property.type)}
                 </span>
                 {property.is_hot_deal && (
-                  <Badge variant="destructive">Hot Deal</Badge>
+                  <Badge variant="destructive" className="text-xs">Hot Deal</Badge>
                 )}
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   For {property.type === 'rent' ? 'Rent' : 'Sale'}
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-6 text-gray-700">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-gray-700 text-xs sm:text-sm">
                 <div className="flex items-center">
-                  <Bed className="h-4 w-4 mr-1" />
-                  {property.bedrooms} Bedrooms
+                  <Bed className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="whitespace-nowrap">{property.bedrooms} Beds</span>
                 </div>
                 <div className="flex items-center">
-                  <Bath className="h-4 w-4 mr-1" />
-                  {property.bathrooms} Bathrooms
+                  <Bath className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="whitespace-nowrap">{property.bathrooms} Baths</span>
                 </div>
                 <div className="flex items-center">
-                  <Square className="h-4 w-4 mr-1" />
-                  {displayArea ? formatArea(displayArea, unitSystem) : 'N/A'}
+                  <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="whitespace-nowrap">{displayArea ? formatArea(displayArea, unitSystem) : 'N/A'}</span>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Description</h2>
-              <p className="text-gray-700 leading-relaxed">{property.description}</p>
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Description</h2>
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{property.description}</p>
             </div>
 
             {/* Amenities */}
             {property.amenities && property.amenities.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Amenities</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {property.amenities.map((amenity, index) => (
                     <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
-                      <span className="text-sm">{amenity}</span>
+                      <span className="text-xs sm:text-sm">{amenity}</span>
                     </div>
                   ))}
                 </div>
@@ -193,9 +194,9 @@ const PropertyDetails = () => {
             )}
 
             {/* Map */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Location</h2>
-              <div className="h-64 rounded-lg overflow-hidden">
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Location</h2>
+              <div className="h-48 sm:h-64 rounded-lg overflow-hidden">
                 <PropertyMap
                   properties={[{
                     id: property.id,
@@ -206,7 +207,7 @@ const PropertyDetails = () => {
                     latitude: property.latitude || 0,
                     longitude: property.longitude || 0,
                   }]}
-                  height="256px"
+                  height="100%"
                 />
               </div>
             </div>
@@ -214,27 +215,27 @@ const PropertyDetails = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+            <div className="lg:sticky lg:top-8 space-y-4 sm:space-y-6">
               {/* Contact Information Card */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Contact Information</CardTitle>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-base sm:text-lg">Contact Information</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6 pt-0">
                   {propertyContactInfo && (propertyContactInfo.contact_name || propertyContactInfo.contact_email || propertyContactInfo.contact_phone) ? (
                     <div className="space-y-3">
                       {propertyContactInfo.contact_name && (
                         <div className="flex items-center">
-                          <User className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="font-medium">{propertyContactInfo.contact_name}</span>
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-500 flex-shrink-0" />
+                          <span className="font-medium text-sm sm:text-base break-words">{propertyContactInfo.contact_name}</span>
                         </div>
                       )}
                       {propertyContactInfo.contact_email && (
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                        <div className="flex items-start">
+                          <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
                           <a 
                             href={`mailto:${propertyContactInfo.contact_email}`}
-                            className="text-primary hover:underline"
+                            className="text-primary hover:underline text-sm sm:text-base break-all"
                           >
                             {propertyContactInfo.contact_email}
                           </a>
@@ -242,10 +243,10 @@ const PropertyDetails = () => {
                       )}
                       {propertyContactInfo.contact_phone && (
                         <div className="flex items-center">
-                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                          <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-500 flex-shrink-0" />
                           <a 
                             href={`tel:${propertyContactInfo.contact_phone}`}
-                            className="text-primary hover:underline"
+                            className="text-primary hover:underline text-sm sm:text-base"
                           >
                             {propertyContactInfo.contact_phone}
                           </a>
@@ -253,7 +254,7 @@ const PropertyDetails = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="text-gray-500">
+                    <div className="text-gray-500 text-sm">
                       Contact information not available
                     </div>
                   )}
@@ -261,25 +262,25 @@ const PropertyDetails = () => {
               </Card>
 
               {/* Property Details */}
-              <div className="bg-white border rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Property Details</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
+              <div className="bg-white border rounded-lg p-4 sm:p-6 shadow-sm">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Property Details</h3>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Property Type</span>
-                    <span className="font-medium">{property.property_type}</span>
+                    <span className="font-medium text-right">{property.property_type}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Listing Type</span>
                     <span className="font-medium capitalize">{property.type}</span>
                   </div>
                   {property.year_built && (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm sm:text-base">
                       <span className="text-gray-600">Year Built</span>
                       <span className="font-medium">{property.year_built}</span>
                     </div>
                   )}
                   {property.parking && (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm sm:text-base">
                       <span className="text-gray-600">Parking</span>
                       <span className="font-medium">{property.parking} spaces</span>
                     </div>
@@ -289,15 +290,15 @@ const PropertyDetails = () => {
 
               {/* QR Code - Small and unobtrusive */}
               {property.qr_code && (
-                <div className="bg-gray-50 border rounded-lg p-4">
+                <div className="bg-gray-50 border rounded-lg p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Legal Documentation</span>
-                    <QrCode className="h-4 w-4 text-gray-400" />
+                    <span className="text-xs sm:text-sm text-gray-600">Legal Documentation</span>
+                    <QrCode className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                   </div>
                   <PropertyQRCode
                     qrCode={property.qr_code}
                     propertyTitle={property.title}
-                    className="max-w-24"
+                    className="max-w-20 sm:max-w-24"
                   />
                 </div>
               )}
