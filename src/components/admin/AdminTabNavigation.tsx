@@ -3,10 +3,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AdminTabNavigationProps {
-  activeTab: 'properties' | 'requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'projects';
-  setActiveTab: (tab: 'properties' | 'requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'projects') => void;
+  activeTab: 'properties' | 'requests' | 'edit-requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'projects';
+  setActiveTab: (tab: 'properties' | 'requests' | 'edit-requests' | 'deletion-requests' | 'archive' | 'content' | 'chats' | 'contact' | 'team' | 'projects') => void;
   propertiesCount: number;
   pendingRequestsCount: number;
+  editRequestsCount?: number;
   deletionRequestsCount?: number;
   archivedPropertiesCount: number;
   openChatsCount: number;
@@ -19,6 +20,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
   setActiveTab,
   propertiesCount,
   pendingRequestsCount,
+  editRequestsCount = 0,
   deletionRequestsCount = 0,
   archivedPropertiesCount,
   openChatsCount,
@@ -50,6 +52,16 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
             }`}
           >
             Property Requests ({pendingRequestsCount} pending)
+          </button>
+          <button
+            onClick={() => setActiveTab('edit-requests')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'edit-requests'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Edit Requests ({editRequestsCount})
           </button>
           <button
             onClick={() => setActiveTab('deletion-requests')}

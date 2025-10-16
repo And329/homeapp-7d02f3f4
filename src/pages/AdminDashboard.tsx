@@ -21,6 +21,7 @@ import AdminTeamTab from '@/components/admin/AdminTeamTab';
 
 import AdminArchiveTab from '@/components/admin/AdminArchiveTab';
 import { AdminLandingPagesTab } from '@/components/admin/AdminLandingPagesTab';
+import { AdminEditRequestsTab } from '@/components/admin/AdminEditRequestsTab';
 import { useAdminQueries } from '@/hooks/useAdminQueries';
 import { useAdminMutations } from '@/hooks/useAdminMutations';
 import { useAdminHandlers } from '@/hooks/useAdminHandlers';
@@ -76,6 +77,20 @@ const AdminDashboard = () => {
       const { count, error } = await supabase
         .from('team_members')
         .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch edit requests count
+  const { data: editRequestsCount = 0 } = useQuery({
+    queryKey: ['admin-edit-requests-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('property_edit_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
       
       if (error) throw error;
       return count || 0;
@@ -259,6 +274,7 @@ const AdminDashboard = () => {
           setActiveTab={state.setActiveTab}
           propertiesCount={transformedProperties.length}
           pendingRequestsCount={propertyRequests.filter(r => r.status === 'pending').length}
+          editRequestsCount={editRequestsCount}
           deletionRequestsCount={deletionRequestsCount}
           archivedPropertiesCount={archivedProperties.length}
           openChatsCount={conversations.length}
@@ -296,6 +312,10 @@ const AdminDashboard = () => {
             onReviewRequest={handlers.handleReviewRequest}
             onApproveDeletion={handlers.handleApproveDeletion}
           />
+        )}
+
+        {state.activeTab === 'edit-requests' && (
+          <AdminEditRequestsTab />
         )}
 
         {state.activeTab === 'deletion-requests' && (

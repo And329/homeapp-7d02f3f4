@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings, Plus, MessageCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Trash2, User, Heart, MessageSquare, Settings, Plus, MessageCircle, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -21,6 +21,7 @@ import ExpandablePropertyCard from '@/components/ExpandablePropertyCard';
 import UnifiedChat from '@/components/UnifiedChat';
 import ContactAdminButton from '@/components/ContactAdminButton';
 import { DeletionReasonDialog } from '@/components/DeletionReasonDialog';
+import { PropertyEditRequestForm } from '@/components/PropertyEditRequestForm';
 import { usePropertyDeletion } from '@/hooks/usePropertyDeletion';
 import NotificationsList from '@/components/NotificationsList';
 
@@ -31,6 +32,8 @@ const UserProfile = () => {
   const queryClient = useQueryClient();
   const [showChatUserId, setShowChatUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [deletionDialog, setDeletionDialog] = useState<{
     isOpen: boolean;
     requestId: string;
@@ -255,10 +258,14 @@ const UserProfile = () => {
     handleRequestDeletion(propertyId, propertyTitle, true);
   };
 
-  // Start chat for approved property (contact admin about property)
   const handleStartChatForProperty = (propertyId: string, propertyTitle: string) => {
     // For approved properties, we don't pass a property request ID since it's already approved
     createConversationMutation.mutate({ propertyRequestId: null, propertyTitle: `Support for: ${propertyTitle}` });
+  };
+
+  const handleEditProperty = (property: Property) => {
+    setEditingProperty(property);
+    setIsEditFormOpen(true);
   };
 
   if (!user) {
@@ -409,40 +416,51 @@ const UserProfile = () => {
                                          {property.is_archived ? 'Archived' : 'Live'}
                                        </Badge>
                                      </div>
-                                     <div className="flex gap-1 flex-col">
-                                       <Button
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           handleStartChatForProperty(property.id, property.title || 'Property');
-                                         }}
-                                         variant="outline"
-                                         size="sm"
-                                         className="bg-white/90 hover:bg-blue-50 hover:border-blue-200 h-7 px-2"
-                                         disabled={createConversationMutation.isPending}
-                                       >
-                                         {createConversationMutation.isPending ? (
-                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                                         ) : (
-                                           <MessageCircle className="h-3 w-3 text-blue-600" />
-                                         )}
-                                       </Button>
-                                       <Button
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           handleDeleteProperty(property.id, property.title || 'Property');
-                                         }}
-                                         variant="outline"
-                                         size="sm"
-                                         className="bg-white/90 hover:bg-red-50 hover:border-red-200 h-7 px-2"
-                                         disabled={isRequestingDeletion}
-                                       >
-                                         {isRequestingDeletion ? (
-                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
-                                         ) : (
-                                           <Trash2 className="h-3 w-3 text-red-600" />
-                                         )}
-                                       </Button>
-                                     </div>
+                                      <div className="flex gap-1 flex-col">
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditProperty(property);
+                                          }}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white/90 hover:bg-primary/10 hover:border-primary h-7 px-2"
+                                        >
+                                          <Edit className="h-3 w-3 text-primary" />
+                                        </Button>
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStartChatForProperty(property.id, property.title || 'Property');
+                                          }}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white/90 hover:bg-blue-50 hover:border-blue-200 h-7 px-2"
+                                          disabled={createConversationMutation.isPending}
+                                        >
+                                          {createConversationMutation.isPending ? (
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                                          ) : (
+                                            <MessageCircle className="h-3 w-3 text-blue-600" />
+                                          )}
+                                        </Button>
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteProperty(property.id, property.title || 'Property');
+                                          }}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white/90 hover:bg-red-50 hover:border-red-200 h-7 px-2"
+                                          disabled={isRequestingDeletion}
+                                        >
+                                          {isRequestingDeletion ? (
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                                          ) : (
+                                            <Trash2 className="h-3 w-3 text-red-600" />
+                                          )}
+                                        </Button>
+                                      </div>
                                    </div>
                                 </div>
                               ))}
@@ -555,6 +573,22 @@ const UserProfile = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {editingProperty && (
+          <PropertyEditRequestForm
+            property={editingProperty}
+            open={isEditFormOpen}
+            onClose={() => {
+              setIsEditFormOpen(false);
+              setEditingProperty(null);
+            }}
+            onSuccess={() => {
+              setIsEditFormOpen(false);
+              setEditingProperty(null);
+              queryClient.invalidateQueries({ queryKey: ['user-approved-properties'] });
+            }}
+          />
         )}
 
         <DeletionReasonDialog

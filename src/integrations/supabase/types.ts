@@ -711,6 +711,110 @@ export type Database = {
           },
         ]
       }
+      property_edit_requests: {
+        Row: {
+          admin_notes: string | null
+          amenities: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          emirate: string | null
+          id: string
+          images: Json | null
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          parking: number | null
+          price: number | null
+          property_id: string
+          property_type: string | null
+          qr_code: string | null
+          status: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+          user_message: string | null
+          year_built: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          emirate?: string | null
+          id?: string
+          images?: Json | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          parking?: number | null
+          price?: number | null
+          property_id: string
+          property_type?: string | null
+          qr_code?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_message?: string | null
+          year_built?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amenities?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          emirate?: string | null
+          id?: string
+          images?: Json | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          parking?: number | null
+          price?: number | null
+          property_id?: string
+          property_type?: string | null
+          qr_code?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_message?: string | null
+          year_built?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_edit_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_requests: {
         Row: {
           amenities: Json | null
@@ -973,6 +1077,10 @@ export type Database = {
         Args: { deletion_request_id_param: string }
         Returns: undefined
       }
+      approve_property_edit_request: {
+        Args: { edit_request_id: string }
+        Returns: undefined
+      }
       approve_property_request: {
         Args:
           | { admin_notes_param?: string; request_id: string }
@@ -999,6 +1107,10 @@ export type Database = {
       get_setting: {
         Args: { setting_key: string }
         Returns: string
+      }
+      reject_property_edit_request: {
+        Args: { edit_request_id: string; rejection_reason?: string }
+        Returns: undefined
       }
       request_property_deletion: {
         Args:
