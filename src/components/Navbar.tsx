@@ -13,9 +13,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Menu, User, LogOut, Settings, Home, Building2, BookOpen, Newspaper, Contact, UserPlus, Plus, Info, Users, FileText } from 'lucide-react';
 import MessageNotificationBadge from './MessageNotificationBadge';
 import NotificationBadge from './NotificationBadge';
+import NotificationsList from './NotificationsList';
 import LanguageSwitcher from './LanguageSwitcher';
 import UnitsToggle from './UnitsToggle';
 
@@ -25,6 +27,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -82,7 +85,16 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-0.5 sm:gap-1">
                 {/* Notifications */}
-                <NotificationBadge onClick={() => navigate('/profile')} />
+                <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                  <PopoverTrigger asChild>
+                    <div>
+                      <NotificationBadge />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[90vw] sm:w-[500px] p-0" align="end">
+                    <NotificationsList />
+                  </PopoverContent>
+                </Popover>
                 
                 {/* Message Notifications */}
                 <MessageNotificationBadge onClick={() => navigate('/messages')} />

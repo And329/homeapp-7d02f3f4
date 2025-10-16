@@ -6,12 +6,10 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface NotificationBadgeProps {
-  onClick?: () => void;
   className?: string;
 }
 
 const NotificationBadge: React.FC<NotificationBadgeProps> = ({ 
-  onClick, 
   className = "" 
 }) => {
   const { user } = useAuth();
@@ -19,17 +17,10 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = ({
 
   if (!user) return null;
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    }
-  };
-
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleClick}
       className={`relative p-1 sm:p-2 ${className}`}
     >
       <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
